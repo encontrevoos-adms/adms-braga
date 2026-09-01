@@ -458,6 +458,14 @@
 .home-note strong{color:var(--royal-deep)}
 @media(max-width:760px){.home-grid{grid-template-columns:1fr}.home-overlay{padding:30px 26px}.home-overlay h1{font-size:38px}.home-hero{min-height:270px}.home-video-placeholder{height:195px}.verse-card blockquote{font-size:24px}.home-actions{gap:7px}}
 
+
+.birthday-today{margin-top:18px;border-radius:22px;padding:25px 28px;background:linear-gradient(125deg,#fffaf0,#fff 55%,#f5f7ff);border:1px solid rgba(205,167,68,.28);box-shadow:0 12px 32px rgba(15,35,80,.07);position:relative;overflow:hidden}
+.birthday-today:after{content:'✦';position:absolute;right:24px;top:-18px;font-size:105px;color:rgba(205,167,68,.10)}
+.birthday-kicker{font-size:10px;font-weight:800;letter-spacing:1.8px;color:#a27b18}
+.birthday-today h3{font-family:'Cormorant Garamond',serif;font-size:29px;color:var(--royal-deep);margin:9px 0}
+.birthday-today p{font-size:13px;line-height:1.75;color:var(--ink-soft);max-width:900px;margin:0}
+.birthday-verse{margin-top:13px;font-size:12px;font-weight:700;color:var(--royal-dark)}
+
 </style>
 <!-- Supabase Cloud — Fase 1: infraestrutura sem alterar a identidade visual -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -668,6 +676,7 @@ window.addEventListener('online',()=>{ admsCarregarMembrosCloud(); admsCarregarE
       <div id="denied-box" class="denied-box"></div>
 
       <button class="btn btn-primary" onclick="attemptLoginUnificado()">Entrar no sistema</button>
+      <button type="button" style="display:block;margin:12px auto 0;border:0;background:transparent;color:var(--royal);font-size:11px;font-weight:700;cursor:pointer" onclick="admsPrimeiroAcesso()">Esqueci / criar palavra-passe</button>
 
       <div class="hint-box" style="border-left-color:var(--red);">
         <strong>Utilização consciente e responsável.</strong> As informações contidas neste sistema são estritamente confidenciais e de uso interno. Não podem ser copiadas, partilhadas, fotografadas ou divulgadas por qualquer forma ou meio sem autorização expressa dos Pastores Sénior. Cada pessoa acede apenas com a sua própria palavra-passe pessoal — nunca a partilhe.
@@ -676,7 +685,7 @@ window.addEventListener('online',()=>{ admsCarregarMembrosCloud(); admsCarregarE
 
     <!-- PASSO 2: Troca de palavra-passe obrigatória no primeiro acesso -->
     <div class="login-body" id="step-forcepw" style="display:none;">
-      <div class="hint-box" style="margin-top:0;">Este é o seu primeiro acesso. Por segurança, defina uma nova palavra-passe pessoal antes de continuar.</div>
+      <div class="hint-box" style="margin-top:0;">Defina uma nova palavra-passe pessoal para o seu acesso. Utilize pelo menos 8 caracteres.</div>
       <label>Nova palavra-passe</label>
       <div class="pw-wrap">
         <input id="fp-new" type="password" placeholder="Mínimo 6 caracteres">
@@ -1711,7 +1720,7 @@ function renderModule(){
   if(session.tipo==='membro' && !memberAllowed.includes(currentModule)){ currentModule='dashboard'; }
   if(currentModule==='meu-perfil') return el.innerHTML = viewMeuPerfil();
   if(currentModule==='eventos'){ el.innerHTML = viewEventos(); return; }
-  if(currentModule==='dashboard'){ el.innerHTML = viewDashboard(); return; }
+  if(currentModule==='dashboard'){ el.innerHTML = viewDashboard(); setTimeout(renderBirthdayToday,0); return; }
   if(currentModule==='painel'){ el.innerHTML = viewAdminDashboard(); if(isMaster()) carregarResumoNovosContactos(); return; }
   if(currentModule==='patrimonio') return el.innerHTML = canAccessPatrimonio()? viewPatrimonio() : viewLocked('Património');
   if(currentModule==='rh'){
@@ -1837,35 +1846,7 @@ function salvarMeuPerfil(){
   showToast('Os seus dados foram atualizados.');
 }
 
-/* ================= ANIVERSARIANTES DO MÊS ================= */
-function aniversariantesDoMesHTML(){
-  const hoje = new Date();
-  const mesAtual = hoje.getMonth()+1;
-  const diaAtual = hoje.getDate();
-  const todos = [...PESSOAS.membros, ...LEADERS, ...MASTERS];
-  const aniversariantes = todos.filter(p=>{
-    const dn = p.dataNascimento || p.nascimento;
-    if(!dn) return false;
-    return parseInt(dn.split('-')[1],10) === mesAtual;
-  }).map(p=>{
-    const dn = p.dataNascimento || p.nascimento;
-    return {nome:p.nome, dia:parseInt(dn.split('-')[2],10), isHoje: parseInt(dn.split('-')[2],10)===diaAtual};
-  }).sort((a,b)=>a.dia-b.dia);
 
-  if(!aniversariantes.length) return '';
-  return `
-    <div class="section-title"><h2>🎂 Aniversariantes de ${mesLabelCompleto(mesAtual)}</h2></div>
-    <div class="card">
-      <div style="display:flex; flex-wrap:wrap; gap:10px;">
-        ${aniversariantes.map(a=>`
-          <div style="display:flex; align-items:center; gap:8px; padding:8px 14px; border-radius:100px; background:${a.isHoje?'linear-gradient(120deg, var(--gold), #E8C874)':'var(--paper-2)'}; ${a.isHoje?'color:white;':''}">
-            <span style="font-weight:700; font-size:13px;">${String(a.dia).padStart(2,'0')}</span>
-            <span style="font-size:12.5px;">${a.nome}${a.isHoje?' 🎉':''}</span>
-          </div>`).join('')}
-      </div>
-    </div>
-  `;
-}
 function mesLabelCompleto(m){
   const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
   return meses[m-1];
@@ -1923,6 +1904,29 @@ function alertasVencimentoHTML(){
   `;
 }
 
+
+function renderBirthdayToday(){
+  const host=document.getElementById('birthday-today-host');
+  if(!host) return;
+  const hoje=new Date(), d=hoje.getDate(), m=hoje.getMonth()+1;
+  const lista=(Array.isArray(membros)?membros:[]).filter(x=>{
+    const raw=x.data_nascimento||x.nascimento||x.dataNascimento||x.birth_date||'';
+    if(!raw) return false;
+    const parts=String(raw).slice(0,10).split('-');
+    if(parts.length!==3) return false;
+    return Number(parts[1])===m && Number(parts[2])===d;
+  });
+  if(!lista.length){ host.innerHTML=''; return; }
+  const nomes=lista.map(x=>x.nome||x.name||'Irmão(ã)').join(', ');
+  const plural=lista.length>1;
+  host.innerHTML=`<section class="birthday-today">
+    <span class="birthday-kicker">ANIVERSARIANTE${plural?'S':''} DO DIA</span>
+    <h3>Feliz aniversário, ${nomes}!</h3>
+    <p>Hoje a ADMS Braga celebra com alegria a sua vida. Receba o carinho de toda a nossa igreja neste dia especial. Oramos para que o Senhor continue conduzindo os seus passos, renovando as suas forças e fazendo florescer os propósitos dEle em cada novo ciclo. Que você se sinta amado(a), acolhido(a) e parte desta família de fé.</p>
+    <div class="birthday-verse">“O Senhor te abençoe e te guarde.” — Números 6:24</div>
+  </section>`;
+}
+
 function viewMemberHome(){
   const nome=(session.label||'').split(' ')[0]||'Irmão(ã)';
   const admin = hasFullConfidentialAccess();
@@ -1953,6 +1957,7 @@ function viewMemberHome(){
         <div class="home-ref">ADMS Braga · Devocional</div>
       </article>
     </div>
+    <div id="birthday-today-host"></div>
     <article class="verse-card">
       <span>VERSÍCULO DO DIA</span>
       <blockquote>“Lâmpada para os meus pés é tua palavra e luz, para o meu caminho.”</blockquote>
@@ -2059,7 +2064,7 @@ function viewAdminDashboard(){
 
     ${alertasVencimentoHTML()}
 
-    ${aniversariantesDoMesHTML()}
+    
 
     ${isMaster() ? `
     <div class="section-title"><h2>Atividade recente</h2></div>
@@ -4751,12 +4756,35 @@ function admsSessaoDoPerfil(profile){
   return {tipo:'consulta',entityKey:'consulta',label:profile.nome||'Consulta',deptIds:depts,liderId:null,cloud:true};
 }
 
+
+async function admsPrimeiroAcesso(){
+  const email=(document.getElementById('login-email')?.value||'').trim().toLowerCase();
+  const denied=document.getElementById('denied-box');
+  if(!email){
+    showLoginError('Introduza primeiro o email cadastrado no sistema.');
+    document.getElementById('login-email')?.focus();
+    return;
+  }
+  const redirectTo=window.location.origin + '/sistema';
+  const {error}=await admsSupabase.auth.resetPasswordForEmail(email,{redirectTo});
+  if(error){
+    console.error('ADMS recuperação de palavra-passe:',error);
+    showLoginError('Não foi possível enviar o link agora. Confirme o email ou contacte a administração.');
+    return;
+  }
+  denied.style.display='block';
+  denied.style.borderColor='rgba(31,138,86,.28)';
+  denied.style.background='rgba(31,138,86,.08)';
+  denied.style.color='var(--ok)';
+  denied.textContent='Link seguro enviado. Abra o email e siga as instruções para criar a sua palavra-passe.';
+}
+
 async function attemptLoginUnificado(){
   const dept=(document.getElementById('login-dept')?.value||'').trim();
   const email=(document.getElementById('login-email')?.value||'').trim().toLowerCase();
   const pass=document.getElementById('login-pass').value;
   document.getElementById('denied-box').style.display='none';
-  if(!dept){ showLoginError('Selecione o departamento.'); return; }
+  if(!dept){ showLoginError('Acesso ao Sistema.'); return; }
   if(!email || !pass){ showLoginError('Introduza o email e a palavra-passe.'); return; }
   const {error}=await admsSupabase.auth.signInWithPassword({email,password:pass});
   if(error){
@@ -4845,6 +4873,14 @@ async function handleLogout(){
 
 admsSupabase?.auth.onAuthStateChange((event)=>{
   if(event==='SIGNED_OUT' && session){ session=null; }
+  if(event==='PASSWORD_RECOVERY'){
+    hideAllLoginSteps();
+    document.getElementById('login-screen').style.display='flex';
+    document.getElementById('login-card').classList.remove('wide');
+    document.getElementById('step-forcepw').style.display='block';
+    const err=document.getElementById('fp-error');
+    if(err) err.style.display='none';
+  }
 });
 
 /* init */
@@ -4875,7 +4911,7 @@ if('serviceWorker' in navigator && location.protocol.startsWith('http')){
 function buildLoginOptions(){
   const sel=document.getElementById('login-dept');
   if(!sel) return;
-  sel.innerHTML='<option value="">Selecione o departamento</option>';
+  sel.innerHTML='<option value="">Acesso ao Sistema</option>';
   const admin=document.createElement('optgroup'); admin.label='Administração';
   [{value:'administracao',text:'Administração / Pastoral'},{value:'tesouraria',text:'Tesouraria'}].forEach(it=>{const o=document.createElement('option');o.value=it.value;o.textContent=it.text;admin.appendChild(o);});
   sel.appendChild(admin);
