@@ -412,6 +412,11 @@
   .cadastro-body label{ font-size:11.5px; font-weight:700; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.4px; display:block; margin:14px 0 6px 0; }
   .cadastro-body label:first-child{ margin-top:0; }
   .codigo-box{ font-family:'IBM Plex Mono', monospace; font-size:11px; width:100%; min-height:120px; padding:14px; border-radius:10px; border:1.5px solid var(--line); background:var(--paper); resize:vertical; word-break:break-all; }
+
+/* ADMS Braga — Home moderna / perfil membro */
+.adms-home{max-width:1180px;margin:0 auto}.home-hero{min-height:255px;border-radius:24px;overflow:hidden;background:linear-gradient(110deg,rgba(8,20,52,.96),rgba(17,43,104,.74)),radial-gradient(circle at 80% 20%,rgba(193,30,43,.42),transparent 38%),#0b1738;box-shadow:0 18px 45px rgba(10,24,60,.18);display:flex;align-items:flex-end}.home-overlay{padding:38px;color:white;max-width:720px}.home-kicker,.home-label{font-size:11px;font-weight:800;letter-spacing:1.8px;color:#e6bd5a}.home-overlay h1{font-family:'Cormorant Garamond',serif;font-size:42px;margin:8px 0 8px;color:#fff}.home-overlay p{font-size:15px;line-height:1.7;color:rgba(255,255,255,.84);margin:0}.home-grid{display:grid;grid-template-columns:1.35fr 1fr;gap:18px;margin-top:18px}.home-card,.verse-card{background:#fff;border:1px solid rgba(24,54,128,.1);border-radius:20px;padding:22px;box-shadow:0 10px 30px rgba(15,35,80,.07)}.home-card-head{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:14px}.home-card-head span{font-size:10px;font-weight:800;letter-spacing:1.3px;color:var(--red)}.home-card-head b{font-size:12px;color:var(--royal-deep)}.home-video-placeholder{height:230px;border-radius:16px;background:linear-gradient(135deg,#08152f,#173b8f);display:flex;flex-direction:column;align-items:center;justify-content:center;color:white;gap:8px}.home-video-placeholder svg{width:38px;height:38px}.home-video-placeholder small{color:rgba(255,255,255,.7)}.devotional h2{font-family:'Cormorant Garamond',serif;font-size:28px;color:var(--royal-deep);margin:12px 0}.devotional p{font-size:13.5px;line-height:1.75;color:var(--ink-soft)}.home-ref{margin-top:18px;padding-top:14px;border-top:1px solid var(--line);font-size:11px;font-weight:700;color:var(--royal-dark)}.verse-card{margin-top:18px;background:linear-gradient(120deg,#102a69,#1b3a9c);color:#fff;border:none;position:relative;overflow:hidden}.verse-card:after{content:'✦';position:absolute;right:24px;top:12px;font-size:90px;color:rgba(255,255,255,.05)}.verse-card span{font-size:10px;letter-spacing:1.5px;font-weight:800;color:#e6bd5a}.verse-card blockquote{font-family:'Cormorant Garamond',serif;font-size:28px;line-height:1.35;margin:14px 0 10px;max-width:820px}.verse-card b{font-size:12px;color:rgba(255,255,255,.78)}
+.member-view #main-content .topbar .access-pill{display:none}.member-view #main-content input,.member-view #main-content textarea,.member-view #main-content select{pointer-events:none}.member-view #main-content button.btn-red,.member-view #main-content button.btn-primary{display:none}
+@media(max-width:760px){.home-grid{grid-template-columns:1fr}.home-overlay{padding:26px}.home-overlay h1{font-size:34px}.home-video-placeholder{height:190px}.verse-card blockquote{font-size:23px}}
 </style>
 <!-- Supabase Cloud — Fase 1: infraestrutura sem alterar a identidade visual -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1467,7 +1472,7 @@ function finalizeLogin(){
   pendingLoginKey = null;
   pendingLoginLeaderId = null;
   currentProfileRef = null;
-  currentModule = session.tipo==='membro' ? 'meu-perfil' : 'dashboard';
+  currentModule = 'dashboard';
   document.getElementById('login-screen').style.display='none';
   document.getElementById('app-screen').style.display='block';
   guardarSessao();
@@ -1508,7 +1513,7 @@ function tentarRestaurarSessao(){
       return false;
     }
     session = guardada.session;
-    currentModule = session.tipo==='membro' ? 'meu-perfil' : 'dashboard';
+    currentModule = 'dashboard';
     document.getElementById('login-screen').style.display='none';
     document.getElementById('app-screen').style.display='block';
     renderShell();
@@ -1555,6 +1560,7 @@ function canAccessDept(deptId){
 }
 function canAccessEscalas(){
   if(hasFullConfidentialAccess()) return true;
+  if(session.tipo==='membro') return true;
   return session.tipo==='lider' && session.deptIds.some(d=>ESCALA_DEPTS.includes(d));
 }
 function myEscalaDepts(){
@@ -1582,10 +1588,21 @@ function renderShell(){
   document.getElementById('side-user-role').textContent = roleLabel();
 
   if(session.tipo==='membro'){
-    document.getElementById('nav-container').innerHTML = `<div class="nav-group-label">Geral</div>` + navItem('meu-perfil','rh','O Meu Perfil', true) + navItem('eventos','events','Eventos', true);
+    document.body.classList.add('member-view');
+    let nav = `<div class="nav-group-label">ADMS Braga</div>`;
+    nav += navItem('dashboard','dashboard','Página Inicial', true);
+    nav += `<div class="nav-group-label">Vida da Igreja</div>`;
+    nav += navItem('escalas','shift','Escalas de Serviço', true);
+    nav += navItem('celulas','cells','Grupos e Células', true);
+    nav += navItem('kids','checkin','Kids — Check-in', true);
+    nav += navItem('ebd','bible','Estudos Bíblicos', true);
+    nav += navItem('eventos','events','Eventos', true);
+    nav += navItem('avisos','megaphone','Avisos e Comunicados', true);
+    document.getElementById('nav-container').innerHTML = nav;
     renderModule();
     return;
   }
+  document.body.classList.remove('member-view');
 
   let nav = '';
   nav += `<div class="nav-group-label">Geral</div>`;
@@ -1648,6 +1665,8 @@ function ruleDivider(){
 ========================================================= */
 function renderModule(){
   const el = document.getElementById('main-content');
+  const memberAllowed=['dashboard','escalas','celulas','celula-detalhe','kids','ebd','ebd-turma','eventos','avisos'];
+  if(session.tipo==='membro' && !memberAllowed.includes(currentModule)){ currentModule='dashboard'; }
   if(currentModule==='meu-perfil') return el.innerHTML = viewMeuPerfil();
   if(currentModule==='eventos'){ el.innerHTML = viewEventos(); return; }
   if(currentModule==='dashboard') return el.innerHTML = viewDashboard();
@@ -1684,13 +1703,13 @@ function renderModule(){
   if(currentModule==='celulas'){ el.innerHTML = viewCelulas(); return; }
   if(currentModule==='celula-detalhe'){ el.innerHTML = viewCelulaDetalhe(); return; }
   if(currentModule==='kids'){
-    const podeKids = isMaster() || session.deptIds.includes('kids');
+    const podeKids = session.tipo==='membro' || isMaster() || session.deptIds.includes('kids');
     if(!podeKids) return el.innerHTML = viewLocked('Kids — Check-in');
     el.innerHTML = viewKids();
     return;
   }
   if(currentModule==='ebd' || currentModule==='ebd-turma'){
-    const podeEbd = isMaster() || session.deptIds.includes('ebd');
+    const podeEbd = session.tipo==='membro' || isMaster() || session.deptIds.includes('ebd');
     if(!podeEbd) return el.innerHTML = viewLocked('Estudos Bíblicos');
     el.innerHTML = currentModule==='ebd' ? viewEBD() : viewEBDTurma();
     return;
@@ -1861,7 +1880,20 @@ function alertasVencimentoHTML(){
   `;
 }
 
+function viewMemberHome(){
+  const nome=(session.label||'').split(' ')[0]||'Irmão(ã)';
+  return `<div class="adms-home">
+    <section class="home-hero"><div class="home-overlay"><span class="home-kicker">ADMS BRAGA</span><h1>Seja bem-vindo, ${nome}!</h1><p>Um espaço para viver a Palavra, servir com propósito e caminhar em comunhão.</p></div></section>
+    <div class="home-grid">
+      <article class="home-card home-video"><div class="home-card-head"><span>VÍDEO DA SEMANA</span><b>Mensagem para a igreja</b></div><div class="home-video-placeholder">${ICON.bible}<strong>Vídeo da Semana</strong><small>O conteúdo semanal será publicado aqui.</small></div></article>
+      <article class="home-card devotional"><span class="home-label">DEVOCIONAL DIÁRIO</span><h2>Permaneça firme na Palavra</h2><p>Separe alguns minutos para ouvir Deus, meditar nas Escrituras e levar a verdade do Evangelho para as decisões de hoje.</p><div class="home-ref">ADMS Braga · Devocional</div></article>
+    </div>
+    <article class="verse-card"><span>VERSÍCULO DO DIA</span><blockquote>“Lâmpada para os meus pés é tua palavra e luz, para o meu caminho.”</blockquote><b>Salmos 119:105</b></article>
+  </div>`;
+}
+
 function viewDashboard(){
+  if(session.tipo==='membro') return viewMemberHome();
   const saldoInfo = calcularSaldo();
   const financeCard = canAccessFinanceiro() ? `
     <div class="card stat-card">
@@ -3976,7 +4008,7 @@ function addEscala(){
 /* ================= AVISOS E COMUNICADOS ================= */
 function viewAvisos(){
   const meusDepts = session.tipo==='lider' ? session.deptIds : [];
-  const visiveis = AVISOS.filter(a => isMaster() || a.publico==='Todos' || meusDepts.includes(a.publico))
+  const visiveis = AVISOS.filter(a => session.tipo==='membro' ? a.publico==='Todos' : (isMaster() || a.publico==='Todos' || meusDepts.includes(a.publico)))
                           .slice().sort((a,b)=>b.data.localeCompare(a.data));
   const opcoesPublico = isMaster()
     ? `<option value="Todos">Toda a igreja</option>${DEPARTMENTS.filter(d=>!d.restrito).map(d=>`<option value="${d.id}">${d.nome}</option>`).join('')}`
@@ -3987,7 +4019,7 @@ function viewAvisos(){
       <span class="access-pill">${ICON.megaphone} ${visiveis.length} avisos</span>
     </div>
     ${ruleDivider()}
-    <div class="section-title"><h2>Publicar novo aviso</h2></div>
+    ${session.tipo==='membro' ? '' : `<div class="section-title"><h2>Publicar novo aviso</h2></div>
     <div class="card">
       <div class="form-row">
         <div><label>Título</label><input id="av-titulo" placeholder="Ex: Reunião de líderes"></div>
@@ -4000,7 +4032,7 @@ function viewAvisos(){
         <select id="av-publico">${opcoesPublico}</select>
       </div>
       <div class="form-row"><div><label>Data / hora (opcional)</label><input id="av-quando" type="datetime-local"></div><div><label>Local (opcional)</label><input id="av-local" placeholder="Ex: Templo sede"></div></div><div class="form-row"><div><label>Link externo</label><input id="av-link" type="url" placeholder="https://..."></div><div><label>Anexo multimédia</label><input id="av-media" type="file" accept="image/jpeg,image/png,image/webp,video/mp4,audio/mpeg,audio/mp4,audio/ogg,application/pdf"></div></div><div class="hint-box" style="margin:10px 0 14px">Imagem, vídeo MP4, áudio ou PDF até 25 MB.</div><button class="btn btn-red" onclick="postAviso()">Publicar comunicação</button>
-    </div>
+    </div>`}
 
     <div class="section-title"><h2>Mural de avisos</h2></div>
     ${visiveis.length ? visiveis.map(a=>`
