@@ -1669,7 +1669,7 @@ function renderModule(){
   if(session.tipo==='membro' && !memberAllowed.includes(currentModule)){ currentModule='dashboard'; }
   if(currentModule==='meu-perfil') return el.innerHTML = viewMeuPerfil();
   if(currentModule==='eventos'){ el.innerHTML = viewEventos(); return; }
-  if(currentModule==='dashboard') return el.innerHTML = viewDashboard();
+  if(currentModule==='dashboard'){ el.innerHTML = viewDashboard(); if(isMaster()) carregarResumoNovosContactos(); return; }
   if(currentModule==='patrimonio') return el.innerHTML = canAccessPatrimonio()? viewPatrimonio() : viewLocked('Património');
   if(currentModule==='rh'){
     if(!canAccessRH()) return el.innerHTML = viewLocked('Recursos Humanos');
@@ -3183,8 +3183,19 @@ async function renderNovosContactos(){
  const {data,error}=await admsSupabase.from('novos_contactos').select('*').order('created_at',{ascending:false});
  if(error){el.innerHTML='<div class="card">Não foi possível carregar os contactos.</div>';return;}
  const rows=(data||[]).map(c=>`<tr><td><b>${c.nome}</b><br><span style="font-size:11px">${new Date(c.created_at).toLocaleString('pt-PT')}</span></td><td>${c.contacto||'—'}<br>${c.email||''}</td><td>${c.melhor_horario||'—'}</td><td>${c.origem||'—'}</td><td><select onchange="atualizarStatusContacto('${c.id}',this.value)">${['novo','contactado','aguardando_retorno','visita_agendada','visitou','integrado'].map(x=>`<option value="${x}" ${c.status===x?'selected':''}>${x.replaceAll('_',' ')}</option>`).join('')}</select></td><td><button class="btn btn-outline" style="width:auto" onclick="converterContactoVisitante('${c.id}')">Converter em visitante</button></td></tr>`).join('');
- el.innerHTML=`<div class="topbar"><div><div class="breadcrumb">Secretaria</div><h1>Novos Contactos</h1></div><span class="access-pill">${(data||[]).filter(x=>x.status==='novo').length} novo(s)</span></div>${ruleDivider()}<div class="card"><table><thead><tr><th>Pessoa</th><th>Contacto</th><th>Melhor horário</th><th>Origem</th><th>Estado</th><th>Ação</th></tr></thead><tbody>${rows||'<tr><td colspan="6">Sem contactos.</td></tr>'}</tbody></table></div>`;
+ el.innerHTML=`<div class="topbar"><div><div class="breadcrumb">Secretaria</div><h1>Novos Contactos</h1></div><div style="display:flex;gap:10px;align-items:center"><span class="access-pill">${(data||[]).filter(x=>x.status==='novo').length} novo(s)</span><button class="btn btn-outline" style="width:auto;margin:0" onclick="renderNovosContactos()">Atualizar</button></div></div>${ruleDivider()}<div class="card"><table><thead><tr><th>Pessoa</th><th>Contacto</th><th>Melhor horário</th><th>Origem</th><th>Estado</th><th>Ação</th></tr></thead><tbody>${rows||'<tr><td colspan="6">Sem contactos.</td></tr>'}</tbody></table></div>`;
 }
+let admsContactosChannel=null;
+function admsIniciarContactosRealtime(){
+  if(admsContactosChannel || !admsSupabase) return;
+  admsContactosChannel=admsSupabase.channel('adms-novos-contactos-ui')
+    .on('postgres_changes',{event:'*',schema:'public',table:'novos_contactos'},()=>{
+      if(currentModule==='novos-contactos') renderNovosContactos();
+      else if(currentModule==='dashboard' && isMaster()) carregarResumoNovosContactos();
+    }).subscribe();
+}
+setTimeout(admsIniciarContactosRealtime,1200);
+
 async function atualizarStatusContacto(id,status){const {error}=await admsSupabase.from('novos_contactos').update({status,updated_at:new Date().toISOString()}).eq('id',id);if(error){showToast('Não foi possível atualizar.');return;}showToast('Estado atualizado.');}
 async function converterContactoVisitante(id){const {data:c,error}=await admsSupabase.from('novos_contactos').select('*').eq('id',id).single();if(error||!c)return;goTo('rh');setTimeout(()=>{const tipo=document.getElementById('rh-tipo');if(tipo){tipo.value='visitantes';toggleRHForm();}const map={'rh-nome':c.nome,'rh-email':c.email||'','rh-contacto':c.contacto||''};Object.entries(map).forEach(([k,v])=>{const x=document.getElementById(k);if(x)x.value=v;});showToast('Dados carregados. Complete a ficha e guarde o visitante.');},100);}
 
@@ -4784,7 +4795,7 @@ if(paramsUrl.get('form') === 'cadastro'){
 // Só funciona quando o ficheiro está publicado num servidor com https (não em file:// local).
 if('serviceWorker' in navigator && location.protocol.startsWith('http')){
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw-sistema.js').catch(() => {});
+    navigator.serviceWorker.register('/sw-sistema.js?v=20260901-3', {updateViaCache:'none'}).then(r=>r.update()).catch(() => {});
   });
 }
 
