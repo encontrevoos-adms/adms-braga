@@ -660,8 +660,7 @@ window.addEventListener('online',()=>{ admsCarregarMembrosCloud(); admsCarregarE
 
     <!-- PASSO 1: Departamento + Palavra-passe -->
     <div class="login-body" id="step-credentials">
-      <label>Departamento</label>
-      <select id="login-dept" onchange="aoMudarDepartamentoLogin()"></select>
+      
 
       <div id="login-lider-wrap" style="display:none;"></div>
 
@@ -1295,7 +1294,7 @@ function showLoginError(msg){
 /* PASSO 1: escolher departamento/administração */
 /* Ao mudar o departamento: mostra o seletor de líder só se houver mais do que um */
 function aoMudarDepartamentoLogin(){
-  const key = document.getElementById('login-dept').value;
+  const key = ((document.getElementById('login-dept')?.value||'')||'');
   const wrap = document.getElementById('login-lider-wrap');
   document.getElementById('denied-box').style.display = 'none';
 
@@ -1320,7 +1319,7 @@ function aoMudarDepartamentoLogin(){
 
 /* PASSO ÚNICO: utilizador (departamento/administração + líder, se aplicável) seguido da palavra-passe */
 function attemptLoginUnificado(){
-  const key = document.getElementById('login-dept').value;
+  const key = ((document.getElementById('login-dept')?.value||'')||'');
   const pass = document.getElementById('login-pass').value;
   document.getElementById('denied-box').style.display = 'none';
 
@@ -4780,7 +4779,7 @@ async function admsPrimeiroAcesso(){
 }
 
 async function attemptLoginUnificado(){
-  const dept=(document.getElementById('login-dept')?.value||'').trim();
+  const dept=((document.getElementById('login-dept')?.value||'')||'').trim();
   const email=(document.getElementById('login-email')?.value||'').trim().toLowerCase();
   const pass=document.getElementById('login-pass').value;
   document.getElementById('denied-box').style.display='none';
