@@ -1611,7 +1611,7 @@ function renderShell(){
   nav += navItem('ebd','bible','Estudos Bíblicos', isMaster() || session.deptIds.includes('ebd'));
   nav += navItem('eventos','events','Eventos', true);
   nav += navItem('avisos','megaphone','Avisos e Comunicados', true);
-  if(isMaster()) nav += navItem('novos-contactos','users','Novos Contactos', true);
+  if(isMaster()) nav += navItem('novos-contactos','cells','Novos Contactos', true);
   nav += navItem('relatorios','report','Relatórios', true);
 
   if(canAccessGestaoAcessos()){
@@ -1705,6 +1705,7 @@ function renderModule(){
   if(currentModule==='acessos') return el.innerHTML = canAccessGestaoAcessos()? viewAcessos() : viewLocked('Gestão de Acessos');
   if(currentModule==='auditoria') return el.innerHTML = canAccessAuditoria()? viewAuditoria() : viewLocked('Registo de Atividade');
   el.innerHTML = viewDashboard();
+  if(isMaster()) carregarResumoNovosContactos();
 }
 
 /* =========================================================
@@ -1933,6 +1934,7 @@ function viewDashboard(){
     ${ruleDivider()}
     <div class="grid grid-4">${rhCard}${deptCard}${patrimonioCard}${financeCard}</div>
     ${securityCard}
+    ${isMaster() ? '<div id="novos-contactos-dashboard"><div class="card" style="margin-top:16px">A carregar novos contactos...</div></div>' : ''}
 
     ${myDepts.length ? `
     <div class="section-title"><h2>${myDepts.length>1?'Os seus departamentos':'O seu departamento'}</h2></div>
@@ -3120,6 +3122,29 @@ function toggleProgressoEBD(licaoId, aluno){
   renderModule();
 }
 
+
+async function carregarResumoNovosContactos(){
+ const host=document.getElementById('novos-contactos-dashboard');
+ if(!host || !isMaster()) return;
+ const [{data:contactos,error:contactosError},{data:notifs,error:notifsError}] = await Promise.all([
+   admsSupabase.from('novos_contactos').select('id,nome,contacto,email,melhor_horario,origem,status,created_at').order('created_at',{ascending:false}).limit(5),
+   admsSupabase.from('notificacoes_internas').select('id,titulo,mensagem,lida,created_at').eq('tipo','novo_contacto').order('created_at',{ascending:false}).limit(10)
+ ]);
+ if(contactosError){
+   console.error('ADMS novos contactos:',contactosError);
+   host.innerHTML='<div class="card" style="border-left:4px solid var(--red);"><b>Novos Contactos</b><p style="margin:6px 0 0;color:var(--ink-soft);font-size:12px">Não foi possível carregar os pedidos recebidos. Verifique as permissões da conta.</p></div>';
+   return;
+ }
+ const lista=contactos||[], novos=lista.filter(x=>x.status==='novo'), naoLidas=(notifs||[]).filter(x=>!x.lida).length;
+ host.innerHTML=`<div class="card" style="border-left:4px solid ${novos.length?'var(--gold)':'var(--ok)'};margin-top:16px;">
+   <div style="display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap">
+     <div><div style="font-weight:800;color:var(--royal-deep)">Novos contactos da Landing Page</div>
+     <div style="font-size:12px;color:var(--ink-soft);margin-top:4px">${novos.length} novo(s) contacto(s) · ${naoLidas} notificação(ões) não lida(s)</div></div>
+     <button class="btn btn-primary" style="width:auto;margin:0" onclick="goTo('novos-contactos')">Abrir contactos</button>
+   </div>
+   ${lista.length?`<div style="margin-top:12px;font-size:12.5px"><b>Mais recente:</b> ${lista[0].nome} · ${new Date(lista[0].created_at).toLocaleString('pt-PT')}</div>`:'<div style="margin-top:12px;font-size:12.5px;color:var(--ink-soft)">Ainda não existem contactos recebidos.</div>'}
+ </div>`;
+}
 
 async function renderNovosContactos(){
  const el=document.getElementById('main-content'); if(!isMaster()){el.innerHTML=viewLocked('Novos Contactos');return;}
