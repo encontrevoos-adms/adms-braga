@@ -38,17 +38,46 @@ footer{background:#041238;color:rgba(255,255,255,.72);padding:45px 7vw;display:f
 
 <section class="section" id="sobre"><div class="section-head"><div class="eyebrow">QUEM SOMOS</div><h2>Uma família de fé em Braga</h2><p>Somos uma comunidade cristã comprometida com o ensino da Palavra, a comunhão, o cuidado de pessoas e a proclamação do Evangelho.</p></div><div class="grid3"><div class="card"><div class="eyebrow">PALAVRA</div><h3>Ensino que transforma</h3><p>Estudos, mensagens e conteúdos para fortalecer a caminhada cristã.</p></div><div class="card"><div class="eyebrow">COMUNHÃO</div><h3>Uma igreja para a família</h3><p>Espaços de cuidado, relacionamento e crescimento para todas as idades.</p></div><div class="card"><div class="eyebrow">MISSÃO</div><h3>Servir com propósito</h3><p>Vivemos para glorificar a Deus e compartilhar o Evangelho com Braga e além.</p></div></div></section>
 
-<section class="section video-section"><div class="section-head"><div class="eyebrow">CONTEÚDO EM DESTAQUE</div><h2>Vídeo da Semana</h2></div><div class="video-grid"><div class="video"><div class="play">▶</div></div><div class="dark-card"><div class="eyebrow">ADMS BRAGA</div><h3>Uma palavra para a sua semana</h3><p>Acompanhe mensagens, cultos e conteúdos da igreja. Esta área poderá ser atualizada diretamente pelo Portal.</p><a class="btn btn-gold" href="#redes">Ver nossos canais</a></div></div></section>
+<section class="section video-section"><div class="section-head"><div class="eyebrow">CONTEÚDO EM DESTAQUE</div><h2 data-site-title="video_semana">Vídeo da Semana</h2></div><div class="video-grid"><div class="video"><div class="play">▶</div></div><div class="dark-card"><div class="eyebrow">ADMS BRAGA</div><h3>Uma palavra para a sua semana</h3><p><span data-site-content="video_semana">Mensagem e conteúdo especial da ADMS Braga para edificação da igreja.</span></p><a class="btn btn-gold" href="#redes">Ver nossos canais</a></div></div></section>
 
 <section class="section" id="agenda"><div class="section-head"><div class="eyebrow">NOSSA AGENDA</div><h2>Próximos encontros</h2><p>Acompanhe cultos, estudos, reuniões e eventos da ADMS Braga.</p></div><div class="agenda"><div class="event"><div class="date">DOMINGO</div><div><h4>Culto de Celebração</h4><p>ADMS Braga · Consulte o horário atualizado</p></div><a class="btn btn-gold" href="#localizacao">Como chegar</a></div><div class="event"><div class="date">SEMANA</div><div><h4>Estudos e atividades</h4><p>A programação completa será publicada nesta agenda.</p></div></div></div></section>
 
 <section class="section" id="estudos"><div class="section-head"><div class="eyebrow">CRESCER NA PALAVRA</div><h2>Estudos Bíblicos</h2><p>Conteúdos para estudo pessoal, família, células e Escola Bíblica.</p></div><div class="grid3"><div class="card"><h3>Estudo da Semana</h3><p>Uma área para o estudo mais recente publicado pela igreja.</p></div><div class="card"><h3>Devocionais</h3><p>Reflexões curtas para acompanhar a igreja durante a semana.</p></div><div class="card"><h3>Biblioteca</h3><p>Arquivo de estudos e materiais que poderão ser disponibilizados pelo Portal.</p></div></div></section>
 
-<section class="section prayer" id="oracao"><div class="section-head"><div class="eyebrow">PODEMOS ORAR POR VOCÊ?</div><h2>Pedidos de Oração</h2><p style="color:rgba(255,255,255,.75)">Compartilhe o seu pedido. Esta área será ligada ao fluxo interno da igreja.</p></div><div class="form"><input placeholder="Seu nome"><input type="email" placeholder="Seu e-mail"><input class="full" placeholder="Contacto"><textarea class="full" rows="5" placeholder="Escreva o seu pedido de oração"></textarea><button class="btn btn-gold full" type="button">Enviar pedido de oração</button></div></section>
+<section class="section prayer" id="oracao"><div class="section-head"><div class="eyebrow">PODEMOS ORAR POR VOCÊ?</div><h2>Pedidos de Oração</h2><p style="color:rgba(255,255,255,.75)">Compartilhe o seu pedido. Esta área será ligada ao fluxo interno da igreja.</p></div><div class="form"><input id="oracao-nome" placeholder="Seu nome"><input id="oracao-email" type="email" placeholder="Seu e-mail"><input id="oracao-contacto" class="full" placeholder="Contacto"><textarea id="oracao-pedido" class="full" rows="5" placeholder="Escreva o seu pedido de oração"></textarea><button class="btn btn-gold full" type="button" onclick="enviarPedidoOracao()">Enviar pedido de oração</button><div id="oracao-msg" class="full" style="color:#efd47e;font-weight:700"></div></div></section>
 
 <section class="section" id="localizacao"><div class="location"><div><div class="eyebrow">VENHA NOS VISITAR</div><h2>Estamos em Braga</h2><p style="color:var(--muted);line-height:1.7">Praça do Bocage, 7<br>São Victor, Braga · Portugal</p><a class="btn btn-gold" href="https://www.google.com/maps/search/?api=1&query=Pra%C3%A7a%20do%20Bocage%2C%207%2C%20S%C3%A3o%20Victor%2C%20Braga">Abrir no mapa</a></div><div class="map"><div><b>ADMS BRAGA</b><p>Praça do Bocage, 7<br>São Victor · Braga</p></div></div></div></section>
 
-<section class="section" id="redes"><div class="section-head"><div class="eyebrow">CONECTE-SE</div><h2>Playlist & Redes Sociais</h2><p>Acompanhe a ADMS Braga também durante a semana.</p></div><div class="socials"><span class="social">YouTube</span><span class="social">Instagram</span><span class="social">Facebook</span><span class="social">Playlist</span></div></section>
+<section class="section" id="redes"><div class="section-head"><div class="eyebrow">CONECTE-SE</div><h2>Playlist & Redes Sociais</h2><p>Acompanhe a ADMS Braga também durante a semana.</p></div><div class="socials"><a class="social" data-site-url="youtube" style="display:none">YouTube</a><a class="social" data-site-url="instagram" style="display:none">Instagram</a><a class="social" data-site-url="facebook" style="display:none">Facebook</a><a class="social" data-site-url="playlist" style="display:none">Playlist</a></div></section>
 
 <footer><div><div class="footer-brand">ADMS Braga</div><p>Igreja Evangélica Assembleia de Deus · Ministério de Santos</p></div><div>Praça do Bocage, 7 · São Victor · Braga</div></footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const ADMS_SUPABASE_URL='https://ogbxntxfrkgllegzzwdm.supabase.co';
+const ADMS_SUPABASE_KEY='sb_publishable_GB2UQqPNh28jsvlrJ7VWSg_9gkHNBOM';
+const admsSite=window.supabase.createClient(ADMS_SUPABASE_URL,ADMS_SUPABASE_KEY);
+
+async function carregarConteudosSite(){
+ const {data}=await admsSite.from('site_conteudos').select('*').eq('ativo',true);
+ (data||[]).forEach(x=>{
+   const title=document.querySelector(`[data-site-title="${x.chave}"]`);
+   const text=document.querySelector(`[data-site-content="${x.chave}"]`);
+   const link=document.querySelector(`[data-site-url="${x.chave}"]`);
+   if(title&&x.titulo) title.textContent=x.titulo;
+   if(text&&x.conteudo) text.textContent=x.conteudo;
+   if(link&&x.url){link.href=x.url;link.style.display='inline-block'}
+ });
+}
+async function enviarPedidoOracao(){
+ const nome=document.getElementById('oracao-nome').value.trim(),email=document.getElementById('oracao-email').value.trim(),contacto=document.getElementById('oracao-contacto').value.trim(),pedido=document.getElementById('oracao-pedido').value.trim();
+ const msg=document.getElementById('oracao-msg');
+ if(nome.length<2||pedido.length<5){msg.textContent='Preencha o seu nome e o pedido de oração.';return}
+ const {error}=await admsSite.from('pedidos_oracao').insert({nome,email:email||null,contacto:contacto||null,pedido});
+ if(error){msg.textContent='Não foi possível enviar agora. Tente novamente.';return}
+ msg.textContent='Pedido recebido. Estaremos em oração por você.';
+ ['oracao-nome','oracao-email','oracao-contacto','oracao-pedido'].forEach(id=>document.getElementById(id).value='');
+}
+carregarConteudosSite();
+</script>
 </body></html>
