@@ -4730,5 +4730,55 @@ async function renderSolicitacoesAcesso(){
 }
 
 </script>
+
+<style id="adms-login-v4">
+#login-dept,#login-screen label[for="login-dept"]{display:none!important}
+.adms-access-link{display:block;width:100%;margin-top:12px;border:0;background:transparent;color:#d5ad45;font-weight:800;cursor:pointer;text-align:center}
+#adms-access-modal{display:none;position:fixed;inset:0;z-index:99999;background:rgba(2,10,35,.78);align-items:center;justify-content:center;padding:18px}
+#adms-access-modal.open{display:flex}.adms-access-card{width:min(520px,100%);background:#fff;border-radius:20px;padding:28px;color:#17213a;box-shadow:0 25px 80px #0008}
+.adms-access-card h2{margin:0;color:#071b50;font-family:Georgia,serif;font-size:31px}.adms-access-card p{color:#667085;line-height:1.55}.adms-access-card input{margin:6px 0 10px}
+.adms-access-actions{display:flex;gap:10px;margin-top:12px}.adms-access-actions button{margin:0}.adms-secondary{background:#e9edf5!important;color:#071b50!important}
+</style>
+<div id="adms-access-modal"><div class="adms-access-card"><h2>Solicitar acesso ao sistema</h2><p>Preencha os seus dados. A solicitação será encaminhada ao Usuário Master, responsável por definir o nível de acesso.</p>
+<label>Nome completo</label><input id="acc-nome">
+<label>E-mail</label><input id="acc-email" type="email">
+<label>Contacto</label><input id="acc-contacto">
+<label>Data de nascimento</label><input id="acc-nascimento" type="date">
+<div id="acc-msg" style="font-weight:700;color:#8a6413;margin-top:8px"></div>
+<div class="adms-access-actions"><button type="button" onclick="admsEnviarSolicitacao()">Enviar solicitação</button><button type="button" class="adms-secondary" onclick="admsFecharSolicitacao()">Cancelar</button></div></div></div>
+<script>
+function admsPrepararLoginV4(){
+ const user=document.getElementById('login-email');
+ if(user){user.type='text';user.placeholder='Usuário ou e-mail'; const lab=user.closest('div')?.querySelector('label'); if(lab)lab.textContent='Usuário ou e-mail';}
+ const dept=document.getElementById('login-dept'); if(dept){dept.required=false; const box=dept.closest('.field')||dept.parentElement;if(box)box.style.display='none'}
+ const area=document.getElementById('step-credentials')||document.querySelector('#login-screen form')||document.getElementById('login-screen');
+ if(area&&!document.getElementById('adms-request-link')){const b=document.createElement('button');b.id='adms-request-link';b.type='button';b.className='adms-access-link';b.textContent='Solicitar acesso ao sistema';b.onclick=()=>document.getElementById('adms-access-modal').classList.add('open');area.appendChild(b)}
+}
+function admsFecharSolicitacao(){document.getElementById('adms-access-modal').classList.remove('open')}
+async function admsEnviarSolicitacao(){
+ const nome=document.getElementById('acc-nome').value.trim(),email=document.getElementById('acc-email').value.trim(),contacto=document.getElementById('acc-contacto').value.trim(),data_nascimento=document.getElementById('acc-nascimento').value,msg=document.getElementById('acc-msg');
+ if(nome.length<2||!email||contacto.length<5||!data_nascimento){msg.textContent='Preencha todos os campos.';return}
+ const {error}=await admsSupabase.from('solicitacoes_acesso').insert({nome_completo:nome,email,contacto,data_nascimento});
+ if(error){msg.textContent='Não foi possível enviar a solicitação agora.';return}
+ msg.textContent='Solicitação enviada ao Usuário Master.';
+ setTimeout(admsFecharSolicitacao,1600);
+}
+const admsLoginOriginal=window.fazerLogin;
+window.fazerLogin=async function(){
+ const campo=document.getElementById('login-email'),valor=(campo?.value||'').trim(),senha=(document.getElementById('login-pass')?.value||'');
+ if(['usuáriomaster','usuariomaster'].includes(valor.toLowerCase())){
+  try{
+   const r=await fetch('https://ogbxntxfrkgllegzzwdm.supabase.co/functions/v1/login-master',{method:'POST',headers:{'Content-Type':'application/json','apikey':'sb_publishable_GB2UQqPNh28jsvlrJ7VWSg_9gkHNBOM'},body:JSON.stringify({usuario:valor,password:senha})});
+   const d=await r.json(); if(!r.ok)throw new Error(d.error||'Credenciais inválidas');
+   const {error}=await admsSupabase.auth.setSession({access_token:d.access_token,refresh_token:d.refresh_token});if(error)throw error;
+   if(typeof admsCarregarPerfilCloud==='function')await admsCarregarPerfilCloud();
+   location.reload(); return;
+  }catch(e){if(typeof showLoginError==='function')showLoginError(e.message||'Credenciais inválidas');return}
+ }
+ if(typeof admsLoginOriginal==='function')return admsLoginOriginal();
+};
+setTimeout(admsPrepararLoginV4,50);
+new MutationObserver(admsPrepararLoginV4).observe(document.documentElement,{childList:true,subtree:true});
+</script>
 </body>
 </html>

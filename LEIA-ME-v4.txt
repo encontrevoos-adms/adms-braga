@@ -1,0 +1,10 @@
+ADMS BRAGA — SITE + PORTAL v4
+- Site institucional v3 preservado (logo real + Sobre Nós da landing).
+- Login do Portal: campo Usuário ou e-mail; seletor de departamento oculto.
+- 'Solicitar acesso ao sistema' incluído no login.
+- Solicitações gravadas em solicitacoes_acesso e destinadas à gestão do Master.
+- Alias especial aceito: usuáriomaster / usuariomaster.
+- A palavra-passe do Master NÃO está gravada no HTML; a validação ocorre no backend.
+- Demais utilizadores continuam autenticando por e-mail.
+- Aprovação backend restrita ao Master, com perfis Pastor, Secretaria, Tesouraria, Líder e Membro.
+- Líder exige departamento; Membro permanece distinto de Líder.
