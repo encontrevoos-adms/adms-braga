@@ -1540,6 +1540,7 @@ function canAccessPatrimonio(){ return hasFullConfidentialAccess(); }
 function canAccessRH(){ return hasFullConfidentialAccess(); }
 function canAccessGestaoAcessos(){ return hasFullConfidentialAccess(); }
 function canAccessAuditoria(){ return hasFullConfidentialAccess(); }
+function canAccessPrayerRequests(){ return !!session && ['pastor','secretaria'].includes(session.tipo); }
 function canAccessDept(deptId){
   if(hasFullConfidentialAccess()) return true;
   if(session.tipo==='lider') return Array.isArray(session.deptIds) && session.deptIds.includes(deptId);
@@ -1616,8 +1617,11 @@ function renderShell(){
     nav+=navItem('eventos','events','Eventos',true);
     nav+=navItem('avisos','megaphone','Avisos e Comunicados',true);
     nav+=navItem('gabinete','rh',session.tipo==='pastor'?'Gabinete Pastoral':'Solicitar Reunião com o Pastor',true);
+    nav+='<div class="nav-group-label">Site e Acolhimento</div>';
+    nav+=navItem('site-publico','megaphone','Conteúdo do Site',true);
+    if(canAccessPrayerRequests()) nav+=navItem('pedidos-oracao','bible','Pedidos de Oração',true);
+    nav+=navItem('novos-contactos','rh','Novos Contactos',true);
     if(session.tipo==='secretaria'){
-      nav+=navItem('novos-contactos','rh','Novos Contactos',true);
       nav+='<div class="nav-group-label">Administração</div>';
       nav+=navItem('acessos','acesso','Gestão de Acessos',true);
     }
@@ -1699,6 +1703,8 @@ function renderModule(){
     return;
   }
   if(currentModule==='avisos') return el.innerHTML = viewAvisos();
+  if(currentModule==='site-publico'){ el.innerHTML='<div class="card">A carregar conteúdos do site...</div>'; renderSitePublico(); return; }
+  if(currentModule==='pedidos-oracao'){ el.innerHTML='<div class="card">A carregar pedidos de oração...</div>'; renderPedidosOracao(); return; }
   if(currentModule==='novos-contactos'){ el.innerHTML='<div class="card">A carregar novos contactos...</div>'; renderNovosContactos(); return; }
   if(currentModule==='relatorios'){
     el.innerHTML = viewRelatorios();
@@ -3170,6 +3176,72 @@ function toggleProgressoEBD(licaoId, aluno){
   salvarEstado();
   renderModule();
 }
+
+
+/* ================= CONTEÚDO DO SITE PÚBLICO ================= */
+const SITE_CONTENT_DEFS=[
+  {key:'video_semana',label:'Vídeo da Semana',help:'Use um link do YouTube no campo URL.'},
+  {key:'agenda_1',label:'Agenda — encontro 1',help:'Título = dia/data; subtítulo = nome do encontro; conteúdo = horário e local.'},
+  {key:'agenda_2',label:'Agenda — encontro 2',help:'Deixe inativo quando não houver um segundo encontro.'},
+  {key:'agenda_3',label:'Agenda — encontro 3',help:'Deixe inativo quando não houver um terceiro encontro.'},
+  {key:'agenda_4',label:'Agenda — encontro 4',help:'Deixe inativo quando não houver um quarto encontro.'},
+  {key:'estudo_semana',label:'Estudo da Semana',help:'A URL pode apontar para um PDF, vídeo ou página de estudo.'},
+  {key:'devocional',label:'Devocional',help:'Publique a reflexão mais recente e o respetivo link.'},
+  {key:'biblioteca',label:'Biblioteca',help:'Aponte para o arquivo público de materiais.'},
+  {key:'youtube',label:'YouTube',help:'Link do canal oficial.'},
+  {key:'instagram',label:'Instagram',help:'Link do perfil oficial.'},
+  {key:'facebook',label:'Facebook',help:'Link da página oficial.'},
+  {key:'playlist',label:'Playlist',help:'Link do Spotify, YouTube Music ou outra playlist oficial.'}
+];
+function admsEsc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+async function renderSitePublico(){
+  const el=document.getElementById('main-content');
+  if(!hasFullConfidentialAccess()){el.innerHTML=viewLocked('Conteúdo do Site');return;}
+  const {data,error}=await admsSupabase.from('site_conteudos').select('*').order('chave');
+  if(error){el.innerHTML='<div class="card"><h2>Conteúdo do Site</h2><p>Não foi possível carregar os conteúdos.</p></div>';return;}
+  const byKey=Object.fromEntries((data||[]).map(x=>[x.chave,x]));
+  const cards=SITE_CONTENT_DEFS.map(def=>{
+    const x=byKey[def.key]||{chave:def.key,titulo:'',subtitulo:'',conteudo:'',url:'',ativo:true};
+    return `<article class="card" style="margin-bottom:16px">
+      <div style="display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap"><div><h3 style="margin:0;color:var(--royal-deep)">${admsEsc(def.label)}</h3><p style="margin:5px 0 0;color:var(--ink-soft);font-size:12px">${admsEsc(def.help)}</p></div><span class="tag ${x.ativo?'tag-green':'tag-gold'}">${x.ativo?'Publicado':'Oculto'}</span></div>
+      <div class="form-row" style="margin-top:14px"><div><label>Título / Data</label><input id="site-${def.key}-titulo" value="${admsEsc(x.titulo)}"></div><div><label>Subtítulo / Nome do encontro</label><input id="site-${def.key}-subtitulo" value="${admsEsc(x.subtitulo)}"></div></div>
+      <label>Conteúdo / Horário e local</label><textarea id="site-${def.key}-conteudo" rows="3">${admsEsc(x.conteudo)}</textarea>
+      <div class="form-row" style="margin-top:12px"><div><label>URL</label><input id="site-${def.key}-url" type="url" value="${admsEsc(x.url)}" placeholder="https://..."></div><div><label>Visibilidade</label><select id="site-${def.key}-ativo"><option value="sim" ${x.ativo?'selected':''}>Publicado</option><option value="nao" ${!x.ativo?'selected':''}>Oculto</option></select></div></div>
+      <button class="btn btn-primary" style="width:auto;margin-top:14px" onclick="guardarConteudoSite('${def.key}')">Guardar e publicar</button>
+    </article>`;
+  }).join('');
+  el.innerHTML=`<div class="topbar"><div><div class="breadcrumb">Comunicação</div><h1>Conteúdo do Site</h1></div><a class="access-pill" href="/" target="_blank" rel="noopener">Abrir site público ↗</a></div>${ruleDivider()}<div class="hint-box" style="margin-bottom:18px">As alterações guardadas aqui aparecem automaticamente no site público. Revise datas, horários e links antes de publicar.</div>${cards}`;
+}
+async function guardarConteudoSite(key){
+  const get=s=>document.getElementById(`site-${key}-${s}`);
+  const url=get('url').value.trim();
+  if(url){try{const u=new URL(url);if(!['http:','https:'].includes(u.protocol))throw new Error();}catch{showToast('Introduza um endereço válido iniciado por https://');return;}}
+  const {data:{user}}=await admsSupabase.auth.getUser();
+  const row={chave:key,titulo:get('titulo').value.trim()||null,subtitulo:get('subtitulo').value.trim()||null,conteudo:get('conteudo').value.trim()||null,url:url||null,ativo:get('ativo').value==='sim',updated_by:user?.id||null,updated_at:new Date().toISOString()};
+  const {error}=await admsSupabase.from('site_conteudos').upsert(row,{onConflict:'chave'});
+  if(error){console.error('Conteúdo do site:',error);showToast('Não foi possível guardar o conteúdo.');return;}
+  logAction('sistema','Conteúdo do site atualizado',`${key} — ${row.ativo?'publicado':'oculto'}`);
+  showToast('Conteúdo guardado e site atualizado.');renderSitePublico();
+}
+
+/* ================= PEDIDOS DE ORAÇÃO ================= */
+async function renderPedidosOracao(){
+  const el=document.getElementById('main-content');
+  if(!canAccessPrayerRequests()){el.innerHTML=viewLocked('Pedidos de Oração');return;}
+  const {data,error}=await admsSupabase.from('pedidos_oracao').select('*').order('created_at',{ascending:false});
+  if(error){el.innerHTML='<div class="card"><h2>Pedidos de Oração</h2><p>Não foi possível carregar os pedidos.</p></div>';return;}
+  const labels={novo:'Novo',em_oracao:'Em oração',acompanhamento:'Acompanhamento',concluido:'Concluído'};
+  const cards=(data||[]).map(p=>`<article class="card" style="margin-bottom:15px;border-left:4px solid ${p.confidencial?'var(--red)':'var(--gold)'}">
+    <div style="display:flex;justify-content:space-between;gap:14px;align-items:flex-start;flex-wrap:wrap"><div><h3 style="margin:0;color:var(--royal-deep)">${admsEsc(p.nome)} ${p.confidencial?'<span class="tag tag-red">Confidencial</span>':''}</h3><div style="font-size:11.5px;color:var(--ink-soft);margin-top:5px">${new Date(p.created_at).toLocaleString('pt-PT')} · ${admsEsc(p.contacto||'Sem contacto')} · ${admsEsc(p.email||'Sem e-mail')}</div></div><select style="width:auto" onchange="atualizarPedidoOracao('${p.id}',this.value)">${Object.entries(labels).map(([v,l])=>`<option value="${v}" ${p.status===v?'selected':''}>${l}</option>`).join('')}</select></div>
+    <p style="white-space:pre-wrap;line-height:1.65;margin:16px 0">${admsEsc(p.pedido)}</p>
+    <label>Nota interna de acompanhamento</label><textarea id="oracao-nota-${p.id}" rows="2" placeholder="Registe apenas informação necessária ao acompanhamento pastoral">${admsEsc(p.observacoes||'')}</textarea>
+    <button class="btn btn-outline" style="width:auto;margin-top:10px" onclick="guardarNotaOracao('${p.id}')">Guardar nota</button>
+  </article>`).join('');
+  const novos=(data||[]).filter(x=>x.status==='novo').length;
+  el.innerHTML=`<div class="topbar"><div><div class="breadcrumb">Cuidado Pastoral</div><h1>Pedidos de Oração</h1></div><span class="access-pill">${novos} novo(s)</span></div>${ruleDivider()}<div class="hint-box" style="margin-bottom:18px">Fluxo: Novo → Em oração → Acompanhamento → Concluído. Os pedidos confidenciais exigem discrição pastoral reforçada.</div>${cards||'<div class="card empty-state"><p>Ainda não existem pedidos de oração.</p></div>'}`;
+}
+async function atualizarPedidoOracao(id,status){const {error}=await admsSupabase.from('pedidos_oracao').update({status,updated_at:new Date().toISOString()}).eq('id',id);if(error){showToast('Não foi possível atualizar o pedido.');return;}logAction('sistema','Pedido de oração atualizado',`${id} — ${status}`);showToast('Estado do pedido atualizado.');}
+async function guardarNotaOracao(id){const observacoes=document.getElementById(`oracao-nota-${id}`).value.trim();const {error}=await admsSupabase.from('pedidos_oracao').update({observacoes:observacoes||null,updated_at:new Date().toISOString()}).eq('id',id);if(error){showToast('Não foi possível guardar a nota.');return;}logAction('sistema','Acompanhamento de oração registado',id);showToast('Nota de acompanhamento guardada.');}
 
 
 async function carregarResumoNovosContactos(){
