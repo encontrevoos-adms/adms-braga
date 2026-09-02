@@ -1,12 +1,1 @@
-const CACHE='adms-sistema-v20260901-home4';
-const STATIC=['/manifest-sistema.json'];
-self.addEventListener('install',event=>{self.skipWaiting();event.waitUntil(caches.open(CACHE).then(c=>c.addAll(STATIC).catch(()=>{})))});
-self.addEventListener('activate',event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});
-self.addEventListener('fetch',event=>{
-  const req=event.request; if(req.method!=='GET') return;
-  const url=new URL(req.url);
-  if(url.origin===location.origin && (url.pathname==='/sistema'||url.pathname==='/sistema/'||url.pathname==='/sistema.html')){
-    event.respondWith(fetch(req,{cache:'no-store'}).catch(()=>caches.match(req))); return;
-  }
-  event.respondWith(fetch(req).catch(()=>caches.match(req)));
-});
+const CACHE='adms-sistema-v20260902-gabinete11';self.addEventListener('install',e=>self.skipWaiting());self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(k=>Promise.all(k.map(x=>caches.delete(x)))).then(()=>self.clients.claim())));self.addEventListener('fetch',e=>{if(e.request.method==='GET')e.respondWith(fetch(e.request,{cache:'no-store'}).catch(()=>caches.match(e.request)))})
