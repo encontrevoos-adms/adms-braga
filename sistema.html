@@ -578,14 +578,12 @@ async function admsIniciarEstadoRealtime(){
 
 window.addEventListener('online',()=>{ admsCarregarMembrosCloud(); admsCarregarEstadoCloud({bootstrap:false}); admsIniciarRealtime(); admsIniciarEstadoRealtime(); });
 </script>
-
-<style id="adms-permission-fixes">
+<style id="adms-v14">
 .member-view #main-content input,.member-view #main-content textarea,.member-view #main-content select{pointer-events:none}
 .member-view #main-content button.btn-red,.member-view #main-content button.btn-primary{display:none}
 .member-view #main-content .gabinete-editavel input,.member-view #main-content .gabinete-editavel textarea,.member-view #main-content .gabinete-editavel select{pointer-events:auto}
 .member-view #main-content .gabinete-editavel button{display:inline-flex}
-</style>
-</head>
+</style></head>
 <body>
 
 <!-- ============= ECRÃ DE AUTO-CADASTRO (link público) ============= -->
@@ -940,23 +938,10 @@ function novoLoginLider(){
 }
 
 // Administradores master: Pastores Sénior e Tesoureiros — acesso total ao sistema (dados informativos)
-let MASTERS = [
-  {id:'m1', nome:'Pr. Adonias Silva', cargo:'Pastor Sénior', email:'adonias.silva@adms-braga.pt', nascimento:'1968-03-11', deptsLideranca:[], ...novoComplemento()},
-  {id:'m2', nome:'Pra. Alecsandra Corsini', cargo:'Pastora Sénior', email:'alecsandra.corsini@adms-braga.pt', nascimento:'1972-09-24', deptsLideranca:['mulheres'], ...novoComplemento()},
-  {id:'m3', nome:'Igor Nascimento', cargo:'Tesoureiro', email:'igor.nascimento@adms-braga.pt', nascimento:'1990-01-01', deptsLideranca:['ebd','patrimonio-limpeza'], ...novoComplemento()},
-  {id:'m4', nome:'Vinícius Marcelino', cargo:'Tesoureiro', email:'vinicius.marcelino@adms-braga.pt', nascimento:'1985-06-18', deptsLideranca:['homens'], ...novoComplemento()},
-];
+let MASTERS = [];
 
 // líderes de departamento — dados informativos (nome, email, nascimento) + dados complementares; o acesso em si é feito pelo departamento (ver AUTH)
-let LEADERS = [
-  {id:'l1', nome:'Ricardo Silva', email:'ricardo.silva@adms-braga.pt', nascimento:'1988-02-19', deptIds:['obreiros'], ...novoComplemento(), login:novoLoginLider()},
-  {id:'l2', nome:'Jamille Ribeiro', email:'jamille.ribeiro@adms-braga.pt', nascimento:'1993-05-07', deptIds:['kids'], ...novoComplemento(), login:novoLoginLider()},
-  {id:'l3', nome:'Alyne Nascimento', email:'alyne.nascimento@adms-braga.pt', nascimento:'1991-11-30', deptIds:['louvor','danca'], ...novoComplemento(), login:novoLoginLider()},
-  {id:'l4', nome:'Ruiel Batalha', email:'ruiel.batalha@adms-braga.pt', nascimento:'1986-08-14', deptIds:['evangelismo'], ...novoComplemento(), login:novoLoginLider()},
-  {id:'l5', nome:'Yasmin Lopes', email:'yasmin.lopes@adms-braga.pt', nascimento:'1997-04-02', deptIds:['midia'], ...novoComplemento(), login:novoLoginLider()},
-  {id:'l6', nome:'Yago Barros', email:'yago.barros@adms-braga.pt', nascimento:'1998-03-15', deptIds:['jovens'], ...novoComplemento(), login:novoLoginLider()},
-  {id:'l7', nome:'Ester Barros', email:'ester.barros@adms-braga.pt', nascimento:'1999-07-22', deptIds:['jovens'], ...novoComplemento(), login:novoLoginLider()},
-];
+let LEADERS = [];
 
 const DEPTS_COM_LIDER = ['kids','homens','mulheres','louvor','danca','evangelismo','ebd','midia','obreiros','patrimonio-limpeza','jovens'];
 
@@ -1570,66 +1555,74 @@ function myEscalaDepts(){
   return session.deptIds.filter(d=>ESCALA_DEPTS.includes(d));
 }
 function roleLabel(){
-  if(session.tipo==='pastor') return session.label + ' · Administrador Master';
-  if(session.tipo==='tesoureiro') return session.label + ' · Administrador Master';
-  if(session.tipo==='secretaria') return session.label + ' · Administrador Master';
-  if(session.tipo==='membro') return 'Membro · Acesso pessoal';
-  return 'Departamento — ' + session.deptIds.map(deptNome).join(' / ');
+  if(session.tipo==='pastor') return session.label + ' · Pastor Local';
+  if(session.tipo==='tesoureiro') return session.label + ' · Tesouraria';
+  if(session.tipo==='secretaria') return session.label + ' · Secretaria';
+  if(session.tipo==='membro'||session.tipo==='consulta') return 'Membro · Visualização';
+  if(session.tipo==='lider') return 'Líder · ' + (session.deptIds||[]).map(deptNome).join(' / ');
+  return session.label||'Utilizador';
 }
 
 /* =========================================================
    NAVEGAÇÃO / SHELL
 ========================================================= */
 function navItem(id, icon, label, enabled){
-  return `<div class="nav-item ${currentModule===id?'active':''} ${enabled?'':'locked'}" onclick="${enabled? `goTo('${id}')` : ''}">${ICON[icon]}<span>${label}</span></div>`;
+  return `<div class="nav-item ${currentModule===id?'active':''} ${enabled?'':'locked'}" onclick="${enabled? `goTo('${id}')` : ''}">${ICON[icon]||ICON.dept||''}<span>${label}</span></div>`;
 }
 
 function renderShell(){
-  document.getElementById('side-user-name').textContent = session.label;
-  document.getElementById('side-user-role').textContent = roleLabel();
+  document.getElementById('side-user-name').textContent=session.label;
+  document.getElementById('side-user-role').textContent=roleLabel();
+  document.body.classList.toggle('member-view',session.tipo==='membro'||session.tipo==='consulta');
+  const membro=session.tipo==='membro'||session.tipo==='consulta';
+  const lider=session.tipo==='lider';
+  let nav='<div class="nav-group-label">Geral</div>';
+  nav+=navItem('dashboard','dashboard','Página Inicial',true);
 
-  if(session.tipo==='membro'){
-    document.getElementById('nav-container').innerHTML = `<div class="nav-group-label">Geral</div>` + navItem('meu-perfil','rh','O Meu Perfil', true) + navItem('eventos','events','Eventos', true);
-    renderModule();
-    return;
+  if(membro){
+    nav+='<div class="nav-group-label">Igreja</div>';
+    nav+=navItem('escalas','shift','Escalas de Serviço',true);
+    nav+=navItem('celulas','cells','Grupos e Células',true);
+    nav+=navItem('kids','checkin','Kids — Check-in',true);
+    nav+=navItem('ebd','bible','Estudos Bíblicos',true);
+    nav+=navItem('eventos','events','Eventos',true);
+    nav+=navItem('avisos','megaphone','Avisos e Comunicados',true);
+    nav+=navItem('gabinete','rh','Solicitar Reunião com o Pastor',true);
+  }else if(lider){
+    nav+='<div class="nav-group-label">Meu Departamento</div>';
+    nav+=navItem('meu-dept','dept','Meu(s) Departamento(s)',true);
+    nav+=navItem('escalas','shift','Escalas de Serviço',true);
+    nav+=navItem('celulas','cells','Grupos e Células',true);
+    nav+=navItem('kids','checkin','Kids — Check-in',true);
+    nav+=navItem('ebd','bible','Estudos Bíblicos',true);
+    nav+=navItem('eventos','events','Eventos',true);
+    nav+=navItem('avisos','megaphone','Avisos e Comunicados',true);
+    nav+=navItem('gabinete','rh','Solicitar Reunião com o Pastor',true);
+  }else{
+    nav+='<div class="nav-group-label">Gestão da Igreja</div>';
+    nav+=navItem('patrimonio','patrimonio','Património',canAccessPatrimonio());
+    nav+=navItem('rh','rh','Recursos Humanos',canAccessRH());
+    nav+=navItem('financeiro','financeiro','Financeiro',canAccessFinanceiro());
+    nav+=navItem('contas-pagar','payable','Contas a Pagar',canAccessFinanceiro());
+    nav+=navItem('contas-receber','receivable','Contas a Receber',canAccessFinanceiro());
+    nav+=navItem('orcamento','chart','Orçamento',canAccessFinanceiro());
+    nav+='<div class="nav-group-label">Departamentos</div>';
+    nav+=navItem('departamentos','dept','Todos os Departamentos',true);
+    nav+=navItem('escalas','shift','Escalas de Serviço',true);
+    nav+=navItem('celulas','cells','Grupos e Células',true);
+    nav+=navItem('kids','checkin','Kids — Check-in',true);
+    nav+=navItem('ebd','bible','Estudos Bíblicos',true);
+    nav+=navItem('eventos','events','Eventos',true);
+    nav+=navItem('avisos','megaphone','Avisos e Comunicados',true);
+    nav+=navItem('gabinete','rh',session.tipo==='pastor'?'Gabinete Pastoral':'Solicitar Reunião com o Pastor',true);
+    if(session.tipo==='secretaria'){
+      nav+=navItem('novos-contactos','rh','Novos Contactos',true);
+      nav+='<div class="nav-group-label">Administração</div>';
+      nav+=navItem('acessos','acesso','Gestão de Acessos',true);
+    }
+    if(session.tipo==='pastor'||session.tipo==='tesoureiro'||session.tipo==='secretaria') nav+=navItem('auditoria','audit','Registo de Atividade',true);
   }
-
-  let nav = '';
-  nav += `<div class="nav-group-label">Geral</div>`;
-  nav += navItem('dashboard','dashboard','Painel Geral', true);
-
-  nav += `<div class="nav-group-label">Gestão da Igreja</div>`;
-  nav += navItem('patrimonio','patrimonio','Património', canAccessPatrimonio());
-  nav += navItem('rh','rh','Recursos Humanos', canAccessRH());
-  nav += navItem('financeiro','financeiro','Financeiro', canAccessFinanceiro());
-  nav += navItem('contas-pagar','payable','Contas a Pagar', canAccessFinanceiro());
-  nav += navItem('contas-receber','receivable','Contas a Receber', canAccessFinanceiro());
-  nav += navItem('orcamento','chart','Orçamento', canAccessFinanceiro());
-
-  nav += `<div class="nav-group-label">Departamentos</div>`;
-  nav += navItem('departamentos','dept','Todos os Departamentos', true);
-
-  if(session.tipo==='lider'){
-    nav += navItem('meu-dept','dept','Meu(s) Departamento(s)', true);
-  }
-  nav += navItem('escalas','shift','Escalas de Serviço', canAccessEscalas());
-  nav += navItem('celulas','cells','Grupos e Células', true);
-  nav += navItem('kids','checkin','Kids — Check-in', isMaster() || session.deptIds.includes('kids'));
-  nav += navItem('ebd','bible','Estudos Bíblicos', isMaster() || session.deptIds.includes('ebd'));
-  nav += navItem('eventos','events','Eventos', true);
-  nav += navItem('avisos','megaphone','Avisos e Comunicados', true);
-  if(isMaster()) nav += navItem('novos-contactos','users','Novos Contactos', true);
-  nav += navItem('relatorios','report','Relatórios', true);
-
-  if(canAccessGestaoAcessos()){
-    nav += `<div class="nav-group-label">Administração</div>`;
-    nav += navItem('acessos','acesso','Gestão de Acessos', true);
-  }
-  if(isMaster()){
-    nav += navItem('auditoria','audit','Registo de Atividade', true);
-  }
-
-  document.getElementById('nav-container').innerHTML = nav;
+  document.getElementById('nav-container').innerHTML=nav;
   renderModule();
 }
 
@@ -1655,11 +1648,10 @@ function ruleDivider(){
 ========================================================= */
 function renderModule(){
   if(currentModule==='gabinete'){renderGabinetePastoral();return;}
-
   const el = document.getElementById('main-content');
   if(currentModule==='meu-perfil') return el.innerHTML = viewMeuPerfil();
   if(currentModule==='eventos'){ el.innerHTML = viewEventos(); return; }
-  if(currentModule==='dashboard') return el.innerHTML = viewDashboard();
+  if(currentModule==='dashboard') return el.innerHTML = ((session.tipo==='membro'||session.tipo==='consulta')?viewMemberHome():viewDashboard());
   if(currentModule==='patrimonio') return el.innerHTML = canAccessPatrimonio()? viewPatrimonio() : viewLocked('Património');
   if(currentModule==='rh'){
     if(!canAccessRH()) return el.innerHTML = viewLocked('Recursos Humanos');
@@ -1711,7 +1703,7 @@ function renderModule(){
     renderRelFilters();
     return;
   }
-  if(currentModule==='acessos') return el.innerHTML = canAccessGestaoAcessos()? viewAcessos() : viewLocked('Gestão de Acessos');
+  if(currentModule==='acessos'){ if(!canAccessGestaoAcessos()) return el.innerHTML=viewLocked('Gestão de Acessos'); el.innerHTML=viewAcessos(); setTimeout(renderSolicitacoesAcesso,0); return; }
   if(currentModule==='auditoria') return el.innerHTML = canAccessAuditoria()? viewAuditoria() : viewLocked('Registo de Atividade');
   el.innerHTML = viewDashboard();
   if(isMaster()) carregarResumoNovosContactos();
@@ -1868,6 +1860,19 @@ function alertasVencimentoHTML(){
       <button class="btn btn-ghost" style="margin-top:10px;" onclick="goTo('contas-pagar')">Ver Contas a Pagar →</button>
     </div>
   `;
+}
+
+
+function viewMemberHome(){
+ const nome=((session&&session.label)||'').trim().split(/\s+/)[0]||'Irmão(ã)';
+ return `<div class="topbar"><div><div class="breadcrumb">Página Inicial</div><h1>A Paz do Senhor Jesus!<br>Seja Bem vindo, ${nome}!</h1></div><span class="access-pill">${ICON.acesso} ${roleLabel()}</span></div>
+ ${ruleDivider()}
+ <div class="grid grid-2">
+  <div class="card"><h3>Vídeo da Semana</h3><p style="color:var(--ink-soft)">Conteúdo semanal da ADMS Braga.</p></div>
+  <div class="card"><h3>Devocional Diário</h3><p style="color:var(--ink-soft)">Uma palavra para fortalecer a sua caminhada com Deus.</p></div>
+  <div class="card"><h3>Versículo do Dia</h3><p style="color:var(--ink-soft)">A Palavra de Deus para meditação diária.</p></div>
+  <div class="card"><h3>Aniversariante do Dia</h3>${aniversariantesDoMesHTML?aniversariantesDoMesHTML():'<p>Nenhum aniversariante hoje.</p>'}</div>
+ </div>`;
 }
 
 function viewDashboard(){
@@ -2184,18 +2189,10 @@ function viewRH(){
         </div>
       </div>
       <div id="rh-lideranca-box">
-        <div class="signature-rule" style="margin:18px 0 12px"><span style="font-size:11.5px;font-weight:700;color:var(--royal-dark);text-transform:uppercase;letter-spacing:.5px">Liderança</span></div>
-        <div class="form-row">
-          <div><label>É líder?</label><select id="rh-e-lider" onchange="admsToggleLideranca()"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
-          <div id="rh-lider-dept-wrap" style="display:none"><label>Departamento que lidera</label><select id="rh-lider-dept"><option value="">Selecione...</option>${DEPARTMENTS.map(d=>`<option value="${d.id||d.nome}">${d.nome}</option>`).join('')}</select></div>
-        </div>
-        <div id="rh-lider-datas" class="form-row" style="display:none">
-          <div><label>Data de início</label><input id="rh-lider-inicio" type="date"></div>
-          <div><label>Atual</label><select id="rh-lider-atual" onchange="admsToggleLiderAtual()"><option value="sim">Sim</option><option value="nao">Não</option></select></div>
-          <div id="rh-lider-fim-wrap" style="display:none"><label>Data de fim</label><input id="rh-lider-fim" type="date"></div>
-        </div>
-      </div>
-        </div>
+       <div class="signature-rule" style="margin:18px 0 12px"><span style="font-size:11.5px;font-weight:700;color:var(--royal-dark);text-transform:uppercase">Liderança</span><div class="bar"></div></div>
+       <div class="form-row"><div><label>É líder?</label><select id="rh-e-lider" onchange="admsToggleLideranca()"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
+       <div id="rh-lider-dept-wrap" style="display:none"><label>Departamento que lidera</label><select id="rh-lider-dept"><option value="">Selecione...</option>${DEPARTMENTS.filter(d=>!d.restrito).map(d=>`<option value="${d.id}">${d.nome}</option>`).join('')}</select></div></div>
+       <div id="rh-lider-datas" class="form-row" style="display:none"><div><label>Data de início</label><input id="rh-lider-inicio" type="date"></div><div><label>Atual</label><select id="rh-lider-atual" onchange="admsToggleLiderAtual()"><option value="sim">Sim</option><option value="nao">Não</option></select></div><div id="rh-lider-fim-wrap" style="display:none"><label>Data de fim</label><input id="rh-lider-fim" type="date"></div></div>
       </div>
 
       <!-- Campos completos — apenas para Membro (padrão de sistemas de gestão de igreja) -->
@@ -2352,6 +2349,9 @@ async function preencherFormularioPessoa(tipo,index,modo='editar'){
   const tipoEl=document.getElementById('rh-tipo'); if(tipoEl)tipoEl.disabled=modo!=='converter';
   toggleRHForm();
   rhSet('rh-nome',p.nome||''); rhSet('rh-contacto',p.contacto||''); rhSet('rh-dept',p.dept||'—');
+  if(tipo==='membros'){
+    rhSet('rh-e-lider',p.eLider?'sim':'nao'); rhSet('rh-lider-dept',p.liderDepartamentoId||''); rhSet('rh-lider-inicio',p.liderDataInicio||''); rhSet('rh-lider-atual',p.liderAtual===false?'nao':'sim'); rhSet('rh-lider-fim',p.liderDataFim||''); admsToggleLideranca(); admsToggleLiderAtual();
+  }
   if((modo==='converter'?'membros':tipo)==='membros'){
     rhSet('rh-nascimento',p.dataNascimento||''); rhSet('rh-genero',p.genero||'Masculino'); rhSet('rh-estado-civil',p.estadoCivil||'Solteiro(a)');
     rhSet('rh-email',p.email||''); rhSet('rh-morada',p.morada||''); rhSet('rh-emerg-nome',p.emergenciaNome||''); rhSet('rh-emerg-tel',p.emergenciaContacto||'');
@@ -2407,13 +2407,14 @@ async function addPessoa(){
   if(tipo==='membros'){
     const batizado=document.getElementById('rh-batizado').value==='sim', temFilhos=document.getElementById('rh-tem-filhos').value==='sim', dataMembresia=document.getElementById('rh-data-membresia').value;
     const base=(edit&&edit.modo==='editar'&&edit.tipo==='membros')?PESSOAS.membros[edit.index]:(edit&&edit.modo==='converter'?PESSOAS[edit.tipo][edit.index]:{});
-    pessoa={...base,id:base.id||('mb'+Date.now()+Math.random().toString(36).slice(2,6)),nome,contacto,dept,desde:dataMembresia?String(dataMembresia.split('-')[0]):String(hoje.getFullYear()),
+    pessoa={...base,id:base.id||('mb'+Date.now()+Math.random().toString(36).slice(2,6)),nome,contacto,dept,eLider:document.getElementById('rh-e-lider')?.value==='sim',liderDepartamentoId:document.getElementById('rh-e-lider')?.value==='sim'?(document.getElementById('rh-lider-dept')?.value||''):'',liderDataInicio:document.getElementById('rh-lider-inicio')?.value||'',liderAtual:document.getElementById('rh-lider-atual')?.value!=='nao',liderDataFim:document.getElementById('rh-lider-atual')?.value==='nao'?(document.getElementById('rh-lider-fim')?.value||''):'',desde:dataMembresia?String(dataMembresia.split('-')[0]):String(hoje.getFullYear()),
       dataNascimento:document.getElementById('rh-nascimento').value,genero:document.getElementById('rh-genero').value,estadoCivil:document.getElementById('rh-estado-civil').value,email:document.getElementById('rh-email').value.trim(),morada:document.getElementById('rh-morada').value.trim(),emergenciaNome:document.getElementById('rh-emerg-nome').value.trim(),emergenciaContacto:document.getElementById('rh-emerg-tel').value.trim(),profissao:document.getElementById('rh-profissao').value.trim(),escolaridade:document.getElementById('rh-escolaridade').value,nomeConjuge:document.getElementById('rh-estado-civil').value==='Casado(a)'?document.getElementById('rh-nome-conjuge').value.trim():'',conjugeConvertido:document.getElementById('rh-estado-civil').value==='Casado(a)'?document.getElementById('rh-conjuge-convertido').value==='sim':null,dataMembresia,comoMembro:document.getElementById('rh-como-membro').value,batizadoAguas:batizado,batizadoData:batizado?document.getElementById('rh-batismo-data').value:'',batizadoLocal:batizado?document.getElementById('rh-batismo-local').value.trim():'',batizadoEspiritoSanto:document.getElementById('rh-batizado-es').value==='sim',temFilhos,numFilhos:temFilhos?parseInt(document.getElementById('rh-num-filhos').value,10)||0:0,estadoMembresia:document.getElementById('rh-estado-membresia').value,dizimista:document.getElementById('rh-dizimista').value==='sim',notas:document.getElementById('rh-notas').value.trim(),...lerCamposMembroExtra('rh')};
     if(edit?.modo==='converter'){pessoa.origemCategoria=edit.tipo;pessoa.convertidoEm=new Date().toISOString();pessoa.convertidoPor=session.label;}
     if(edit?.modo==='editar'){pessoa.alteradoEm=new Date().toISOString();pessoa.alteradoPor=session.label;}
     const fotoFile=document.getElementById('rh-foto')?.files?.[0]||null;
     if(fotoFile){const up=await admsUploadFotoMembro(fotoFile,pessoa.id);if(!up.ok){showToast('Não foi possível guardar a fotografia.');return;}pessoa.fotoPath=up.path;}
     const cloud=await admsSalvarMembroCloud(pessoa); if(!cloud.ok){showToast('Não foi possível guardar no servidor. Nenhuma alteração foi concluída.');console.error(cloud.error||cloud.reason);return;}
+    await admsSincronizarLiderancaCloud(cloud.data?.id,pessoa);
     if(edit?.modo==='converter')PESSOAS[edit.tipo].splice(edit.index,1);
     else if(edit?.modo==='editar')PESSOAS.membros[edit.index]=pessoa;
     else PESSOAS.membros.push(pessoa);
@@ -3639,147 +3640,11 @@ function verRecibo(reciboId){
 }
 
 function viewAcessos(){
-  const pendentesKeys = LEADERS.filter(l=>l.login.pendingSenha)
-    .map(l=>({key:'lider:'+l.id, label:l.nome + ' — ' + l.deptIds.map(deptNome).join(' / '), auth:l.login}))
-    .concat(['master_pastor','master_tesoureiro'].filter(k=>AUTH[k].pendingSenha).map(k=>({key:k, label:k==='master_pastor'?'Pastor(a) Sénior — Administração':'Tesouraria — Administração', auth:AUTH[k]})));
-
-  const aguardandoLiberacao = DEPARTMENTS.filter(d=>d.id!=='pastoral' && !getAuth(d.id).liberado);
-
-  return `
-    <div class="topbar">
-      <div><div class="breadcrumb">Administração</div><h1>Gestão de Acessos</h1></div>
-      <span class="access-pill">${ICON.acesso} Exclusivo do Tesoureiro</span>
-    </div>
-    ${ruleDivider()}
-    <p style="color:var(--ink-soft); font-size:13.5px; max-width:680px; margin-top:0;">O acesso ao sistema é feito pelo <strong>departamento</strong>, com palavra-passe própria. A palavra-passe inicial é sempre <strong>${SENHA_PADRAO}</strong>; no primeiro acesso, o sistema obriga à criação de uma nova palavra-passe pessoal, ao consentimento RGPD e ao preenchimento dos dados complementares. A criação e aprovação de novos acessos é exclusiva do <strong>Tesoureiro</strong>.</p>
-
-    <div class="card" style="border-left:4px solid var(--red);">
-      <h3 style="margin-top:0; font-size:15px; color:var(--royal-deep);">Cópia de segurança (backup)</h3>
-      <p style="font-size:12.5px; color:var(--ink-soft); margin:0 0 14px 0;">Cada dispositivo (computador, telemóvel) guarda os seus próprios dados de forma isolada — não há sincronização automática entre aparelhos. Use esta cópia de segurança para levar os dados de um dispositivo para outro, ou para guardar um backup externo periodicamente.</p>
-      <div style="display:flex; gap:10px; flex-wrap:wrap;">
-        <button class="btn btn-primary" style="width:auto; margin-top:0;" onclick="exportarTudo()">Exportar tudo</button>
-        <button class="btn btn-outline" onclick="importarTudoClick()">Importar backup</button>
-        <input type="file" id="import-tudo-input" accept=".json" style="display:none;" onchange="importarTudoFicheiro(this)">
-      </div>
-      <p style="font-size:11px; color:var(--red-dark); margin:12px 0 0 0; font-weight:600;">⚠ Importar um backup substitui TODOS os dados atuais deste dispositivo — use com cuidado.</p>
-    </div>
-
-    ${aguardandoLiberacao.length ? `
-    <div class="section-title"><h2>Departamentos aguardando liberação</h2></div>
-    <div class="card">
-      <table>
-        <thead><tr><th>Departamento</th><th>Estado</th><th></th></tr></thead>
-        <tbody>
-          ${aguardandoLiberacao.map(d=>`
-            <tr>
-              <td style="font-weight:600;">${d.nome}</td>
-              <td><span class="tag tag-red">Sem acesso liberado</span></td>
-              <td><span style="color:var(--ok); font-weight:700; cursor:pointer; font-size:12px;" onclick="liberarDept('${d.id}')">Liberar acesso</span></td>
-            </tr>`).join('')}
-        </tbody>
-      </table>
-    </div>` : ''}
-
-    ${pendentesKeys.length ? `
-    <div class="section-title"><h2>Pedidos de alteração de palavra-passe pendentes</h2></div>
-    <div class="card">
-      <table>
-        <thead><tr><th>Departamento / Administração</th><th>Nova palavra-passe</th><th></th></tr></thead>
-        <tbody>
-          ${pendentesKeys.map(p=>`
-            <tr>
-              <td style="font-weight:600;">${p.label}</td>
-              <td class="mono">${p.auth.pendingSenha}</td>
-              <td style="display:flex; gap:14px;">
-                <span style="color:var(--ok); font-weight:700; cursor:pointer; font-size:12px;" onclick="approvePassword('${p.key}')">Aprovar</span>
-                <span style="color:var(--red-dark); font-weight:700; cursor:pointer; font-size:12px;" onclick="rejectPassword('${p.key}')">Rejeitar</span>
-              </td>
-            </tr>`).join('')}
-        </tbody>
-      </table>
-    </div>` : ''}
-
-    <div class="section-title"><h2>Criar / atribuir acesso de líder</h2></div>
-    <div class="card">
-      <div class="form-row">
-        <div><label>Nome completo</label><input id="new-nome" placeholder="Ex: Joana Patrícia Moreira"></div>
-        <div><label>Email</label><input id="new-email" type="email" placeholder="nome@adms-braga.pt"></div>
-      </div>
-      <div class="form-row">
-        <div><label>Data de nascimento</label><input id="new-nasc" type="date"></div>
-        <div><label>Departamento</label>
-          <select id="new-dept">${DEPARTMENTS.filter(d=>!d.restrito).map(d=>`<option value="${d.id}">${d.nome}</option>`).join('')}</select>
-        </div>
-      </div>
-      <p style="font-size:11.5px; color:var(--ink-soft); margin:-2px 0 12px 0;">Isto regista o líder e liberta o acesso do departamento com a palavra-passe inicial <span class="mono" style="font-weight:700;">${SENHA_PADRAO}</span>.</p>
-      <button class="btn btn-red" onclick="createLeader()">Registar líder e liberar acesso</button>
-    </div>
-
-    <div class="section-title"><h2>Administradores master</h2></div>
-    <div class="card">
-      <table>
-        <thead><tr><th>Nome</th><th>Cargo</th><th>Também lidera</th><th>Palavra-passe</th></tr></thead>
-        <tbody>
-          ${MASTERS.map(m=>{
-            const a = getAuth(m.cargo.includes('Pastor')?'master_pastor':'master_tesoureiro');
-            return `
-            <tr>
-              <td style="font-weight:600;">${m.nome}</td>
-              <td><span class="tag tag-gold">${m.cargo}</span></td>
-              <td>${m.deptsLideranca.length? m.deptsLideranca.map(deptNome).join(', ') : '—'}</td>
-              <td>${a.senhaAlterada? `<span class="tag tag-green">Personalizada</span>` : `<span class="tag tag-gold">Padrão</span>`}</td>
-            </tr>`;}).join('')}
-        </tbody>
-      </table>
-      <p style="font-size:11px; color:var(--ink-soft); margin:10px 0 0 0;">Pastores Sénior partilham a credencial "Administração — Pastor(a) Sénior"; Tesoureiros partilham a credencial "Administração — Tesouraria".</p>
-    </div>
-
-    <div class="section-title"><h2>Login para Membros</h2></div>
-    <div class="card">
-      <p style="font-size:12.5px; color:var(--ink-soft); margin:0 0 14px 0;">Cada membro com acesso pode consultar e atualizar os seus próprios dados. A palavra-passe inicial é <span class="mono" style="font-weight:700;">${SENHA_PADRAO}</span>.</p>
-      ${PESSOAS.membros.length ? `
-      <table>
-        <thead><tr><th>Nome</th><th>Contacto</th><th>Acesso</th><th></th></tr></thead>
-        <tbody>
-          ${PESSOAS.membros.map((m,i)=>`
-            <tr>
-              <td style="font-weight:600;">${m.nome}</td>
-              <td>${m.contacto}</td>
-              <td>${m.login&&m.login.ativo? `<span class="tag tag-green">Ativo</span>` : `<span class="tag tag-gold">Sem acesso</span>`}</td>
-              <td>${m.login&&m.login.ativo
-                ? `<span style="color:var(--red-dark); font-weight:700; cursor:pointer; font-size:12px;" onclick="revogarAcessoMembro(${i})">Revogar</span>`
-                : `<span style="color:var(--ok); font-weight:700; cursor:pointer; font-size:12px;" onclick="ativarAcessoMembro(${i})">Ativar acesso</span>`}</td>
-            </tr>`).join('')}
-        </tbody>
-      </table>` : `<div class="empty-state"><p>Ainda sem membros registados em RH.</p></div>`}
-    </div>
-
-    <div class="section-title"><h2>Líderes e acesso por departamento</h2></div>
-    <div class="card">
-      <table>
-        <thead><tr><th>Nome completo</th><th>Email</th><th>Data nasc.</th><th>Departamento</th><th>Palavra-passe</th><th></th></tr></thead>
-        <tbody id="leaders-table">
-          ${LEADERS.flatMap(l=>l.deptIds.map(deptId=>({l, deptId}))).map(({l,deptId})=>{
-            const a = l.login;
-            return `
-            <tr>
-              <td style="font-weight:600;">${l.nome}</td>
-              <td>${l.email}</td>
-              <td>${formatDate(l.nascimento)}</td>
-              <td><span class="tag tag-blue">${deptNome(deptId)}</span></td>
-              <td>${a.senhaAlterada? `<span class="tag tag-green">Personalizada</span>` : `<span class="tag tag-gold">Padrão</span>`}</td>
-              <td style="display:flex; gap:14px; align-items:center;">
-                <span style="color:var(--royal-dark); font-weight:700; cursor:pointer; font-size:12px; display:flex; align-items:center; gap:4px;" onclick="enviarBoasVindas('${l.id}','${deptId}')">${ICON.mail} Boas-vindas</span>
-                <span style="color:var(--red-dark); font-weight:700; cursor:pointer; font-size:12px;" onclick="revokeLeaderDept('${l.id}','${deptId}')">Revogar</span>
-              </td>
-            </tr>`;}).join('')}
-        </tbody>
-      </table>
-      <p style="font-size:11px; color:var(--ink-soft); margin:10px 0 0 0;">"Boas-vindas" abre o seu programa de email com a mensagem já preenchida (destinatário, assunto e texto) — reveja e envie a partir daí.</p>
-    </div>
-  `;
+ return `<div class="topbar"><div><div class="breadcrumb">Administração</div><h1>Gestão de Acessos</h1></div><span class="access-pill">${ICON.acesso} Secretaria</span></div>
+ ${ruleDivider()}
+ <div class="card"><h3>Solicitações de acesso</h3><p style="color:var(--ink-soft)">Os acessos são criados exclusivamente a partir das solicitações enviadas pela página de login. A Secretaria aprova o pedido, define o grau de acesso e a palavra-passe temporária. O utilizador deverá alterá-la no primeiro login.</p><div id="solicitacoes-acesso-lista">A carregar solicitações...</div></div>`;
 }
-/* ================= EMAIL DE BOAS-VINDAS (mailto — abre o programa de email do utilizador) ================= */
+
 function enviarBoasVindas(leaderId, deptId){
   const l = LEADERS.find(x=>x.id===leaderId);
   if(!l){ showToast('Líder não encontrado.'); return; }
@@ -4796,53 +4661,38 @@ function aoMudarDepartamentoLogin(){
   const wrap=document.getElementById('login-lider-wrap'); if(wrap) wrap.style.display='none';
 }
 
-function admsModuloPermitido(mod){
-  if(!session) return false;
-  const membro=['dashboard','escalas','celulas','celula-detalhe','kids','ebd','ebd-turma','eventos','avisos','gabinete'];
-  const bloqueadoLider=['rh','financeiro','contas-pagar','contas-receber','orcamento','patrimonio','acessos','gestao-acessos','solicitacoes-acesso','auditoria','registo-atividade','novos-contactos','relatorios'];
-  if(session.tipo==='consulta'||session.tipo==='membro') return membro.includes(mod);
-  if(session.tipo==='lider') return !bloqueadoLider.includes(mod);
-  return true;
-}
-
-
-function admsToggleLideranca(){
-  const sim=document.getElementById('rh-e-lider')?.value==='sim';
-  const a=document.getElementById('rh-lider-dept-wrap'),b=document.getElementById('rh-lider-datas');
-  if(a)a.style.display=sim?'block':'none';
-  if(b)b.style.display=sim?'grid':'none';
-}
-function admsToggleLiderAtual(){
-  const atual=document.getElementById('rh-lider-atual')?.value==='sim';
-  const f=document.getElementById('rh-lider-fim-wrap');
-  if(f)f.style.display=atual?'none':'block';
+function admsToggleLideranca(){const sim=document.getElementById('rh-e-lider')?.value==='sim';const a=document.getElementById('rh-lider-dept-wrap'),b=document.getElementById('rh-lider-datas');if(a)a.style.display=sim?'block':'none';if(b)b.style.display=sim?'grid':'none'}
+function admsToggleLiderAtual(){const atual=document.getElementById('rh-lider-atual')?.value==='sim';const f=document.getElementById('rh-lider-fim-wrap');if(f)f.style.display=atual?'none':'block'}
+async function admsSincronizarLiderancaCloud(membroId,p){
+ if(!membroId||!admsSupabase)return;
+ const {data:atuais}=await admsSupabase.from('membro_liderancas').select('*').eq('membro_id',membroId).eq('atual',true);
+ if(!p.eLider){
+   for(const x of (atuais||[])){await admsSupabase.from('membro_liderancas').update({atual:false,data_fim:p.liderDataFim||new Date().toISOString().slice(0,10),updated_at:new Date().toISOString()}).eq('id',x.id)}
+   return;
+ }
+ if(!p.liderDepartamentoId||!p.liderDataInicio){showToast('Informe departamento e data de início da liderança.');return}
+ const same=(atuais||[]).find(x=>x.departamento_id===p.liderDepartamentoId);
+ for(const x of (atuais||[]).filter(x=>x.id!==same?.id)){await admsSupabase.from('membro_liderancas').update({atual:false,data_fim:p.liderDataInicio,updated_at:new Date().toISOString()}).eq('id',x.id)}
+ if(p.liderAtual===false){
+   if(same) await admsSupabase.from('membro_liderancas').update({atual:false,data_fim:p.liderDataFim,updated_at:new Date().toISOString()}).eq('id',same.id);
+   else await admsSupabase.from('membro_liderancas').insert({membro_id:membroId,departamento_id:p.liderDepartamentoId,data_inicio:p.liderDataInicio,atual:false,data_fim:p.liderDataFim});
+ }else if(!same) await admsSupabase.from('membro_liderancas').insert({membro_id:membroId,departamento_id:p.liderDepartamentoId,data_inicio:p.liderDataInicio,atual:true,data_fim:null});
 }
 async function renderGabinetePastoral(){
-  const host=document.getElementById('main-content')||document.getElementById('content-area');
-  if(!host||!window.admsSupabase)return;
-  const pastor=session?.tipo==='pastor';
-  const {data,error}=await admsSupabase.from('gabinete_pastoral').select('*').order('created_at',{ascending:false});
-  if(error){host.innerHTML='<div class="card"><h2>Gabinete Pastoral</h2><p>Não foi possível carregar os pedidos.</p></div>';return}
-  const form=pastor?'':`<div class="card gabinete-editavel"><h2>Solicitar reunião de gabinete com o Pastor Local</h2><p>As informações desta solicitação são confidenciais.</p><div class="form-row"><div><label>Data pretendida</label><input id="gab-data" type="date"></div><div><label>Horário pretendido</label><input id="gab-hora" type="time"></div></div><label>Motivo</label><textarea id="gab-motivo"></textarea><label>Participantes</label><input id="gab-participantes"><div class="form-row"><div><label>Contacto</label><input id="gab-contacto"></div><div><label>E-mail</label><input id="gab-email" type="email"></div></div><label>Observações (opcional)</label><textarea id="gab-obs"></textarea><button class="btn btn-red" onclick="enviarPedidoGabinete()">Enviar solicitação</button></div>`;
-  const rows=(data||[]).map(x=>`<tr><td>${formatDate(x.data_solicitada)}<br>${String(x.horario_solicitado).slice(0,5)}</td><td>${x.motivo}</td><td>${x.participantes}</td><td>${x.status}${x.data_agendada?`<br><small>${formatDate(x.data_agendada)} ${String(x.horario_agendado||'').slice(0,5)}</small>`:''}</td><td>${pastor&&['pendente','reagendada'].includes(x.status)?`<button class="btn btn-red" onclick="decidirGabinete('${x.id}','aprovar')">Aprovar</button> <button class="btn btn-outline" onclick="decidirGabinete('${x.id}','reagendar')">Reagendar</button> <button class="btn btn-outline" onclick="decidirGabinete('${x.id}','reprovar')">Reprovar</button>`:'—'}</td></tr>`).join('');
-  host.innerHTML=`<div class="page-header"><div><h1>${pastor?'Gabinete Pastoral':'Reunião com o Pastor'}</h1><p>${pastor?'Solicitações confidenciais de atendimento pastoral.':'Solicite e acompanhe a sua reunião com o Pastor Local.'}</p></div></div>${form}<div class="card"><table><thead><tr><th>Data</th><th>Motivo</th><th>Participantes</th><th>Estado</th><th>Ação</th></tr></thead><tbody>${rows||'<tr><td colspan="5">Nenhuma solicitação.</td></tr>'}</tbody></table></div>`;
+ const el=document.getElementById('main-content'),pastor=session.tipo==='pastor';
+ const {data,error}=await admsSupabase.from('gabinete_pastoral').select('*').order('created_at',{ascending:false});
+ if(error){el.innerHTML='<div class="card"><h2>Gabinete Pastoral</h2><p>Não foi possível carregar os pedidos.</p></div>';return}
+ const form=pastor?'':`<div class="card gabinete-editavel"><h3>Solicitar reunião de gabinete com o Pastor Local</h3><p>Pedido confidencial.</p><div class="form-row"><div><label>Data</label><input id="gab-data" type="date"></div><div><label>Horário</label><input id="gab-hora" type="time"></div></div><label>Motivo</label><textarea id="gab-motivo"></textarea><label>Participantes</label><input id="gab-participantes"><div class="form-row"><div><label>Contacto</label><input id="gab-contacto"></div><div><label>Email</label><input id="gab-email" type="email"></div></div><button class="btn btn-red" onclick="enviarPedidoGabinete()">Enviar solicitação</button></div>`;
+ const rows=(data||[]).map(x=>`<tr><td>${formatDate(x.data_solicitada)} ${String(x.horario_solicitado).slice(0,5)}</td><td>${x.motivo}</td><td>${x.participantes}</td><td>${x.status}</td><td>${pastor?`<button class="btn btn-outline" onclick="decidirGabinete('${x.id}','aprovar')">Aprovar</button> <button class="btn btn-outline" onclick="decidirGabinete('${x.id}','reagendar')">Reagendar</button> <button class="btn btn-outline" onclick="decidirGabinete('${x.id}','reprovar')">Reprovar</button>`:'—'}</td></tr>`).join('');
+ el.innerHTML=`<div class="topbar"><div><div class="breadcrumb">Cuidado Pastoral</div><h1>${pastor?'Gabinete Pastoral':'Reunião com o Pastor'}</h1></div></div>${ruleDivider()}${form}<div class="card"><table><thead><tr><th>Data</th><th>Motivo</th><th>Participantes</th><th>Estado</th><th>Ação</th></tr></thead><tbody>${rows||'<tr><td colspan="5">Nenhum pedido.</td></tr>'}</tbody></table></div>`;
 }
-async function enviarPedidoGabinete(){
- const v=id=>document.getElementById(id)?.value?.trim()||'';
- const data_solicitada=v('gab-data'),horario_solicitado=v('gab-hora'),motivo=v('gab-motivo'),participantes=v('gab-participantes'),contacto=v('gab-contacto'),email=v('gab-email'),observacoes=v('gab-obs');
- if(!data_solicitada||!horario_solicitado||!motivo||!participantes||!contacto||!email){showToast('Preencha todos os campos obrigatórios.');return}
- const {data:{user}}=await admsSupabase.auth.getUser();
- const {error}=await admsSupabase.from('gabinete_pastoral').insert({solicitante_id:user.id,data_solicitada,horario_solicitado,motivo,participantes,contacto,email,observacoes});
- if(error){showToast('Não foi possível enviar a solicitação.');return}
- showToast('Solicitação enviada ao Pastor Local.'); renderGabinetePastoral();
-}
-async function decidirGabinete(id,acao){
- const {data:{user}}=await admsSupabase.auth.getUser(); const patch={decisao_por:user.id,decisao_em:new Date().toISOString()};
- if(acao==='reprovar'){const m=prompt('Motivo da reprovação:');if(!m)return;patch.status='reprovada';patch.motivo_reprovacao=m}
- else{const d=prompt('Data da reunião (AAAA-MM-DD):');if(!d)return;const h=prompt('Horário (HH:MM):');if(!h)return;patch.data_agendada=d;patch.horario_agendado=h;patch.status=acao==='aprovar'?'aprovada':'reagendada'}
- const {error}=await admsSupabase.from('gabinete_pastoral').update(patch).eq('id',id);
- if(error){showToast('Não foi possível atualizar a solicitação.');return}
- showToast('Solicitação atualizada.'); renderGabinetePastoral();
+async function enviarPedidoGabinete(){const v=id=>document.getElementById(id)?.value?.trim()||'';const {data:{user}}=await admsSupabase.auth.getUser();const row={solicitante_id:user.id,data_solicitada:v('gab-data'),horario_solicitado:v('gab-hora'),motivo:v('gab-motivo'),participantes:v('gab-participantes'),contacto:v('gab-contacto'),email:v('gab-email')};if(Object.values(row).some(x=>!x)){showToast('Preencha todos os campos.');return}const {error}=await admsSupabase.from('gabinete_pastoral').insert(row);if(error){showToast('Falha ao enviar.');return}showToast('Solicitação enviada.');renderGabinetePastoral()}
+async function decidirGabinete(id,a){const {data:{user}}=await admsSupabase.auth.getUser();let p={decisao_por:user.id,decisao_em:new Date().toISOString()};if(a==='reprovar'){let m=prompt('Motivo da reprovação:');if(!m)return;p.status='reprovada';p.motivo_reprovacao=m}else{let d=prompt('Data (AAAA-MM-DD):');if(!d)return;let h=prompt('Horário (HH:MM):');if(!h)return;p.data_agendada=d;p.horario_agendado=h;p.status=a==='aprovar'?'aprovada':'reagendada'}const {error}=await admsSupabase.from('gabinete_pastoral').update(p).eq('id',id);if(error){showToast('Falha ao atualizar.');return}renderGabinetePastoral()}
+async function renderSolicitacoesAcesso(){
+ const box=document.getElementById('solicitacoes-acesso-lista');if(!box||!admsSupabase)return;
+ const {data,error}=await admsSupabase.from('solicitacoes_acesso').select('*').order('created_at',{ascending:false});
+ if(error){box.textContent='Não foi possível carregar as solicitações.';return}
+ box.innerHTML=(data||[]).map(x=>`<div style="padding:12px 0;border-bottom:1px solid var(--line)"><b>${x.nome_completo}</b> · ${x.email}<br><small>${x.contacto} · ${formatDate(x.data_nascimento)} · ${x.status}</small></div>`).join('')||'<p>Nenhuma solicitação.</p>';
 }
 
 </script>
