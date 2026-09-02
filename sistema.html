@@ -578,6 +578,13 @@ async function admsIniciarEstadoRealtime(){
 
 window.addEventListener('online',()=>{ admsCarregarMembrosCloud(); admsCarregarEstadoCloud({bootstrap:false}); admsIniciarRealtime(); admsIniciarEstadoRealtime(); });
 </script>
+
+<style id="adms-permission-fixes">
+.member-view #main-content input,.member-view #main-content textarea,.member-view #main-content select{pointer-events:none}
+.member-view #main-content button.btn-red,.member-view #main-content button.btn-primary{display:none}
+.member-view #main-content .gabinete-editavel input,.member-view #main-content .gabinete-editavel textarea,.member-view #main-content .gabinete-editavel select{pointer-events:auto}
+.member-view #main-content .gabinete-editavel button{display:inline-flex}
+</style>
 </head>
 <body>
 
@@ -1647,8 +1654,8 @@ function ruleDivider(){
    RENDER MODULE ROUTER
 ========================================================= */
 function renderModule(){
-  if(currentModule==='gabinete'){ renderGabinetePastoral(); return; }
-  
+  if(currentModule==='gabinete'){renderGabinetePastoral();return;}
+
   const el = document.getElementById('main-content');
   if(currentModule==='meu-perfil') return el.innerHTML = viewMeuPerfil();
   if(currentModule==='eventos'){ el.innerHTML = viewEventos(); return; }
@@ -2176,14 +2183,18 @@ function viewRH(){
           <select id="rh-dept"><option value="—">—</option>${DEPARTMENTS.map(d=>`<option>${d.nome}</option>`).join('')}</select>
         </div>
       </div>
-      <div id="rh-lideranca-fields" class="form-row">
-        <div><label>É líder?</label><select id="rh-e-lider" onchange="admsToggleLideranca()"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
-        <div id="rh-lider-dept-wrap" style="display:none"><label>Departamento que lidera</label><select id="rh-lider-dept"><option value="">Selecione...</option>${DEPARTMENTS.map(d=>`<option value="${d.id||d.nome}">${d.nome}</option>`).join('')}</select></div>
+      <div id="rh-lideranca-box">
+        <div class="signature-rule" style="margin:18px 0 12px"><span style="font-size:11.5px;font-weight:700;color:var(--royal-dark);text-transform:uppercase;letter-spacing:.5px">Liderança</span></div>
+        <div class="form-row">
+          <div><label>É líder?</label><select id="rh-e-lider" onchange="admsToggleLideranca()"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
+          <div id="rh-lider-dept-wrap" style="display:none"><label>Departamento que lidera</label><select id="rh-lider-dept"><option value="">Selecione...</option>${DEPARTMENTS.map(d=>`<option value="${d.id||d.nome}">${d.nome}</option>`).join('')}</select></div>
+        </div>
+        <div id="rh-lider-datas" class="form-row" style="display:none">
+          <div><label>Data de início</label><input id="rh-lider-inicio" type="date"></div>
+          <div><label>Atual</label><select id="rh-lider-atual" onchange="admsToggleLiderAtual()"><option value="sim">Sim</option><option value="nao">Não</option></select></div>
+          <div id="rh-lider-fim-wrap" style="display:none"><label>Data de fim</label><input id="rh-lider-fim" type="date"></div>
+        </div>
       </div>
-      <div id="rh-lider-datas" class="form-row" style="display:none">
-        <div><label>Data de início</label><input id="rh-lider-inicio" type="date"></div>
-        <div><label>Atual</label><select id="rh-lider-atual" onchange="admsToggleLiderAtual()"><option value="sim">Sim</option><option value="nao">Não</option></select></div>
-        <div id="rh-lider-fim-wrap" style="display:none"><label>Data de fim</label><input id="rh-lider-fim" type="date"></div>
         </div>
       </div>
 
@@ -4785,55 +4796,53 @@ function aoMudarDepartamentoLogin(){
   const wrap=document.getElementById('login-lider-wrap'); if(wrap) wrap.style.display='none';
 }
 
+function admsModuloPermitido(mod){
+  if(!session) return false;
+  const membro=['dashboard','escalas','celulas','celula-detalhe','kids','ebd','ebd-turma','eventos','avisos','gabinete'];
+  const bloqueadoLider=['rh','financeiro','contas-pagar','contas-receber','orcamento','patrimonio','acessos','gestao-acessos','solicitacoes-acesso','auditoria','registo-atividade','novos-contactos','relatorios'];
+  if(session.tipo==='consulta'||session.tipo==='membro') return membro.includes(mod);
+  if(session.tipo==='lider') return !bloqueadoLider.includes(mod);
+  return true;
+}
+
+
 function admsToggleLideranca(){
- const sim=document.getElementById('rh-e-lider')?.value==='sim';
- const w=document.getElementById('rh-lider-dept-wrap'),d=document.getElementById('rh-lider-datas');
- if(w)w.style.display=sim?'block':'none'; if(d)d.style.display=sim?'grid':'none';
+  const sim=document.getElementById('rh-e-lider')?.value==='sim';
+  const a=document.getElementById('rh-lider-dept-wrap'),b=document.getElementById('rh-lider-datas');
+  if(a)a.style.display=sim?'block':'none';
+  if(b)b.style.display=sim?'grid':'none';
 }
 function admsToggleLiderAtual(){
- const atual=document.getElementById('rh-lider-atual')?.value==='sim';
- const w=document.getElementById('rh-lider-fim-wrap'); if(w)w.style.display=atual?'none':'block';
-}
-async function admsSalvarLiderancaMembro(membroId){
- const el=document.getElementById('rh-e-lider'); if(!el||!membroId||!window.admsSupabase)return;
- const sim=el.value==='sim';
- if(!sim)return;
- const departamento_id=document.getElementById('rh-lider-dept')?.value||'';
- const data_inicio=document.getElementById('rh-lider-inicio')?.value||'';
- const atual=document.getElementById('rh-lider-atual')?.value!=='nao';
- const data_fim=atual?null:(document.getElementById('rh-lider-fim')?.value||null);
- if(!departamento_id||!data_inicio){showToast('Informe o departamento e a data de início da liderança.');return}
- if(!atual&&!data_fim){showToast('Informe a data de fim da liderança.');return}
- const {data:{user}}=await admsSupabase.auth.getUser();
- const {error}=await admsSupabase.from('membro_liderancas').insert({membro_id:membroId,departamento_id,data_inicio,atual,data_fim,created_by:user?.id||null,updated_by:user?.id||null});
- if(error)showToast('Cadastro salvo, mas não foi possível registrar a liderança.');
-}
-async function admsHistoricoLideranca(membroId){
- if(!window.admsSupabase)return '';
- const {data}=await admsSupabase.from('membro_liderancas').select('*').eq('membro_id',membroId).order('data_inicio',{ascending:false});
- if(!data?.length)return '<p class="muted">Sem histórico de liderança.</p>';
- return '<div class="card"><h3>Histórico de Liderança</h3>'+data.map(x=>`<p><b>${x.departamento_id}</b> — ${formatDate(x.data_inicio)} a ${x.atual?'<b>Atual</b>':formatDate(x.data_fim)}</p>`).join('')+'</div>';
+  const atual=document.getElementById('rh-lider-atual')?.value==='sim';
+  const f=document.getElementById('rh-lider-fim-wrap');
+  if(f)f.style.display=atual?'none':'block';
 }
 async function renderGabinetePastoral(){
- const host=document.getElementById('main-content')||document.getElementById('content-area'); if(!host||!window.admsSupabase)return;
- const pastor=session?.tipo==='pastor';
- const {data,error}=await admsSupabase.from('gabinete_pastoral').select('*').order('created_at',{ascending:false});
- if(error){host.innerHTML='<div class="card"><h2>Gabinete Pastoral</h2><p>Não foi possível carregar os pedidos.</p></div>';return}
- const form=pastor?'':`<div class="card"><h2>Solicitar Reunião com o Pastor</h2><p>O conteúdo deste pedido é confidencial.</p><div class="form-row"><div><label>Data pretendida</label><input id="gab-data" type="date"></div><div><label>Horário</label><input id="gab-hora" type="time"></div></div><label>Motivo</label><textarea id="gab-motivo"></textarea><label>Participantes</label><input id="gab-participantes"><div class="form-row"><div><label>Contacto</label><input id="gab-contacto"></div><div><label>Email</label><input id="gab-email" type="email"></div></div><label>Observações</label><textarea id="gab-obs"></textarea><button class="btn btn-red" onclick="enviarPedidoGabinete()">Enviar solicitação</button></div>`;
- const rows=(data||[]).map(x=>`<tr><td>${formatDate(x.data_solicitada)} ${String(x.horario_solicitado).slice(0,5)}</td><td>${x.motivo}</td><td>${x.participantes}</td><td>${x.status}${x.data_agendada?`<br><small>${formatDate(x.data_agendada)} ${String(x.horario_agendado||'').slice(0,5)}</small>`:''}</td><td>${pastor&&['pendente','reagendada'].includes(x.status)?`<button class="btn btn-red" onclick="decidirGabinete('${x.id}','aprovar')">Aprovar</button> <button class="btn btn-outline" onclick="decidirGabinete('${x.id}','reagendar')">Reagendar</button> <button class="btn btn-outline" onclick="decidirGabinete('${x.id}','reprovar')">Reprovar</button>`:'—'}</td></tr>`).join('');
- host.innerHTML=`<div class="page-header"><div><h1>${pastor?'Gabinete Pastoral':'Reunião com o Pastor'}</h1><p>${pastor?'Gestão confidencial das solicitações pastorais.':'Solicite e acompanhe a sua reunião pastoral.'}</p></div></div>${form}<div class="card"><table><thead><tr><th>Data</th><th>Motivo</th><th>Participantes</th><th>Estado</th><th>Ação</th></tr></thead><tbody>${rows||'<tr><td colspan="5">Nenhum pedido.</td></tr>'}</tbody></table></div>`;
+  const host=document.getElementById('main-content')||document.getElementById('content-area');
+  if(!host||!window.admsSupabase)return;
+  const pastor=session?.tipo==='pastor';
+  const {data,error}=await admsSupabase.from('gabinete_pastoral').select('*').order('created_at',{ascending:false});
+  if(error){host.innerHTML='<div class="card"><h2>Gabinete Pastoral</h2><p>Não foi possível carregar os pedidos.</p></div>';return}
+  const form=pastor?'':`<div class="card gabinete-editavel"><h2>Solicitar reunião de gabinete com o Pastor Local</h2><p>As informações desta solicitação são confidenciais.</p><div class="form-row"><div><label>Data pretendida</label><input id="gab-data" type="date"></div><div><label>Horário pretendido</label><input id="gab-hora" type="time"></div></div><label>Motivo</label><textarea id="gab-motivo"></textarea><label>Participantes</label><input id="gab-participantes"><div class="form-row"><div><label>Contacto</label><input id="gab-contacto"></div><div><label>E-mail</label><input id="gab-email" type="email"></div></div><label>Observações (opcional)</label><textarea id="gab-obs"></textarea><button class="btn btn-red" onclick="enviarPedidoGabinete()">Enviar solicitação</button></div>`;
+  const rows=(data||[]).map(x=>`<tr><td>${formatDate(x.data_solicitada)}<br>${String(x.horario_solicitado).slice(0,5)}</td><td>${x.motivo}</td><td>${x.participantes}</td><td>${x.status}${x.data_agendada?`<br><small>${formatDate(x.data_agendada)} ${String(x.horario_agendado||'').slice(0,5)}</small>`:''}</td><td>${pastor&&['pendente','reagendada'].includes(x.status)?`<button class="btn btn-red" onclick="decidirGabinete('${x.id}','aprovar')">Aprovar</button> <button class="btn btn-outline" onclick="decidirGabinete('${x.id}','reagendar')">Reagendar</button> <button class="btn btn-outline" onclick="decidirGabinete('${x.id}','reprovar')">Reprovar</button>`:'—'}</td></tr>`).join('');
+  host.innerHTML=`<div class="page-header"><div><h1>${pastor?'Gabinete Pastoral':'Reunião com o Pastor'}</h1><p>${pastor?'Solicitações confidenciais de atendimento pastoral.':'Solicite e acompanhe a sua reunião com o Pastor Local.'}</p></div></div>${form}<div class="card"><table><thead><tr><th>Data</th><th>Motivo</th><th>Participantes</th><th>Estado</th><th>Ação</th></tr></thead><tbody>${rows||'<tr><td colspan="5">Nenhuma solicitação.</td></tr>'}</tbody></table></div>`;
 }
 async function enviarPedidoGabinete(){
- const ids=x=>document.getElementById(x); const data_solicitada=ids('gab-data')?.value,horario_solicitado=ids('gab-hora')?.value,motivo=ids('gab-motivo')?.value.trim(),participantes=ids('gab-participantes')?.value.trim(),contacto=ids('gab-contacto')?.value.trim(),email=ids('gab-email')?.value.trim(),observacoes=ids('gab-obs')?.value.trim();
+ const v=id=>document.getElementById(id)?.value?.trim()||'';
+ const data_solicitada=v('gab-data'),horario_solicitado=v('gab-hora'),motivo=v('gab-motivo'),participantes=v('gab-participantes'),contacto=v('gab-contacto'),email=v('gab-email'),observacoes=v('gab-obs');
  if(!data_solicitada||!horario_solicitado||!motivo||!participantes||!contacto||!email){showToast('Preencha todos os campos obrigatórios.');return}
- const {data:{user}}=await admsSupabase.auth.getUser(); const {error}=await admsSupabase.from('gabinete_pastoral').insert({solicitante_id:user.id,data_solicitada,horario_solicitado,motivo,participantes,contacto,email,observacoes});
- if(error){showToast('Não foi possível enviar a solicitação.');return} showToast('Solicitação enviada ao Pastor.');renderGabinetePastoral();
+ const {data:{user}}=await admsSupabase.auth.getUser();
+ const {error}=await admsSupabase.from('gabinete_pastoral').insert({solicitante_id:user.id,data_solicitada,horario_solicitado,motivo,participantes,contacto,email,observacoes});
+ if(error){showToast('Não foi possível enviar a solicitação.');return}
+ showToast('Solicitação enviada ao Pastor Local.'); renderGabinetePastoral();
 }
 async function decidirGabinete(id,acao){
- const patch={decisao_em:new Date().toISOString()}; const {data:{user}}=await admsSupabase.auth.getUser();patch.decisao_por=user.id;
- if(acao==='reprovar'){const motivo_reprovacao=prompt('Motivo da reprovação:');if(!motivo_reprovacao)return;patch.status='reprovada';patch.motivo_reprovacao=motivo_reprovacao}
- else {const data_agendada=prompt('Data (AAAA-MM-DD):');if(!data_agendada)return;const horario_agendado=prompt('Horário (HH:MM):');if(!horario_agendado)return;patch.data_agendada=data_agendada;patch.horario_agendado=horario_agendado;patch.status=acao==='aprovar'?'aprovada':'reagendada'}
- const {error}=await admsSupabase.from('gabinete_pastoral').update(patch).eq('id',id); if(error){showToast('Não foi possível atualizar.');return}showToast('Pedido atualizado.');renderGabinetePastoral();
+ const {data:{user}}=await admsSupabase.auth.getUser(); const patch={decisao_por:user.id,decisao_em:new Date().toISOString()};
+ if(acao==='reprovar'){const m=prompt('Motivo da reprovação:');if(!m)return;patch.status='reprovada';patch.motivo_reprovacao=m}
+ else{const d=prompt('Data da reunião (AAAA-MM-DD):');if(!d)return;const h=prompt('Horário (HH:MM):');if(!h)return;patch.data_agendada=d;patch.horario_agendado=h;patch.status=acao==='aprovar'?'aprovada':'reagendada'}
+ const {error}=await admsSupabase.from('gabinete_pastoral').update(patch).eq('id',id);
+ if(error){showToast('Não foi possível atualizar a solicitação.');return}
+ showToast('Solicitação atualizada.'); renderGabinetePastoral();
 }
 
 </script>
