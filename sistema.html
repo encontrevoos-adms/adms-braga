@@ -1577,7 +1577,7 @@ function renderShell(){
   const membro=session.tipo==='membro'||session.tipo==='consulta';
   const lider=session.tipo==='lider';
   let nav='<div class="nav-group-label">Geral</div>';
-  nav+=navItem('dashboard','dashboard','Página Inicial',true);
+  nav+=navItem('home','dashboard','Página Inicial',true);
 
   if(membro){
     nav+='<div class="nav-group-label">Igreja</div>';
@@ -1599,6 +1599,7 @@ function renderShell(){
     nav+=navItem('avisos','megaphone','Avisos e Comunicados',true);
     nav+=navItem('gabinete','rh','Solicitar Reunião com o Pastor',true);
   }else{
+    nav+=navItem('dashboard','dashboard','Painel Administrativo',true);
     nav+='<div class="nav-group-label">Gestão da Igreja</div>';
     nav+=navItem('patrimonio','patrimonio','Património',canAccessPatrimonio());
     nav+=navItem('rh','rh','Recursos Humanos',canAccessRH());
@@ -1647,8 +1648,9 @@ function ruleDivider(){
    RENDER MODULE ROUTER
 ========================================================= */
 function renderModule(){
-  if(currentModule==='gabinete'){renderGabinetePastoral();return;}
   const el = document.getElementById('main-content');
+  if(currentModule==='home') return el.innerHTML=viewChurchHome();
+  if(currentModule==='gabinete'){renderGabinetePastoral();return;}
   if(currentModule==='meu-perfil') return el.innerHTML = viewMeuPerfil();
   if(currentModule==='eventos'){ el.innerHTML = viewEventos(); return; }
   if(currentModule==='dashboard') return el.innerHTML = ((session.tipo==='membro'||session.tipo==='consulta')?viewMemberHome():viewDashboard());
@@ -1862,6 +1864,29 @@ function alertasVencimentoHTML(){
   `;
 }
 
+
+
+function viewChurchHome(){
+ const nome=((session&&session.label)||'').trim().split(/\s+/)[0]||'Irmão(ã)';
+ const hoje=new Date(), dd=String(hoje.getDate()).padStart(2,'0'), mm=String(hoje.getMonth()+1).padStart(2,'0');
+ let anivers=[];
+ try{
+   anivers=(PESSOAS.membros||[]).filter(p=>{
+     const d=(p.dataNascimento||p.nascimento||'').toString();
+     if(!d)return false;
+     const parts=d.includes('-')?d.split('-'):[];
+     return parts.length===3 && parts[1]===mm && parts[2]===dd;
+   });
+ }catch(e){}
+ return `<div class="topbar"><div><div class="breadcrumb">Página Inicial</div><h1>A Paz do Senhor Jesus!<br>Seja Bem vindo, ${nome}!</h1><p style="color:var(--ink-soft);margin-top:8px">ADMS Braga — uma igreja para viver a Palavra, servir e crescer em comunhão.</p></div><span class="access-pill">${ICON.acesso||''} ${roleLabel()}</span></div>
+ ${ruleDivider()}
+ <div class="grid grid-2">
+  <div class="card"><h3>Vídeo da Semana</h3><div style="aspect-ratio:16/9;border-radius:12px;background:var(--surface-2,#eef1f8);display:flex;align-items:center;justify-content:center;margin-top:12px"><span style="color:var(--ink-soft)">Vídeo da Semana</span></div></div>
+  <div class="card"><h3>Devocional Diário</h3><p style="color:var(--ink-soft);line-height:1.7">Uma palavra para fortalecer a sua caminhada com Deus. O conteúdo poderá ser atualizado pela liderança responsável.</p></div>
+  <div class="card"><h3>Versículo do Dia</h3><p style="color:var(--ink-soft);line-height:1.7">A Palavra de Deus para meditação e edificação durante o dia.</p></div>
+  <div class="card"><h3>Aniversariante do Dia</h3>${anivers.length?anivers.map(p=>`<p><b>${p.nome}</b><br><span style="color:var(--ink-soft)">Este é o dia que fez o Senhor; regozijemo-nos e alegremo-nos nele. — Salmos 118:24</span></p>`).join(''):'<p style="color:var(--ink-soft)">Nenhum aniversariante registado para hoje.</p>'}</div>
+ </div>`;
+}
 
 function viewMemberHome(){
  const nome=((session&&session.label)||'').trim().split(/\s+/)[0]||'Irmão(ã)';
@@ -4514,8 +4539,11 @@ function admsSessaoDoPerfil(profile){
   const role = profile.role;
   const depts = Array.isArray(profile.dept_ids) ? profile.dept_ids : [];
   if(role==='master'){
-    const tes = /tesour/i.test(profile.cargo||'');
-    return {tipo: tes?'tesoureiro':'pastor', entityKey:tes?'master_tesoureiro':'master_pastor', label:profile.nome||profile.cargo||'Administração', deptIds:depts, liderId:null, cloud:true};
+    const cargo=(profile.cargo||'').toLowerCase();
+    if(/secretar/.test(cargo)) return {tipo:'secretaria',entityKey:'master_secretaria',label:profile.nome||'Secretaria',deptIds:depts,liderId:null,cloud:true};
+    if(/tesour/.test(cargo)) return {tipo:'tesoureiro',entityKey:'master_tesoureiro',label:profile.nome||'Tesouraria',deptIds:depts,liderId:null,cloud:true};
+    if(/pastor/.test(cargo)) return {tipo:'pastor',entityKey:'master_pastor',label:profile.nome||'Pastoral',deptIds:depts,liderId:null,cloud:true};
+    return {tipo:'secretaria',entityKey:'master_secretaria',label:profile.nome||'Administração',deptIds:depts,liderId:null,cloud:true};
   }
   if(role==='pastor') return {tipo:'pastor',entityKey:'master_pastor',label:profile.nome||'Pastoral',deptIds:depts,liderId:null,cloud:true};
   if(role==='tesouraria') return {tipo:'tesoureiro',entityKey:'master_tesoureiro',label:profile.nome||'Tesouraria',deptIds:depts,liderId:null,cloud:true};
@@ -4580,7 +4608,7 @@ async function finalizeLogin(){
   if(!profile){ const atual=await admsPerfilAtual(); if(!atual) return false; profile=atual.profile; admsCloudProfile=profile; }
   session=admsSessaoDoPerfil(profile);
   pendingLoginKey=null; pendingLoginLeaderId=null; currentProfileRef=null;
-  currentModule='dashboard';
+  currentModule='home';
   document.getElementById('login-screen').style.display='none';
   document.getElementById('app-screen').style.display='block';
   await admsCarregarMembrosCloud();
@@ -4633,7 +4661,13 @@ if(paramsUrl.get('form') === 'cadastro'){
   document.getElementById('cadastro-screen').style.display = 'block';
   renderCadastroForm();
 } else {
-  tentarRestaurarSessao(); // Supabase Auth restaura/renova a sessão persistente
+  (async()=>{
+    try{ await admsSupabase.auth.signOut(); }catch(e){}
+    session=null; admsCloudProfile=null;
+    document.getElementById('app-screen').style.display='none';
+    document.getElementById('login-screen').style.display='flex';
+    document.getElementById('step-credentials').style.display='block';
+  })();
 }
 
 // Regista o service worker — permite instalar como aplicação e abrir mesmo sem internet.
