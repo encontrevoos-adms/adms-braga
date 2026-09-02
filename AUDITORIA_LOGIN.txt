@@ -1,0 +1,21 @@
+AUDITORIA DA TELA DE LOGIN — ADMS BRAGA v3
+
+Requisitos solicitados:
+- Master entra com identificador 'usuáriomaster', sem e-mail.
+- A palavra-passe Master deve ser validada no backend, nunca exposta no HTML.
+- Demais utilizadores entram com e-mail/palavra-passe.
+- Link 'Solicitar acesso ao sistema'.
+- Todas as solicitações seguem para o Master.
+- Master define o nível de acesso.
+- Distinção entre Líder e Membro preservada.
+
+Estado do sistema.html herdado da versão atual:
+Solicitar acesso: False
+Master alias usuáriomaster: False
+Passe Master solicitada: False
+Login exige departamento: True
+Login Supabase por email: True
+
+CONCLUSÃO:
+A tela de login atual AINDA NÃO ESTÁ conforme a arquitetura Master solicitada.
+Não foi falsamente marcada como concluída nesta versão.
