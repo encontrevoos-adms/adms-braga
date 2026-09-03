@@ -2460,7 +2460,9 @@ async function addPessoa(){
   logAction('sistema',edit?.modo==='converter'?'Conversão para membro':edit?.modo==='editar'?'Perfil atualizado':'Novo cadastro',`${nome} — ${tipo}`);
   RH_EDIT_STATE=null; showToast(msg); renderModule();
 }
+let RH_ACTIVE_TAB='membros';
 function setRHTab(tab, el){
+  RH_ACTIVE_TAB=tab;
   document.querySelectorAll('#rh-tabs .tab').forEach(t=>t.classList.remove('active'));
   el.classList.add('active');
   renderRHTable(tab);
@@ -2469,11 +2471,15 @@ function renderRHTable(tab){
   const data = PESSOAS[tab];
   document.getElementById('rh-tab-content').innerHTML = `
     <div class="card">
+      <div class="search-filter-bar" style="margin-bottom:14px;">
+        <input id="rh-pesquisa" type="search" placeholder="Pesquisar por nome, contacto, email ou departamento" oninput="filtrarRHTable()" aria-label="Pesquisar pessoas">
+      </div>
+      <div id="rh-lista-pessoas">
       ${data.length ? `
       <table>
         <thead><tr><th>Nome</th><th>Contacto</th><th>${tab==='visitantes'?'Primeira visita':'Desde'}</th><th>Departamento</th><th>Estado</th><th>Ações</th></tr></thead>
         <tbody>
-          ${data.map((p,i)=>`<tr>
+          ${data.map((p,i)=>`<tr data-rh-index="${i}">
             <td style="font-weight:600;">${p.nome}</td><td>${p.contacto||'—'}</td><td>${p.desde||'—'}</td><td>${p.dept||'—'}</td>
             <td>${tab==='membros'?`<span class="tag ${p.estadoMembresia==='Ativo'?'tag-green':p.estadoMembresia==='Inativo'?'tag-gold':'tag-red'}">${p.estadoMembresia||'Ativo'}</span>`:`<span class="tag tag-blue">${tab==='congregados'?'Congregado':'Visitante'}</span>`}</td>
             <td style="display:flex;gap:10px;flex-wrap:wrap;">
@@ -2485,7 +2491,17 @@ function renderRHTable(tab){
           </tr>`).join('')}
         </tbody>
       </table>` : `<div class="empty-state"><p>Ainda sem registos nesta categoria.</p></div>`}
+      </div>
     </div>`;
+}
+function filtrarRHTable(){
+  const termo=(document.getElementById('rh-pesquisa')?.value||'').trim().toLocaleLowerCase('pt-PT');
+  const linhas=Array.from(document.querySelectorAll('#rh-lista-pessoas tbody tr'));
+  let visiveis=0;
+  linhas.forEach(tr=>{const i=Number(tr.dataset.rhIndex),p=PESSOAS[RH_ACTIVE_TAB]?.[i]||{};const texto=[p.nome,p.contacto,p.email,p.dept,p.estadoMembresia].join(' ').toLocaleLowerCase('pt-PT');const ok=!termo||texto.includes(termo);tr.style.display=ok?'':'none';if(ok)visiveis++;});
+  let vazio=document.getElementById('rh-pesquisa-vazia');
+  if(!vazio){vazio=document.createElement('div');vazio.id='rh-pesquisa-vazia';vazio.className='empty-state';vazio.innerHTML='<p>Nenhuma pessoa corresponde à pesquisa.</p>';document.getElementById('rh-lista-pessoas')?.appendChild(vazio);}
+  vazio.style.display=linhas.length&&visiveis===0?'block':'none';
 }
 
 function openMemberModal(index){ openPessoaModal('membros',index); }
@@ -2590,7 +2606,7 @@ function viewFinanceiro(){
   return `
     <div class="topbar">
       <div><div class="breadcrumb">Gestão da Igreja</div><h1>Financeiro</h1></div>
-      <span class="access-pill">${ICON.financeiro} Restrito · Pastor Sénior / Tesoureiro</span>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="btn btn-outline" onclick="abrirRelatorioTipo('financeiro')">Imprimir relatório</button><span class="access-pill">${ICON.financeiro} Restrito · Pastor Sénior / Tesoureiro</span></div>
     </div>
     ${ruleDivider()}
     <div class="grid grid-3">
@@ -2721,7 +2737,7 @@ function viewContasPagar(){
   return `
     <div class="topbar">
       <div><div class="breadcrumb">Gestão da Igreja</div><h1>Contas a Pagar</h1></div>
-      <span class="access-pill">${ICON.payable} Restrito · Pastor Sénior / Tesoureiro</span>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="btn btn-outline" onclick="abrirRelatorioTipo('contas-pagar')">Imprimir relatório</button><span class="access-pill">${ICON.payable} Restrito · Pastor Sénior / Tesoureiro</span></div>
     </div>
     ${ruleDivider()}
     <div class="grid grid-3" id="cp-stats"></div>
@@ -2837,7 +2853,7 @@ function viewContasReceber(){
   return `
     <div class="topbar">
       <div><div class="breadcrumb">Gestão da Igreja</div><h1>Contas a Receber</h1></div>
-      <span class="access-pill">${ICON.receivable} Restrito · Pastor Sénior / Tesoureiro</span>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="btn btn-outline" onclick="abrirRelatorioTipo('contas-receber')">Imprimir relatório</button><span class="access-pill">${ICON.receivable} Restrito · Pastor Sénior / Tesoureiro</span></div>
     </div>
     ${ruleDivider()}
     <div class="grid grid-3" id="cr-stats"></div>
@@ -3961,11 +3977,11 @@ function addEscala(){
 /* ================= AVISOS E COMUNICADOS ================= */
 function viewAvisos(){
   const meusDepts = session.tipo==='lider' ? session.deptIds : [];
-  const visiveis = AVISOS.filter(a => isMaster() || a.publico==='Todos' || meusDepts.includes(a.publico))
+  const visiveis = AVISOS.filter(avisoVisivelParaSessao)
                           .slice().sort((a,b)=>b.data.localeCompare(a.data));
   const opcoesPublico = isMaster()
-    ? `<option value="Todos">Toda a igreja</option>${DEPARTMENTS.filter(d=>!d.restrito).map(d=>`<option value="${d.id}">${d.nome}</option>`).join('')}`
-    : `<option value="Todos">Toda a igreja</option>${session.deptIds.map(id=>`<option value="${id}">${deptNome(id)}</option>`).join('')}`;
+    ? `<option value="Todos">Toda a igreja</option><option value="Membros">Todos os membros</option><option value="Lideres">Todos os líderes</option>${DEPARTMENTS.filter(d=>!d.restrito).map(d=>`<option value="${d.id}">${d.nome}</option>`).join('')}`
+    : `<option value="Todos">Toda a igreja</option><option value="Lideres">Todos os líderes</option>${session.deptIds.map(id=>`<option value="${id}">${deptNome(id)}</option>`).join('')}`;
   return `
     <div class="topbar">
       <div><div class="breadcrumb">Comunicação</div><h1>Avisos e Comunicados</h1></div>
@@ -3993,13 +4009,37 @@ function viewAvisos(){
         <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px; flex-wrap:wrap;">
           <div>
             <h3 style="margin:0 0 4px 0; font-size:16px; color:var(--royal-deep);">${a.titulo}</h3>
-            <p style="margin:0; font-size:11.5px; color:var(--ink-soft);">${a.autor} · ${formatDate(a.data)} · ${a.publico==='Todos'?'Toda a igreja':deptNome(a.publico)}</p>
+            <p style="margin:0; font-size:11.5px; color:var(--ink-soft);">${a.autor} · ${formatDate(a.data)} · ${rotuloPublicoAviso(a.publico)}</p>
           </div>
           ${a.prioridade==='Importante'? `<span class="tag tag-red">Importante</span>` : `<span class="tag tag-blue">Normal</span>`}
         </div>
-        <p style="margin:8px 0 4px;font-size:11.5px;color:var(--royal-dark);font-weight:700;">${a.tipoComunicacao||'Aviso'}${a.quando?' · '+new Date(a.quando).toLocaleString('pt-PT'):''}${a.local?' · '+a.local:''}</p><p style="margin:8px 0 12px 0; font-size:13.5px; color:var(--ink); line-height:1.6;">${a.mensagem}</p>${a.link?`<p><a href="${a.link}" target="_blank" rel="noopener">Abrir link associado</a></p>`:``}${a.mediaPath?`<button class="btn btn-outline" style="margin-right:8px" onclick="abrirMediaAviso('${a.id}')">Abrir anexo</button>`:``}<button class="btn btn-outline" onclick="partilharComunicacao('${a.id}')">Enviar / Partilhar invite</button>
+        <p style="margin:8px 0 4px;font-size:11.5px;color:var(--royal-dark);font-weight:700;">${a.tipoComunicacao||'Aviso'}${a.quando?' · '+new Date(a.quando).toLocaleString('pt-PT'):''}${a.local?' · '+a.local:''}</p><p style="margin:8px 0 12px 0; font-size:13.5px; color:var(--ink); line-height:1.6;">${a.mensagem}</p>${a.link?`<p><a href="${a.link}" target="_blank" rel="noopener">Abrir link associado</a></p>`:``}${a.mediaPath?`<button class="btn btn-outline" style="margin-right:8px" onclick="abrirMediaAviso('${a.id}')">Abrir anexo</button>`:``}<button class="btn btn-outline" style="margin-right:8px" onclick="partilharComunicacao('${a.id}')">Partilhar invite</button><button class="btn btn-outline" onclick="enviarComunicacaoEmail('${a.id}')">Enviar por email</button>
       </div>`).join('') : `<div class="card empty-state"><p>Sem avisos publicados no momento.</p></div>`}
   `;
+}
+function rotuloPublicoAviso(publico){return publico==='Todos'?'Toda a igreja':publico==='Membros'?'Todos os membros':publico==='Lideres'?'Todos os líderes':deptNome(publico);}
+function avisoVisivelParaSessao(a){
+  if(isMaster())return true;
+  if(a.publico==='Todos')return true;
+  if(session.tipo==='membro')return a.publico==='Membros';
+  if(session.tipo==='lider')return a.publico==='Lideres'||session.deptIds.includes(a.publico);
+  return (session.deptIds||[]).includes(a.publico);
+}
+function emailsDestinatariosAviso(a){
+  let pessoas=[];
+  if(a.publico==='Todos'||a.publico==='Membros')pessoas=PESSOAS.membros||[];
+  else if(a.publico==='Lideres')pessoas=(LEADERS||[]);
+  else pessoas=(PESSOAS.membros||[]).filter(p=>p.dept===deptNome(a.publico)||p.dept===a.publico);
+  return [...new Set(pessoas.map(p=>String(p.email||p.login||'').trim().toLowerCase()).filter(Boolean).filter(emailValido))];
+}
+function enviarComunicacaoEmail(id){
+  const a=AVISOS.find(x=>x.id===id);if(!a)return;
+  const emails=emailsDestinatariosAviso(a);
+  if(!emails.length){showToast('Não existem emails cadastrados para este público.');return;}
+  const corpo=`${a.mensagem}${a.quando?'\n\nData/Hora: '+new Date(a.quando).toLocaleString('pt-PT'):''}${a.local?'\nLocal: '+a.local:''}${a.link?'\nLink: '+a.link:''}\n\nADMS Braga`;
+  const url='mailto:?bcc='+encodeURIComponent(emails.join(','))+'&subject='+encodeURIComponent((a.tipoComunicacao||'Comunicado')+' — '+a.titulo)+'&body='+encodeURIComponent(corpo);
+  if(url.length>7500){showToast('A lista é extensa. Exporte os contactos ou envie por grupos menores.');return;}
+  logAction('aviso','Envio por email preparado',`${a.titulo} — ${emails.length} destinatário(s)`);window.location.href=url;
 }
 async function postAviso(){
   const titulo = document.getElementById('av-titulo').value.trim();
@@ -4015,7 +4055,7 @@ async function postAviso(){
   const hoje = new Date().toISOString().split('T')[0];
   AVISOS.unshift({id, titulo, mensagem, autor:session.label, data:hoje, publico, prioridade,tipoComunicacao,quando,local,link,mediaPath});
   salvarEstado();
-  logAction('aviso', 'Aviso publicado', `"${titulo}" — destinado a ${publico==='Todos'?'toda a igreja':deptNome(publico)} (${prioridade}).`);
+  logAction('aviso', 'Aviso publicado', `"${titulo}" — destinado a ${rotuloPublicoAviso(publico)} (${prioridade}).`);
   showToast('Aviso publicado.');
   renderModule();
 }
@@ -4100,6 +4140,14 @@ function viewRelatorios(){
 
     ${buildDashboardRelatorios()}
   `;
+}
+function abrirRelatorioTipo(tipo){
+  goTo('relatorios');
+  const select=document.getElementById('rel-tipo');
+  if(!select)return;
+  select.value=tipo;
+  renderRelFilters();
+  document.getElementById('rel-extra-filters')?.scrollIntoView({behavior:'smooth',block:'center'});
 }
 function mesLabel(ym){
   const meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
@@ -4284,11 +4332,11 @@ function getReportData(){
     const meusDepts = session.tipo==='lider' ? session.deptIds : [];
     const deptFiltro = deptSel;
     const rows = AVISOS.filter(a=>{
-      const visivel = isMaster() || a.publico==='Todos' || meusDepts.includes(a.publico);
+      const visivel = avisoVisivelParaSessao(a);
       if(!visivel) return false;
       if(deptFiltro && deptFiltro!=='todos' && a.publico!==deptFiltro && a.publico!=='Todos') return false;
       return dentroIntervalo(a.data, ini, fim);
-    }).map(a=>[formatDate(a.data), a.titulo, a.mensagem, a.publico==='Todos'?'Toda a igreja':deptNome(a.publico), a.prioridade, a.autor]);
+    }).map(a=>[formatDate(a.data), a.titulo, a.mensagem, rotuloPublicoAviso(a.publico), a.prioridade, a.autor]);
     return {title:'Relatório de Avisos e Comunicados', headers:['Data','Título','Mensagem','Público','Prioridade','Autor'], rows};
   }
   if(tipo==='contas-pagar'){
