@@ -611,13 +611,14 @@ window.addEventListener('online',()=>{ admsCarregarMembrosCloud(); admsCarregarE
 
     <!-- PASSO 1: Departamento + Palavra-passe -->
     <div class="login-body" id="step-credentials">
-      <label>Departamento</label>
-      <select id="login-dept" onchange="aoMudarDepartamentoLogin()"></select>
+      <p id="adms-login-welcome" class="login-welcome" style="margin:0 0 20px;color:#67718b;font-size:14px;line-height:1.55;text-align:center;"><strong style="display:block;color:#071b50;font-family:Georgia,serif;font-size:24px;margin-bottom:5px;">Bem-vindo ao Portal</strong>Acesso reservado aos utilizadores autorizados da ADMS Braga.</p>
+      <label for="login-dept" style="display:none;">Departamento</label>
+      <select id="login-dept" onchange="aoMudarDepartamentoLogin()" style="display:none;"></select>
 
       <div id="login-lider-wrap" style="display:none;"></div>
 
-      <label>Email</label>
-      <input id="login-email" type="email" autocomplete="username" placeholder="Email de acesso" style="margin-bottom:10px;">
+      <label>Usuário ou e-mail</label>
+      <input id="login-email" type="text" autocomplete="username" placeholder="Usuário ou e-mail" style="margin-bottom:10px;">
       <label>Palavra-passe</label>
       <div class="pw-wrap">
         <input id="login-pass" type="password" autocomplete="current-password" placeholder="Palavra-passe">
@@ -626,7 +627,10 @@ window.addEventListener('online',()=>{ admsCarregarMembrosCloud(); admsCarregarE
 
       <div id="denied-box" class="denied-box"></div>
 
-      <button class="btn btn-primary" onclick="attemptLoginUnificado()">Entrar no sistema</button>
+      <button class="btn btn-primary" onclick="fazerLogin()">Entrar no sistema</button>
+
+      <button id="adms-forgot-link" type="button" class="adms-forgot-link" onclick="admsRecuperarSenha()">Esqueci a palavra-passe</button>
+      <button id="adms-request-link" type="button" class="adms-access-link" onclick="document.getElementById('adms-access-modal').classList.add('open')">Solicitar acesso ao sistema</button>
 
       <div class="hint-box" style="border-left-color:var(--red);">
         <strong>Utilização consciente e responsável.</strong> As informações contidas neste sistema são estritamente confidenciais e de uso interno. Não podem ser copiadas, partilhadas, fotografadas ou divulgadas por qualquer forma ou meio sem autorização expressa dos Pastores Sénior. Cada pessoa acede apenas com a sua própria palavra-passe pessoal — nunca a partilhe.
@@ -638,7 +642,7 @@ window.addEventListener('online',()=>{ admsCarregarMembrosCloud(); admsCarregarE
       <div class="hint-box" style="margin-top:0;">Este é o seu primeiro acesso. Por segurança, defina uma nova palavra-passe pessoal antes de continuar.</div>
       <label>Nova palavra-passe</label>
       <div class="pw-wrap">
-        <input id="fp-new" type="password" placeholder="Mínimo 6 caracteres">
+        <input id="fp-new" type="password" placeholder="Mínimo 8 caracteres">
         <button type="button" class="pw-toggle" onclick="togglePwVisibility('fp-new', this)" aria-label="Mostrar palavra-passe"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg></button>
       </div>
       <label>Confirmar nova palavra-passe</label>
@@ -4782,11 +4786,17 @@ if(paramsUrl.get('form') === 'cadastro'){
   renderCadastroForm();
 } else {
   (async()=>{
-    try{ await admsSupabase.auth.signOut(); }catch(e){}
-    session=null; admsCloudProfile=null;
-    document.getElementById('app-screen').style.display='none';
-    document.getElementById('login-screen').style.display='flex';
-    document.getElementById('step-credentials').style.display='block';
+    let restaurada=false;
+    try{
+      const {data}=await admsSupabase.auth.getSession();
+      if(data?.session) restaurada=await tentarRestaurarSessao();
+    }catch(e){ console.warn('Não foi possível restaurar a sessão.',e); }
+    if(!restaurada){
+      session=null; admsCloudProfile=null;
+      document.getElementById('app-screen').style.display='none';
+      document.getElementById('login-screen').style.display='flex';
+      document.getElementById('step-credentials').style.display='block';
+    }
   })();
 }
 
@@ -4853,7 +4863,9 @@ async function renderSolicitacoesAcesso(){
 
 <style id="adms-login-v4">
 #login-dept,#login-screen label[for="login-dept"]{display:none!important}
+.login-card{overflow:visible}.login-welcome{margin:0 0 20px;color:#67718b;font-size:14px;line-height:1.55;text-align:center}.login-welcome strong{display:block;color:#071b50;font-family:Georgia,serif;font-size:24px;margin-bottom:5px}
 .adms-access-link{display:block;width:100%;margin-top:12px;border:0;background:transparent;color:#d5ad45;font-weight:800;cursor:pointer;text-align:center}
+.adms-forgot-link{display:block;width:100%;margin-top:12px;border:0;background:transparent;color:#27469b;font-weight:700;cursor:pointer;text-align:center}
 #adms-access-modal{display:none;position:fixed;inset:0;z-index:99999;background:rgba(2,10,35,.78);align-items:center;justify-content:center;padding:18px}
 #adms-access-modal.open{display:flex}.adms-access-card{width:min(520px,100%);background:#fff;border-radius:20px;padding:28px;color:#17213a;box-shadow:0 25px 80px #0008}
 .adms-access-card h2{margin:0;color:#071b50;font-family:Georgia,serif;font-size:31px}.adms-access-card p{color:#667085;line-height:1.55}.adms-access-card input{margin:6px 0 10px}
@@ -4872,6 +4884,8 @@ function admsPrepararLoginV4(){
  if(user){user.type='text';user.placeholder='Usuário ou e-mail'; const lab=user.closest('div')?.querySelector('label'); if(lab)lab.textContent='Usuário ou e-mail';}
  const dept=document.getElementById('login-dept'); if(dept){dept.required=false; const box=dept.closest('.field')||dept.parentElement;if(box)box.style.display='none'}
  const area=document.getElementById('step-credentials')||document.querySelector('#login-screen form')||document.getElementById('login-screen');
+ if(area&&!document.getElementById('adms-login-welcome')){const p=document.createElement('p');p.id='adms-login-welcome';p.className='login-welcome';p.innerHTML='<strong>Bem-vindo ao Portal</strong>Acesso reservado aos utilizadores autorizados da ADMS Braga.';area.insertBefore(p,area.firstChild)}
+ if(area&&!document.getElementById('adms-forgot-link')){const f=document.createElement('button');f.id='adms-forgot-link';f.type='button';f.className='adms-forgot-link';f.textContent='Esqueci a palavra-passe';f.onclick=admsRecuperarSenha;area.appendChild(f)}
  if(area&&!document.getElementById('adms-request-link')){const b=document.createElement('button');b.id='adms-request-link';b.type='button';b.className='adms-access-link';b.textContent='Solicitar acesso ao sistema';b.onclick=()=>document.getElementById('adms-access-modal').classList.add('open');area.appendChild(b)}
 }
 function admsFecharSolicitacao(){document.getElementById('adms-access-modal').classList.remove('open')}
@@ -4883,22 +4897,45 @@ async function admsEnviarSolicitacao(){
  msg.textContent='Solicitação enviada ao Usuário Master.';
  setTimeout(admsFecharSolicitacao,1600);
 }
-const admsLoginOriginal=window.fazerLogin;
 window.fazerLogin=async function(){
  const campo=document.getElementById('login-email'),valor=(campo?.value||'').trim(),senha=(document.getElementById('login-pass')?.value||'');
+ const botao=document.querySelector('#step-credentials .btn-primary');
+ const concluir=async()=>{const atual=await admsPerfilAtual();if(!atual){await admsSupabase.auth.signOut();throw new Error('Conta sem perfil ativo ou sem autorização.')}admsCloudProfile=atual.profile;if(!atual.profile.rgpd_accepted_at){hideAllLoginSteps();document.getElementById('step-rgpd').style.display='block';return}await finalizeLogin()};
+ document.getElementById('denied-box').style.display='none';
+ if(!valor||!senha){showLoginError('Introduza o usuário ou e-mail e a palavra-passe.');return}
+ if(botao){botao.disabled=true;botao.textContent='A entrar…'}
+ try{
  if(['usuáriomaster','usuariomaster'].includes(valor.toLowerCase())){
-  try{
    const r=await fetch('https://ogbxntxfrkgllegzzwdm.supabase.co/functions/v1/login-master',{method:'POST',headers:{'Content-Type':'application/json','apikey':'sb_publishable_GB2UQqPNh28jsvlrJ7VWSg_9gkHNBOM'},body:JSON.stringify({usuario:valor,password:senha})});
    const d=await r.json(); if(!r.ok)throw new Error(d.error||'Credenciais inválidas');
    const {error}=await admsSupabase.auth.setSession({access_token:d.access_token,refresh_token:d.refresh_token});if(error)throw error;
-   if(typeof admsCarregarPerfilCloud==='function')await admsCarregarPerfilCloud();
-   location.reload(); return;
-  }catch(e){if(typeof showLoginError==='function')showLoginError(e.message||'Credenciais inválidas');return}
+   await concluir();return;
  }
- if(typeof admsLoginOriginal==='function')return admsLoginOriginal();
+ if(!emailValido(valor))throw new Error('Introduza um e-mail válido ou o usuário master.');
+ const {error}=await admsSupabase.auth.signInWithPassword({email:valor.toLowerCase(),password:senha});
+ if(error)throw new Error((error.code||'')==='email_not_confirmed'?'Este e-mail ainda não foi confirmado. Contacte a administração.':'E-mail ou palavra-passe inválidos.');
+ await concluir();
+ }catch(e){showLoginError(e.message||'Não foi possível entrar no sistema.');}
+ finally{if(botao){botao.disabled=false;botao.textContent='Entrar no sistema'}}
 };
+async function admsRecuperarSenha(){
+ const email=(document.getElementById('login-email')?.value||'').trim().toLowerCase();
+ if(!email||!emailValido(email)||['usuáriomaster','usuariomaster'].includes(email)){showLoginError('Introduza primeiro o e-mail da sua conta.');return}
+ const {error}=await admsSupabase.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname});
+ if(error){showLoginError('Não foi possível enviar a recuperação agora.');return}
+ showToast('Enviámos as instruções de recuperação para o seu e-mail.');
+}
+document.getElementById('login-pass')?.addEventListener('keydown',e=>{if(e.key==='Enter')fazerLogin()});
 setTimeout(admsPrepararLoginV4,50);
 new MutationObserver(admsPrepararLoginV4).observe(document.documentElement,{childList:true,subtree:true});
+admsSupabase?.auth.onAuthStateChange((event)=>{
+ if(event==='PASSWORD_RECOVERY'){
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('app-screen').style.display='none';
+  hideAllLoginSteps();
+  document.getElementById('step-forcepw').style.display='block';
+ }
+});
 </script>
 </body>
 </html>
