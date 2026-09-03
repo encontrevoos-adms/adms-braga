@@ -37,6 +37,9 @@
     @media(max-width:760px){:root{--header-h:72px}header{padding:0 16px}.brand img{width:52px;height:52px}.brand b{font-size:15px}.brand small{font-size:8px}.portal{display:none}.hero{padding:58px 22px 78px;gap:30px}.hero h1{font-size:49px}.hero p{font-size:17px}.hero-video-wrap{height:420px;border-radius:24px}.quick-actions{grid-template-columns:1fr;margin:-28px 18px 55px;padding:0}.section{padding:68px 22px}.story-card,.mission-card,.leadership-panel{padding:23px}.leader{grid-template-columns:1fr;padding:18px}.leader img{order:-1}.presidents{grid-template-columns:1fr 1fr}.grid3{grid-template-columns:1fr}.event{grid-template-columns:1fr;gap:7px}.event .btn{justify-self:start}.form{grid-template-columns:1fr}.form .full{grid-column:auto}.footer-grid{grid-template-columns:1fr}.mobile-menu{display:none}.actions{flex-direction:column;align-items:stretch}.actions .btn{width:100%}}
     @media(max-width:430px){.brand small{display:none}.hero h1{font-size:43px}.hero-video-wrap{height:345px}.presidents{grid-template-columns:1fr}.socials{grid-template-columns:1fr}.modal-card{padding:24px 20px}.quick-card{padding:18px}.gallery-grid{grid-auto-rows:190px;gap:9px}.gallery-item:first-child,.gallery-item:nth-child(6){grid-column:span 2}}
   </style>
+  <style>
+    .site-notices{display:grid;gap:13px}.site-notice{padding:20px 22px;border-left:4px solid var(--gold);border-radius:12px;background:#fff;box-shadow:0 8px 25px rgba(16,34,82,.06)}.site-notice h3{margin:0 0 6px;color:var(--navy)}.site-notice p{margin:0;color:var(--muted);line-height:1.6}
+  </style>
 </head>
 <body>
   <header>
@@ -61,7 +64,7 @@
 
     <section class="section alt" id="video"><div class="content-shell"><div class="section-head"><div class="eyebrow">CONTEÚDO EM DESTAQUE</div><h2 id="video-title">Vídeo da Semana</h2></div><div class="media-grid"><div class="video-frame" id="video-frame"><button class="play" type="button" aria-label="Abrir vídeo" onclick="openWeeklyVideo()">▶</button></div><div class="dark-card"><div class="eyebrow">ADMS BRAGA</div><h3 id="video-subtitle">Uma palavra para a sua semana</h3><p id="video-content">Mensagem e conteúdo especial da ADMS Braga para edificação da igreja.</p><a class="btn btn-gold" href="#redes">Ver nossos canais</a></div></div></div></section>
 
-    <section class="section" id="galeria"><div class="content-shell"><div class="section-head"><div class="eyebrow">NOSSA COMUNIDADE</div><h2>Momentos que vivemos juntos</h2><p>Registos de fé, louvor, comunhão e serviço na ADMS Braga.</p></div><div class="gallery-grid">
+    <section class="section" id="galeria"><div class="content-shell"><div class="section-head"><div class="eyebrow">NOSSA COMUNIDADE</div><h2>Momentos que vivemos juntos</h2><p>Registos de fé, louvor, comunhão e serviço na ADMS Braga.</p></div><div class="gallery-grid" id="gallery-grid">
       <button class="gallery-item" type="button" onclick="openGallery('/adms-01.webp','Momento de oração')"><img src="/adms-01.webp" alt="Momento de oração na ADMS Braga" loading="lazy"></button>
       <button class="gallery-item" type="button" onclick="openGallery('/adms-02.webp','Comunhão da igreja')"><img src="/adms-02.webp" alt="Comunhão durante o culto na ADMS Braga" loading="lazy"></button>
       <button class="gallery-item" type="button" onclick="openGallery('/adms-03.webp','Adoração ao Senhor')"><img src="/adms-03.webp" alt="Igreja em adoração ao Senhor" loading="lazy"></button>
@@ -69,6 +72,8 @@
       <button class="gallery-item" type="button" onclick="openGallery('/adms-05.webp','Ministério de louvor')"><img src="/adms-05.webp" alt="Ministério de louvor da ADMS Braga" loading="lazy"></button>
       <button class="gallery-item" type="button" onclick="openGallery('/adms-06.webp','Louvor e celebração')"><img src="/adms-06.webp" alt="Louvor e celebração na ADMS Braga" loading="lazy"></button>
     </div></div></section>
+
+    <section class="section alt" id="avisos" hidden><div class="content-shell"><div class="section-head"><div class="eyebrow">FIQUE INFORMADO</div><h2>Avisos da igreja</h2></div><div class="site-notices" id="site-notices"></div></div></section>
 
     <section class="section" id="agenda"><div class="content-shell"><div class="section-head"><div class="eyebrow">NOSSA AGENDA</div><h2>Próximos encontros</h2><p>Acompanhe cultos, estudos, reuniões e eventos da ADMS Braga.</p></div><div class="agenda" id="agenda-list"><div class="empty">A carregar a programação…</div></div></div></section>
 
@@ -104,7 +109,11 @@
     async function loadSiteContent(){const {data,error}=await admsSite.from('site_conteudos').select('*').eq('ativo',true);if(error){console.warn('Conteúdos indisponíveis',error);renderAgenda();return}(data||[]).forEach(x=>siteContent[x.chave]=x);renderDynamicContent()}
     function renderDynamicContent(){const video=siteContent.video_semana||weeklyVideoFallback;document.getElementById('video-title').textContent=video.titulo||'Vídeo da Semana';document.getElementById('video-subtitle').textContent=video.subtitulo||'Uma palavra para a sua semana';document.getElementById('video-content').textContent=video.conteudo||'Mensagem e conteúdo especial da ADMS Braga para edificação da igreja.';const embed=youtubeEmbed(video.url);if(embed)document.getElementById('video-frame').innerHTML=`<iframe title="${escapeHtml(video.titulo||'Vídeo da Semana')}" src="${embed}" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
       ['estudo_semana','devocional','biblioteca'].forEach(key=>{const item=siteContent[key],card=document.querySelector(`[data-content-card="${key}"]`);if(!item||!card)return;if(item.titulo)card.querySelector('h3').textContent=item.titulo;if(item.conteudo)card.querySelector('p').textContent=item.conteudo;const link=card.querySelector('a'),url=safeUrl(item.url);if(url){link.href=url;link.classList.remove('is-hidden')}});
-      ['youtube','instagram','facebook'].forEach(key=>{const item=siteContent[key],link=document.querySelector(`[data-social="${key}"]`),url=safeUrl(item?.url);if(link&&url){link.href=url;const label=link.querySelector('.social-label');if(label)label.textContent=item.titulo||label.textContent;link.classList.remove('is-hidden')}});renderAgenda()}
+      ['youtube','instagram','facebook'].forEach(key=>{const item=siteContent[key],link=document.querySelector(`[data-social="${key}"]`),url=safeUrl(item?.url);if(link&&url){link.href=url;const label=link.querySelector('.social-label');if(label)label.textContent=item.titulo||label.textContent;link.classList.remove('is-hidden')}});renderGallery();renderNotices();renderEditorialCards();renderAgenda()}
+    function editorialItems(prefix){return Object.values(siteContent).filter(x=>x.chave===prefix||x.chave.startsWith(prefix+'_')).sort((a,b)=>String(b.updated_at||'').localeCompare(String(a.updated_at||'')))}
+    function renderGallery(){const rows=editorialItems('galeria');if(!rows.length)return;document.getElementById('gallery-grid').innerHTML=rows.map(x=>{const url=safeUrl(x.url);return url?`<button class="gallery-item" type="button" onclick="openGallery('${url.replaceAll("'",'%27')}','${escapeHtml(x.titulo||'Fotografia da ADMS Braga')}')"><img src="${url}" alt="${escapeHtml(x.titulo||'Fotografia da ADMS Braga')}" loading="lazy"></button>`:''}).join('')}
+    function renderNotices(){const rows=editorialItems('aviso'),section=document.getElementById('avisos');if(!rows.length){section.hidden=true;return}section.hidden=false;document.getElementById('site-notices').innerHTML=rows.map(x=>`<article class="site-notice"><h3>${escapeHtml(x.titulo||'Aviso')}</h3><p>${escapeHtml(x.conteudo||x.subtitulo||'')}</p>${safeUrl(x.url)?`<a class="card-link" href="${safeUrl(x.url)}" target="_blank" rel="noopener">Mais informações →</a>`:''}</article>`).join('')}
+    function renderEditorialCards(){[['estudo','estudo_semana'],['devocional','devocional'],['livro','biblioteca']].forEach(([prefix,target])=>{const item=editorialItems(prefix)[0]||siteContent[target],card=document.querySelector(`[data-content-card="${target}"]`);if(!item||!card)return;card.querySelector('h3').textContent=item.titulo||card.querySelector('h3').textContent;card.querySelector('p').textContent=item.conteudo||item.subtitulo||card.querySelector('p').textContent;const link=card.querySelector('a'),url=safeUrl(item.url);if(url){link.href=url;link.classList.remove('is-hidden')}})}
     function renderAgenda(){
       const host=document.getElementById('agenda-list');
       const fallback=[
@@ -114,7 +123,7 @@
         {titulo:'DOMINGO',subtitulo:'Culto Manhã com Deus',conteudo:'10h30'},
         {titulo:'DOMINGO',subtitulo:'Culto de Celebração ao Senhor',conteudo:'18h30'}
       ];
-      const publicados=['agenda_1','agenda_2','agenda_3','agenda_4','agenda_5'].map(k=>siteContent[k]).filter(Boolean);
+      const publicados=editorialItems('agenda').sort((a,b)=>a.chave.localeCompare(b.chave));
       const items=publicados.length?publicados:fallback;
       host.innerHTML=items.map(item=>{const url=safeUrl(item.url);return `<article class="event"><div class="event-date">${escapeHtml(item.titulo||'AGENDA')}</div><div><h3>${escapeHtml(item.subtitulo||'Encontro ADMS Braga')}</h3><p>${escapeHtml(item.conteudo||'')}</p></div>${url?`<a class="btn btn-gold" href="${url}" target="_blank" rel="noopener">Mais informações</a>`:''}</article>`}).join('')
     }
