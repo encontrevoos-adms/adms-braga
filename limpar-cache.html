@@ -23,7 +23,7 @@ html,body{height:100%;margin:0}body{display:grid;place-items:center;background:#
       await Promise.all(keys.map(key=>caches.delete(key)));
     }
   }catch(error){console.warn('Não foi possível limpar todo o cache.',error)}
-  setTimeout(()=>location.replace('/sistema?v=12'),700);
+  setTimeout(()=>location.replace('/portal-web?v=21'),700);
 })();
 </script>
 </body>
