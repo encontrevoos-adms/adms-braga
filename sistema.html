@@ -4920,7 +4920,6 @@ async function admsRecuperarSenha(){
 }
 document.getElementById('login-pass')?.addEventListener('keydown',e=>{if(e.key==='Enter')fazerLogin()});
 setTimeout(admsPrepararLoginV4,50);
-new MutationObserver(admsPrepararLoginV4).observe(document.documentElement,{childList:true,subtree:true});
 admsSupabase?.auth.onAuthStateChange((event)=>{
  if(event==='PASSWORD_RECOVERY'){
   document.getElementById('login-screen').style.display='flex';
