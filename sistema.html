@@ -4773,6 +4773,19 @@ admsSupabase?.auth.onAuthStateChange((event)=>{
 /* init */
 const dadosRestaurados = carregarEstado();
 buildLoginOptions();
+function admsGarantirFormularioLogin(){
+  const login=document.getElementById('login-screen');
+  const app=document.getElementById('app-screen');
+  const principal=document.getElementById('step-credentials');
+  const passos=['step-credentials','step-forcepw','step-rgpd','step-who','step-profile']
+    .map(id=>document.getElementById(id)).filter(Boolean);
+  if(login && getComputedStyle(login).display!=='none' && (!app || getComputedStyle(app).display==='none') && passos.every(el=>getComputedStyle(el).display==='none')){
+    principal.style.display='block';
+  }
+}
+admsGarantirFormularioLogin();
+setTimeout(admsGarantirFormularioLogin,500);
+setTimeout(admsGarantirFormularioLogin,3000);
 setInterval(salvarEstado, 4000);
 window.addEventListener('beforeunload', salvarEstado);
 window.addEventListener('pagehide', salvarEstado);
