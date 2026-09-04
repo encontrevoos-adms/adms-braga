@@ -4887,6 +4887,9 @@ async function admsEnviarSolicitacao(){
  msg.textContent='Solicitação enviada ao Usuário Master.';
  setTimeout(admsFecharSolicitacao,1600);
 }
+function admsComTimeout(promise,ms=20000){
+ return Promise.race([promise,new Promise((_,reject)=>setTimeout(()=>reject(new Error('A ligação demorou demasiado. Verifique a internet e tente novamente.')),ms))]);
+}
 window.fazerLogin=async function(){
  const campo=document.getElementById('login-email'),valor=(campo?.value||'').trim(),senha=(document.getElementById('login-pass')?.value||'');
  const botao=document.querySelector('#step-credentials .btn-primary');
@@ -4896,13 +4899,13 @@ window.fazerLogin=async function(){
  if(botao){botao.disabled=true;botao.textContent='A entrar…'}
  try{
  if(['usuáriomaster','usuariomaster'].includes(valor.toLowerCase())){
-   const r=await fetch('https://ogbxntxfrkgllegzzwdm.supabase.co/functions/v1/login-master',{method:'POST',headers:{'Content-Type':'application/json','apikey':'sb_publishable_GB2UQqPNh28jsvlrJ7VWSg_9gkHNBOM'},body:JSON.stringify({usuario:valor,password:senha})});
+   const r=await admsComTimeout(fetch('https://ogbxntxfrkgllegzzwdm.supabase.co/functions/v1/login-master',{method:'POST',headers:{'Content-Type':'application/json','apikey':'sb_publishable_OO6HZ5Cs1wjOecpmcJoiMg_FOzewFq0'},body:JSON.stringify({usuario:valor,password:senha})}));
    const d=await r.json(); if(!r.ok)throw new Error(d.error||'Credenciais inválidas');
    const {error}=await admsSupabase.auth.setSession({access_token:d.access_token,refresh_token:d.refresh_token});if(error)throw error;
    await concluir();return;
  }
  if(!emailValido(valor))throw new Error('Introduza um e-mail válido ou o usuário master.');
- const {error}=await admsSupabase.auth.signInWithPassword({email:valor.toLowerCase(),password:senha});
+ const {error}=await admsComTimeout(admsSupabase.auth.signInWithPassword({email:valor.toLowerCase(),password:senha}));
  if(error)throw new Error((error.code||'')==='email_not_confirmed'?'Este e-mail ainda não foi confirmado. Contacte a administração.':'E-mail ou palavra-passe inválidos.');
  await concluir();
  }catch(e){showLoginError(e.message||'Não foi possível entrar no sistema.');}
