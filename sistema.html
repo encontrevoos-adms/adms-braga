@@ -410,6 +410,31 @@
   .cadastro-body label{ font-size:11.5px; font-weight:700; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.4px; display:block; margin:14px 0 6px 0; }
   .cadastro-body label:first-child{ margin-top:0; }
   .codigo-box{ font-family:'IBM Plex Mono', monospace; font-size:11px; width:100%; min-height:120px; padding:14px; border-radius:10px; border:1.5px solid var(--line); background:var(--paper); resize:vertical; word-break:break-all; }
+
+  /* ================= MATRIZ DE PERMISSÕES ================= */
+  .permission-intro{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:18px;}
+  .permission-intro p{margin:5px 0 0;color:var(--ink-soft);font-size:13px;line-height:1.55;max-width:680px;}
+  .permission-role-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0 20px;}
+  .permission-role-tab{border:1px solid var(--line);background:var(--white);color:var(--royal-deep);padding:9px 14px;border-radius:999px;font-size:12px;font-weight:700;cursor:pointer;transition:.18s ease;}
+  .permission-role-tab:hover{border-color:var(--gold);transform:translateY(-1px);}
+  .permission-role-tab.active{color:white;border-color:var(--royal);background:linear-gradient(135deg,var(--royal),var(--royal-dark));box-shadow:0 6px 16px rgba(18,52,133,.2);}
+  .permission-table-wrap{overflow:auto;border:1px solid var(--line);border-radius:14px;background:var(--white);}
+  .permission-matrix{width:100%;min-width:760px;border-collapse:separate;border-spacing:0;}
+  .permission-matrix th,.permission-matrix td{padding:13px 12px;border-bottom:1px solid var(--paper-2);text-align:center;font-size:12px;}
+  .permission-matrix th{background:#F5F7FC;color:var(--ink-soft);font-size:10.5px;text-transform:uppercase;letter-spacing:.55px;position:sticky;top:0;z-index:2;}
+  .permission-matrix th:first-child,.permission-matrix td:first-child{text-align:left;position:sticky;left:0;z-index:1;background:var(--white);min-width:190px;}
+  .permission-matrix th:first-child{z-index:3;background:#F5F7FC;}
+  .permission-matrix tr:last-child td{border-bottom:none;}
+  .permission-module-name{font-weight:700;color:var(--royal-deep);}
+  .permission-module-note{display:block;margin-top:3px;color:var(--ink-soft);font-size:10.5px;font-weight:400;}
+  .permission-toggle{width:38px;height:22px;border:0;border-radius:99px;background:#D9DEEA;position:relative;cursor:pointer;transition:.18s ease;vertical-align:middle;}
+  .permission-toggle::after{content:"";position:absolute;width:16px;height:16px;left:3px;top:3px;border-radius:50%;background:white;box-shadow:0 1px 4px rgba(0,0,0,.22);transition:.18s ease;}
+  .permission-toggle.on{background:linear-gradient(90deg,var(--royal),#3157C8);}
+  .permission-toggle.on::after{left:19px;}
+  .permission-toggle:disabled{opacity:.42;cursor:not-allowed;}
+  .permission-legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:14px;color:var(--ink-soft);font-size:11px;}
+  .permission-status{padding:7px 11px;border-radius:999px;background:#EEF3FF;color:var(--royal);font-size:11px;font-weight:700;white-space:nowrap;}
+  @media(max-width:700px){.permission-intro{display:block}.permission-status{display:inline-flex;margin-top:12px}.permission-role-tab{padding:8px 11px}.permission-matrix th,.permission-matrix td{padding:11px 9px}}
 </style>
 <!-- Supabase Cloud — Fase 1: infraestrutura sem alterar a identidade visual -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1122,6 +1147,27 @@ const DEPARTMENTS = [
 let ESCALA_DEPTS = DEPARTMENTS.filter(d=>d.escala).map(d=>d.id);
 let DEPARTMENTS_ADMIN = DEPARTMENTS.map(d=>({...d,ativo:true,confidencialidade:d.restrito?'pastoral':'normal',liderNome:'',viceLiderNome:'',secretarioNome:'',ordem:100}));
 let departamentosCloudDisponivel = false;
+let PERMISSOES_PERFIS = [];
+let permissaoPerfilSelecionado = 'lider';
+const PERMISSAO_ACOES = ['visualizar','inserir','editar','arquivar','exportar'];
+const PERMISSAO_PERFIS = [
+  {id:'master',nome:'Master'},{id:'pastor',nome:'Pastoral'},{id:'secretaria',nome:'Secretaria'},
+  {id:'tesouraria',nome:'Tesouraria'},{id:'lider',nome:'Liderança'},{id:'consulta',nome:'Consulta'}
+];
+const PERMISSAO_MODULOS = [
+  {id:'membros',nome:'Membros',nota:'Cadastros e dados pessoais'},
+  {id:'departamentos',nome:'Departamentos',nota:'Estrutura e equipas'},
+  {id:'eventos',nome:'Eventos',nota:'Agenda e encontros'},
+  {id:'escalas',nome:'Escalas',nota:'Serviços e voluntários'},
+  {id:'avisos',nome:'Avisos',nota:'Comunicados internos'},
+  {id:'financeiro',nome:'Financeiro',nota:'Movimentos e contas'},
+  {id:'patrimonio',nome:'Património',nota:'Bens e inventário'},
+  {id:'pastoral',nome:'Pastoral',nota:'Conteúdo confidencial'},
+  {id:'site-publico',nome:'Site público',nota:'Conteúdos publicados'},
+  {id:'relatorios',nome:'Relatórios',nota:'Consultas e exportações'},
+  {id:'auditoria',nome:'Auditoria',nota:'Registo de atividade'},
+  {id:'acessos',nome:'Gestão de acessos',nota:'Contas e permissões'}
+];
 
 // dados complementares — valores por omissão (preenchidos na rotina pós-primeiro-login)
 // SENHA_PADRAO — palavra-passe inicial de todos os acessos, definida pelo tesoureiro/administração master
@@ -1735,16 +1781,43 @@ function handleLogout(){
 /* =========================================================
    PERMISSÕES
 ========================================================= */
-function hasFullConfidentialAccess(){ return !!session && ['pastor','tesoureiro','secretaria'].includes(session.tipo); }
-function isMaster(){ return hasFullConfidentialAccess(); }
-function canAccessFinanceiro(){ return hasFullConfidentialAccess(); }
-function canAccessPatrimonio(){ return hasFullConfidentialAccess(); }
-function canAccessRH(){ return hasFullConfidentialAccess(); }
-function canAccessGestaoAcessos(){ return hasFullConfidentialAccess(); }
-function canAccessAuditoria(){ return hasFullConfidentialAccess(); }
-function canAccessPrayerRequests(){ return !!session && ['pastor','secretaria'].includes(session.tipo); }
+function perfilPermissaoAtual(){
+  if(admsCloudProfile?.role) return admsCloudProfile.role;
+  return ({pastor:'pastor',tesoureiro:'tesouraria',secretaria:'secretaria',lider:'lider',membro:'consulta',consulta:'consulta'})[session?.tipo]||'consulta';
+}
+function permissaoBloqueada(perfil,modulo){
+  if(modulo==='pastoral' && !['master','pastor','secretaria'].includes(perfil)) return true;
+  if(['financeiro','patrimonio'].includes(modulo) && !['master','pastor','secretaria','tesouraria'].includes(perfil)) return true;
+  if(modulo==='acessos' && !['master','pastor','secretaria'].includes(perfil)) return true;
+  return false;
+}
+function permissaoFallback(perfil,modulo,acao){
+  if(perfil==='master') return true;
+  if(permissaoBloqueada(perfil,modulo)) return false;
+  if(perfil==='pastor') return true;
+  if(perfil==='secretaria') return acao==='visualizar' || !['financeiro','patrimonio'].includes(modulo);
+  if(perfil==='tesouraria') return ['financeiro','patrimonio'].includes(modulo) || (acao==='visualizar' && ['membros','departamentos','eventos','escalas','avisos','relatorios','auditoria'].includes(modulo));
+  if(perfil==='lider') return ['departamentos','eventos','escalas','avisos'].includes(modulo) && (acao!=='arquivar');
+  return acao==='visualizar' && ['departamentos','eventos','escalas','avisos'].includes(modulo);
+}
+function permPode(modulo,acao='visualizar',perfil=perfilPermissaoAtual()){
+  if(permissaoBloqueada(perfil,modulo)) return false;
+  const regra=PERMISSOES_PERFIS.find(p=>p.perfil===perfil && p.modulo===modulo);
+  return regra ? regra[acao]===true : permissaoFallback(perfil,modulo,acao);
+}
+function hasFullConfidentialAccess(){ return !!session && ['master','pastor','secretaria'].includes(perfilPermissaoAtual()); }
+function isMaster(){ return perfilPermissaoAtual()==='master' || hasFullConfidentialAccess(); }
+function canAccessFinanceiro(){ return permPode('financeiro'); }
+function canAccessPatrimonio(){ return permPode('patrimonio'); }
+function canAccessRH(){ return permPode('membros'); }
+function canAccessGestaoAcessos(){ return permPode('acessos') && ['master','pastor','secretaria'].includes(perfilPermissaoAtual()); }
+function canAccessAuditoria(){ return permPode('auditoria'); }
+function canAccessPrayerRequests(){ return permPode('pastoral') && ['master','pastor','secretaria'].includes(perfilPermissaoAtual()); }
+function canManagePermissions(){ return canAccessGestaoAcessos(); }
 function canAccessDept(deptId){
-  if(hasFullConfidentialAccess()) return true;
+  if(deptId==='pastoral') return permPode('pastoral');
+  if(!permPode('departamentos')) return false;
+  if(hasFullConfidentialAccess() || perfilPermissaoAtual()==='tesouraria') return true;
   if(session.tipo==='lider') return Array.isArray(session.deptIds) && session.deptIds.includes(deptId);
   return false;
 }
@@ -1829,11 +1902,12 @@ function renderShell(){
     nav+=navItem('site-publico','megaphone','Conteúdo do Site',true);
     if(canAccessPrayerRequests()) nav+=navItem('pedidos-oracao','bible','Pedidos de Oração',true);
     nav+=navItem('novos-contactos','rh','Novos Contactos',true);
-    if(session.tipo==='secretaria'){
+    if(canAccessGestaoAcessos()){
       nav+='<div class="nav-group-label">Administração</div>';
       nav+=navItem('acessos','acesso','Gestão de Acessos',true);
+      nav+=navItem('permissoes','lock','Permissões por Perfil',true);
     }
-    if(session.tipo==='pastor'||session.tipo==='tesoureiro'||session.tipo==='secretaria') nav+=navItem('auditoria','audit','Registo de Atividade',true);
+    if(canAccessAuditoria()) nav+=navItem('auditoria','audit','Registo de Atividade',true);
   }
   document.getElementById('nav-container').innerHTML=nav;
   renderModule();
@@ -1864,7 +1938,7 @@ function renderModule(){
   if(currentModule==='home') return el.innerHTML=viewChurchHome();
   if(currentModule==='gabinete'){renderGabinetePastoral();return;}
   if(currentModule==='meu-perfil') return el.innerHTML = viewMeuPerfil();
-  if(currentModule==='eventos'){ el.innerHTML = viewEventos(); return; }
+  if(currentModule==='eventos'){ el.innerHTML = permPode('eventos')?viewEventos():viewLocked('Eventos'); return; }
   if(currentModule==='dashboard') return el.innerHTML = ((session.tipo==='membro'||session.tipo==='consulta')?viewMemberHome():viewDashboard());
   if(currentModule==='patrimonio') return el.innerHTML = canAccessPatrimonio()? viewPatrimonio() : viewLocked('Património');
   if(currentModule==='rh'){
@@ -1892,7 +1966,7 @@ function renderModule(){
     return;
   }
   if(currentModule==='orcamento') return el.innerHTML = canAccessFinanceiro()? viewOrcamento() : viewLocked('Orçamento');
-  if(currentModule==='departamentos') return el.innerHTML = viewDepartamentos();
+  if(currentModule==='departamentos') return el.innerHTML = permPode('departamentos')?viewDepartamentos():viewLocked('Departamentos');
   if(currentModule==='meu-dept') return el.innerHTML = viewMeuDept();
   if(currentModule==='dept-detail') return el.innerHTML = canAccessDept(currentDeptView)? viewDeptDetail(currentDeptView) : viewLocked(deptNome(currentDeptView));
   if(currentModule==='escalas') return el.innerHTML = canAccessEscalas()? viewEscalas() : viewLocked('Escalas de Serviço');
@@ -1910,8 +1984,8 @@ function renderModule(){
     el.innerHTML = currentModule==='ebd' ? viewEBD() : viewEBDTurma();
     return;
   }
-  if(currentModule==='avisos') return el.innerHTML = viewAvisos();
-  if(currentModule==='site-publico'){ el.innerHTML='<div class="card">A carregar conteúdos do site...</div>'; renderSitePublico(); return; }
+  if(currentModule==='avisos') return el.innerHTML = permPode('avisos')?viewAvisos():viewLocked('Avisos');
+  if(currentModule==='site-publico'){ if(!permPode('site-publico')) return el.innerHTML=viewLocked('Conteúdo do Site'); el.innerHTML='<div class="card">A carregar conteúdos do site...</div>'; renderSitePublico(); return; }
   if(currentModule==='pedidos-oracao'){ el.innerHTML='<div class="card">A carregar pedidos de oração...</div>'; renderPedidosOracao(); return; }
   if(currentModule==='novos-contactos'){ el.innerHTML='<div class="card">A carregar novos contactos...</div>'; renderNovosContactos(); return; }
   if(currentModule==='relatorios'){
@@ -1920,6 +1994,7 @@ function renderModule(){
     return;
   }
   if(currentModule==='acessos'){ if(!canAccessGestaoAcessos()) return el.innerHTML=viewLocked('Gestão de Acessos'); el.innerHTML=viewAcessos(); setTimeout(renderSolicitacoesAcesso,0); return; }
+  if(currentModule==='permissoes'){ if(!canManagePermissions()) return el.innerHTML=viewLocked('Permissões por Perfil'); el.innerHTML=viewPermissoes(); return; }
   if(currentModule==='auditoria') return el.innerHTML = canAccessAuditoria()? viewAuditoria() : viewLocked('Registo de Atividade');
   el.innerHTML = viewDashboard();
   if(isMaster()) carregarResumoNovosContactos();
@@ -4031,6 +4106,47 @@ function verRecibo(reciboId){
   mostrarDocumentoImpressao(html);
 }
 
+function viewPermissoes(){
+  const perfil=PERMISSAO_PERFIS.find(p=>p.id===permissaoPerfilSelecionado)||PERMISSAO_PERFIS[0];
+  const tabs=PERMISSAO_PERFIS.map(p=>`<button class="permission-role-tab ${p.id===perfil.id?'active':''}" onclick="selecionarPerfilPermissao('${p.id}')">${p.nome}</button>`).join('');
+  const rows=PERMISSAO_MODULOS.map(m=>{
+    const bloqueado=permissaoBloqueada(perfil.id,m.id) || perfil.id==='master';
+    const cells=PERMISSAO_ACOES.map(a=>{
+      const ligado=permPode(m.id,a,perfil.id);
+      const titulo=perfil.id==='master'?'O perfil Master mantém sempre acesso total.':(bloqueado?'Proteção fixa de segurança.':`${ligado?'Retirar':'Conceder'} permissão para ${a}.`);
+      return `<td><button type="button" class="permission-toggle ${ligado?'on':''}" aria-pressed="${ligado}" aria-label="${a}: ${ligado?'permitido':'bloqueado'}" title="${titulo}" ${bloqueado?'disabled':''} onclick="atualizarPermissao('${perfil.id}','${m.id}','${a}',${!ligado},this)"></button></td>`;
+    }).join('');
+    return `<tr><td><span class="permission-module-name">${m.nome}</span><span class="permission-module-note">${m.nota}</span></td>${cells}</tr>`;
+  }).join('');
+  return `<div class="topbar"><div><div class="breadcrumb">Administração</div><h1>Permissões por Perfil</h1></div><span class="access-pill">${ICON.lock} Controlo de acesso</span></div>
+  ${ruleDivider()}
+  <div class="card">
+    <div class="permission-intro"><div><h3 style="margin:0;color:var(--royal-deep)">Matriz de autorização</h3><p>Defina o que cada perfil pode visualizar e realizar. As áreas Financeira, Pastoral e Gestão de Acessos conservam proteções fixas para evitar exposições acidentais.</p></div><span class="permission-status">Alterações guardadas na nuvem</span></div>
+    <div class="permission-role-tabs">${tabs}</div>
+    <div class="permission-table-wrap"><table class="permission-matrix"><thead><tr><th>Módulo</th><th>Visualizar</th><th>Inserir</th><th>Editar</th><th>Arquivar</th><th>Exportar</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <div class="permission-legend"><span>Azul: permitido</span><span>Cinzento: bloqueado</span><span>Controlos desativados: proteção fixa</span></div>
+  </div>`;
+}
+
+function selecionarPerfilPermissao(perfil){
+  if(!PERMISSAO_PERFIS.some(p=>p.id===perfil)) return;
+  permissaoPerfilSelecionado=perfil;
+  renderModule();
+}
+
+async function atualizarPermissao(perfil,modulo,acao,valor,botao){
+  if(!canManagePermissions() || !PERMISSAO_ACOES.includes(acao) || permissaoBloqueada(perfil,modulo) || perfil==='master') return;
+  botao.disabled=true;
+  const alteracao={}; alteracao[acao]=!!valor; alteracao.updated_by=admsCloudProfile?.id||null; alteracao.updated_at=new Date().toISOString();
+  const {error}=await admsSupabase.from('permissoes_perfis').update(alteracao).eq('perfil',perfil).eq('modulo',modulo);
+  if(error){ botao.disabled=false; showToast('Não foi possível guardar a permissão.'); console.error('ADMS Permissões:',error.message); return; }
+  const regra=PERMISSOES_PERFIS.find(p=>p.perfil===perfil&&p.modulo===modulo);
+  if(regra) regra[acao]=!!valor;
+  logAction('acesso','Permissão atualizada',`${perfil} · ${modulo} · ${acao}: ${valor?'permitido':'bloqueado'}.`);
+  showToast('Permissão atualizada.');
+  renderModule();
+}
+
 function viewAcessos(){
  return `<div class="topbar"><div><div class="breadcrumb">Administração</div><h1>Gestão de Acessos</h1></div><span class="access-pill">${ICON.acesso} Secretaria</span></div>
  ${ruleDivider()}
@@ -4962,6 +5078,19 @@ async function admsCarregarDepartamentosCloud(){
   return true;
 }
 
+async function admsCarregarPermissoesCloud(){
+  if(!admsSupabase) return false;
+  const {data,error}=await admsSupabase.from('permissoes_perfis')
+    .select('perfil,modulo,visualizar,inserir,editar,arquivar,exportar,updated_at')
+    .order('perfil',{ascending:true}).order('modulo',{ascending:true});
+  if(error){
+    console.warn('ADMS Permissões: a usar regras de segurança incorporadas.',error.message);
+    return false;
+  }
+  PERMISSOES_PERFIS=Array.isArray(data)?data:[];
+  return PERMISSOES_PERFIS.length>0;
+}
+
 async function admsPerfilAtual(){
   if(!admsSupabase) return null;
   const {data:{user}, error:userError} = await admsSupabase.auth.getUser();
@@ -5051,6 +5180,7 @@ async function finalizeLogin(){
   document.getElementById('app-screen').style.display='block';
   await admsCarregarMembrosCloud();
   await admsCarregarDepartamentosCloud();
+  await admsCarregarPermissoesCloud();
   await admsCarregarEstadoCloud({bootstrap:true});
   await admsIniciarRealtime();
   await admsIniciarEstadoRealtime();
