@@ -754,6 +754,19 @@ window.addEventListener('online',()=>{ admsCarregarMembrosCloud(); admsCarregarE
 #app-screen .portal-agenda-item span{width:7px;height:7px;border-radius:50%;background:#d6ad45;flex:0 0 auto;}
 @media (max-width:1050px){#app-screen .portal-welcome{grid-template-columns:1fr;}#app-screen .portal-welcome-meta{max-width:430px;}#app-screen .portal-home-grid{grid-template-columns:1fr;}#app-screen .portal-home-grid + .portal-home-grid{grid-template-columns:repeat(2,minmax(0,1fr));}}
 @media (max-width:760px){#app-screen .portal-welcome{padding:26px 22px;border-radius:20px;}#app-screen .portal-welcome h1{font-size:36px;}#app-screen .portal-welcome-meta{padding:14px;}#app-screen .portal-actions{display:grid;grid-template-columns:1fr 1fr;}#app-screen .portal-action{justify-content:center;padding-inline:10px;}#app-screen .portal-home-grid + .portal-home-grid{grid-template-columns:1fr;}#app-screen .portal-video-head,#app-screen .portal-video-foot{padding-inline:18px;}#app-screen .portal-video-foot{align-items:flex-start;flex-direction:column;}#app-screen .portal-mini{min-height:0;}}
+#app-screen .dept-admin-card{display:flex;flex-direction:column;min-height:270px;}
+#app-screen .dept-admin-card.inactive{opacity:.68;background:#f3f1eb;}
+#app-screen .dept-admin-card .dept-status-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px;}
+#app-screen .dept-admin-card .dept-card-actions{display:flex;gap:8px;margin-top:auto;padding-top:18px;}
+#app-screen .dept-admin-card .dept-card-actions .btn{flex:1;justify-content:center;}
+#app-screen .dept-leadership{display:grid;gap:7px;margin-top:13px;padding-top:13px;border-top:1px solid #ebe5d9;font-size:13px;color:#566078;}
+#app-screen .dept-leadership strong{color:#07194f;}
+#dept-editor-modal .modal-box{max-width:720px;}
+#dept-editor-modal .modal-body>label{display:block;margin:14px 0 6px;font-size:12px;font-weight:800;letter-spacing:.55px;text-transform:uppercase;color:var(--ink-soft);}
+#dept-editor-modal .dept-checks{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px;}
+#dept-editor-modal .dept-check{display:flex;align-items:flex-start;gap:10px;padding:13px;border:1px solid var(--line);border-radius:12px;background:var(--paper);font-size:13px;line-height:1.4;}
+#dept-editor-modal .dept-check input{width:18px;height:18px;min-height:18px;margin-top:1px;}
+@media(max-width:620px){#dept-editor-modal .dept-checks{grid-template-columns:1fr;}#dept-editor-modal .form-row{grid-template-columns:1fr;}}
 </style>
 </head>
 <body>
@@ -929,6 +942,42 @@ window.addEventListener('online',()=>{ admsCarregarMembrosCloud(); admsCarregarE
   </div>
 </div>
 
+<div class="modal-overlay" id="dept-editor-modal" role="dialog" aria-modal="true" aria-labelledby="dept-editor-title">
+  <div class="modal-box">
+    <div class="modal-head">
+      <div class="modal-close" onclick="fecharEditorDepartamento()" aria-label="Fechar">✕</div>
+      <div class="avatar"><svg width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></div>
+      <h3 id="dept-editor-title">Configurar departamento</h3>
+      <div class="sub">Definição institucional, liderança e permissões operacionais</div>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div><label>Identificador</label><input id="dept-edit-id" maxlength="49" placeholder="ex: rececao"></div>
+        <div><label>Nome do departamento</label><input id="dept-edit-nome" maxlength="80"></div>
+      </div>
+      <label>Descrição</label><textarea id="dept-edit-descricao" rows="3" maxlength="500"></textarea>
+      <div class="form-row" style="margin-top:14px">
+        <div><label>Ícone</label><select id="dept-edit-icone"></select></div>
+        <div><label>Confidencialidade</label><select id="dept-edit-conf"><option value="normal">Normal</option><option value="restrito">Restrito à administração</option><option value="pastoral">Confidencial — Pastoral</option></select></div>
+      </div>
+      <div class="form-row">
+        <div><label>Líder</label><input id="dept-edit-lider" maxlength="120" placeholder="Nome completo"></div>
+        <div><label>Vice-líder</label><input id="dept-edit-vice" maxlength="120" placeholder="Nome completo"></div>
+      </div>
+      <label>Secretário(a)</label><input id="dept-edit-secretario" maxlength="120" placeholder="Nome completo">
+      <div class="dept-checks">
+        <label class="dept-check"><input type="checkbox" id="dept-edit-ativo"><span><strong>Departamento ativo</strong><br>Visível nas áreas operacionais.</span></label>
+        <label class="dept-check"><input type="checkbox" id="dept-edit-escala"><span><strong>Permitir escalas</strong><br>Habilita a gestão de serviço.</span></label>
+      </div>
+      <div id="dept-edit-error" class="denied-box"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="fecharEditorDepartamento()">Cancelar</button>
+      <button class="btn btn-primary" id="dept-edit-save" style="width:auto;margin-top:0" onclick="guardarDepartamento()">Guardar departamento</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 <div id="print-area"></div>
 
@@ -1070,7 +1119,9 @@ const DEPARTMENTS = [
   {id:'danca', nome:'Dança', icon:'dance', descricao:'Ministração através da dança e expressão corporal nos cultos e eventos.', membros:0, restrito:false, escala:true},
   {id:'patrimonio-limpeza', nome:'Património e Limpeza', icon:'clean', descricao:'Zeladoria, manutenção e limpeza das instalações da igreja.', membros:0, restrito:false, escala:true},
 ];
-const ESCALA_DEPTS = DEPARTMENTS.filter(d=>d.escala).map(d=>d.id);
+let ESCALA_DEPTS = DEPARTMENTS.filter(d=>d.escala).map(d=>d.id);
+let DEPARTMENTS_ADMIN = DEPARTMENTS.map(d=>({...d,ativo:true,confidencialidade:d.restrito?'pastoral':'normal',liderNome:'',viceLiderNome:'',secretarioNome:'',ordem:100}));
+let departamentosCloudDisponivel = false;
 
 // dados complementares — valores por omissão (preenchidos na rotina pós-primeiro-login)
 // SENHA_PADRAO — palavra-passe inicial de todos os acessos, definida pelo tesoureiro/administração master
@@ -2201,17 +2252,74 @@ function deptCardHTML(d){
 }
 
 function viewDepartamentos(){
+  const gestao=hasFullConfidentialAccess();
+  const lista=gestao&&DEPARTMENTS_ADMIN.length?DEPARTMENTS_ADMIN:DEPARTMENTS;
   return `
     <div class="topbar">
       <div><div class="breadcrumb">Gestão da Igreja</div><h1>Departamentos</h1></div>
-      <span class="access-pill">${ICON.dept} ${DEPARTMENTS.length} departamentos</span>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span class="access-pill">${ICON.dept} ${lista.filter(d=>d.ativo).length} ativos</span>${gestao?'<button class="btn btn-primary" style="width:auto;margin:0" onclick="abrirEditorDepartamento()">+ Novo departamento</button>':''}</div>
     </div>
     ${ruleDivider()}
-    <p style="color:var(--ink-soft); font-size:13.5px; max-width:640px; margin-top:0;">Cada líder acede apenas ao seu próprio departamento. O departamento <strong>Pastoral</strong> é visível apenas ao Pastor Sénior e ao Tesoureiro.</p>
+    <p style="color:var(--ink-soft);font-size:15px;line-height:1.6;max-width:760px;margin-top:0;">Organize a liderança, a visibilidade e as funções operacionais de cada departamento. Conteúdos confidenciais continuam limitados aos perfis autorizados.</p>
     <div class="grid grid-3" style="margin-top:18px;">
-      ${DEPARTMENTS.map(d=>deptCardHTML(d)).join('')}
+      ${lista.map(d=>gestao?deptAdminCardHTML(d):deptCardHTML(d)).join('')}
     </div>
   `;
+}
+
+function deptAdminCardHTML(d){
+  const sigilo=d.confidencialidade==='pastoral'?'Pastoral':d.confidencialidade==='restrito'?'Restrito':'Normal';
+  return `<article class="card dept-card dept-admin-card ${d.ativo?'':'inactive'}" onclick="${d.ativo?`openDept('${d.id}')`:''}">
+    <div class="dept-status-row"><div class="dept-icon">${ICON[d.icon]||ICON.dept}</div><div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end"><span class="tag ${d.ativo?'tag-green':'tag-gold'}">${d.ativo?'Ativo':'Arquivado'}</span><span class="tag ${d.restrito?'tag-red':'tag-blue'}">${sigilo}</span></div></div>
+    <h3>${admsEsc(d.nome)}</h3><p>${admsEsc(d.descricao)}</p>
+    <div class="dept-leadership"><span><strong>Líder:</strong> ${admsEsc(d.liderNome||'Não atribuído')}</span>${d.viceLiderNome?`<span><strong>Vice-líder:</strong> ${admsEsc(d.viceLiderNome)}</span>`:''}${d.secretarioNome?`<span><strong>Secretaria:</strong> ${admsEsc(d.secretarioNome)}</span>`:''}</div>
+    <div class="dept-card-actions"><button class="btn btn-outline" onclick="event.stopPropagation();abrirEditorDepartamento('${d.id}')">Editar</button>${d.ativo&&d.id!=='pastoral'?`<button class="btn btn-ghost" onclick="event.stopPropagation();arquivarDepartamento('${d.id}')">Arquivar</button>`:''}</div>
+  </article>`;
+}
+
+function abrirEditorDepartamento(id=''){
+  if(!hasFullConfidentialAccess()){showToast('Sem permissão para gerir departamentos.');return}
+  const d=id?DEPARTMENTS_ADMIN.find(x=>x.id===id):null;
+  const modal=document.getElementById('dept-editor-modal');
+  document.getElementById('dept-editor-title').textContent=d?'Editar departamento':'Novo departamento';
+  const idEl=document.getElementById('dept-edit-id'); idEl.value=d?.id||''; idEl.disabled=!!d;
+  document.getElementById('dept-edit-nome').value=d?.nome||'';
+  document.getElementById('dept-edit-descricao').value=d?.descricao||'';
+  const iconEl=document.getElementById('dept-edit-icone');
+  const icons=[['dept','Institucional'],['pastoral','Pastoral'],['kids','Infantil'],['men','Homens'],['women','Mulheres'],['youth','Jovens'],['deacon','Diaconato'],['praise','Louvor'],['secret','Secretaria'],['evang','Evangelismo'],['couples','Casais'],['teach','Ensino'],['media','Comunicação'],['worker','Obreiros'],['dance','Dança'],['clean','Património']];
+  iconEl.innerHTML=icons.map(([v,l])=>`<option value="${v}" ${v===(d?.icon||'dept')?'selected':''}>${l}</option>`).join('');
+  document.getElementById('dept-edit-conf').value=d?.confidencialidade||'normal';
+  document.getElementById('dept-edit-lider').value=d?.liderNome||'';
+  document.getElementById('dept-edit-vice').value=d?.viceLiderNome||'';
+  document.getElementById('dept-edit-secretario').value=d?.secretarioNome||'';
+  document.getElementById('dept-edit-ativo').checked=d?d.ativo:true;
+  document.getElementById('dept-edit-escala').checked=!!d?.escala;
+  const err=document.getElementById('dept-edit-error');err.style.display='none';err.textContent='';
+  modal.classList.add('show');
+}
+function fecharEditorDepartamento(){document.getElementById('dept-editor-modal').classList.remove('show')}
+function deptSlug(v){return v.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,49)}
+async function guardarDepartamento(){
+  const err=document.getElementById('dept-edit-error'),idEl=document.getElementById('dept-edit-id');
+  const nome=document.getElementById('dept-edit-nome').value.trim();
+  const id=deptSlug(idEl.value||nome),descricao=document.getElementById('dept-edit-descricao').value.trim();
+  if(id.length<2||nome.length<2||descricao.length<8){err.textContent='Preencha o nome e uma descrição clara do departamento.';err.style.display='block';return}
+  const {data:{user}}=await admsSupabase.auth.getUser();
+  const existente=DEPARTMENTS_ADMIN.find(d=>d.id===id);
+  const row={id,nome,descricao,icone:document.getElementById('dept-edit-icone').value,confidencialidade:document.getElementById('dept-edit-conf').value,lider_nome:document.getElementById('dept-edit-lider').value.trim()||null,vice_lider_nome:document.getElementById('dept-edit-vice').value.trim()||null,secretario_nome:document.getElementById('dept-edit-secretario').value.trim()||null,ativo:document.getElementById('dept-edit-ativo').checked,permite_escala:document.getElementById('dept-edit-escala').checked,ordem:existente?.ordem||((DEPARTMENTS_ADMIN.length+1)*10),updated_by:user.id,updated_at:new Date().toISOString()};
+  if(!existente)row.created_by=user.id;
+  const btn=document.getElementById('dept-edit-save');btn.disabled=true;btn.textContent='A guardar…';
+  const {error}=await admsSupabase.from('departamentos').upsert(row,{onConflict:'id'});
+  btn.disabled=false;btn.textContent='Guardar departamento';
+  if(error){err.textContent='Não foi possível guardar. Verifique a sua autorização.';err.style.display='block';console.error(error);return}
+  await admsCarregarDepartamentosCloud();fecharEditorDepartamento();showToast('Departamento guardado com sucesso.');renderShell();
+}
+async function arquivarDepartamento(id){
+  const d=DEPARTMENTS_ADMIN.find(x=>x.id===id);if(!d||!confirm(`Arquivar o departamento ${d.nome}? Os dados serão preservados.`))return;
+  const {data:{user}}=await admsSupabase.auth.getUser();
+  const {error}=await admsSupabase.from('departamentos').update({ativo:false,updated_by:user.id,updated_at:new Date().toISOString()}).eq('id',id);
+  if(error){showToast('Não foi possível arquivar o departamento.');return}
+  await admsCarregarDepartamentosCloud();showToast('Departamento arquivado.');renderShell();
 }
 
 function findDeptLeaders(id){
@@ -4828,6 +4936,32 @@ function copiarLinkCadastro(){
 ========================================================= */
 let admsCloudProfile = null;
 
+function admsDepartamentoDaNuvem(r){
+  return {
+    id:r.id,nome:r.nome,icon:r.icone||'dept',descricao:r.descricao||'',membros:0,
+    restrito:r.confidencialidade!=='normal',confidencialidade:r.confidencialidade||'normal',
+    escala:!!r.permite_escala,ativo:r.ativo!==false,liderNome:r.lider_nome||'',
+    viceLiderNome:r.vice_lider_nome||'',secretarioNome:r.secretario_nome||'',ordem:Number(r.ordem)||100
+  };
+}
+
+async function admsCarregarDepartamentosCloud(){
+  if(!admsSupabase) return false;
+  const {data,error}=await admsSupabase.from('departamentos').select('*').order('ordem',{ascending:true});
+  if(error){
+    console.warn('ADMS Departamentos: a usar configuração incorporada.',error.message);
+    departamentosCloudDisponivel=false;
+    return false;
+  }
+  const todos=(data||[]).map(admsDepartamentoDaNuvem);
+  if(!todos.length) return false;
+  departamentosCloudDisponivel=true;
+  DEPARTMENTS_ADMIN=todos;
+  DEPARTMENTS.splice(0,DEPARTMENTS.length,...todos.filter(d=>d.ativo));
+  ESCALA_DEPTS=DEPARTMENTS.filter(d=>d.escala).map(d=>d.id);
+  return true;
+}
+
 async function admsPerfilAtual(){
   if(!admsSupabase) return null;
   const {data:{user}, error:userError} = await admsSupabase.auth.getUser();
@@ -4916,6 +5050,7 @@ async function finalizeLogin(){
   document.getElementById('login-screen').style.display='none';
   document.getElementById('app-screen').style.display='block';
   await admsCarregarMembrosCloud();
+  await admsCarregarDepartamentosCloud();
   await admsCarregarEstadoCloud({bootstrap:true});
   await admsIniciarRealtime();
   await admsIniciarEstadoRealtime();
