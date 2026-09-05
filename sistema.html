@@ -1722,6 +1722,11 @@ function navItem(id, icon, label, enabled){
   return `<div class="nav-item ${currentModule===id?'active':''} ${enabled?'':'locked'}" onclick="${enabled? `goTo('${id}')` : ''}">${ICON[icon]||ICON.dept||''}<span>${label}</span></div>`;
 }
 
+function navDeptItem(id, icon, label, enabled){
+  const active=currentModule==='dept-detail' && currentDeptView===id;
+  return `<div class="nav-item ${active?'active':''} ${enabled?'':'locked'}" onclick="${enabled? `openDept('${id}')` : ''}">${ICON[icon]||ICON.dept||''}<span>${label}</span></div>`;
+}
+
 function renderShell(){
   document.getElementById('side-user-name').textContent=session.label;
   document.getElementById('side-user-role').textContent=roleLabel();
@@ -1761,6 +1766,7 @@ function renderShell(){
     nav+=navItem('orcamento','chart','Orçamento',canAccessFinanceiro());
     nav+='<div class="nav-group-label">Departamentos</div>';
     nav+=navItem('departamentos','dept','Todos os Departamentos',true);
+    nav+=navDeptItem('pastoral','pastoral','Pastoral',canAccessDept('pastoral'));
     nav+=navItem('escalas','shift','Escalas de Serviço',true);
     nav+=navItem('celulas','cells','Grupos e Células',true);
     nav+=navItem('kids','checkin','Kids — Check-in',true);
