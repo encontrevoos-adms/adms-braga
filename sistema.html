@@ -1877,12 +1877,12 @@ function roleLabel(){
    NAVEGAÇÃO / SHELL
 ========================================================= */
 function navItem(id, icon, label, enabled){
-  return `<div class="nav-item ${currentModule===id?'active':''} ${enabled?'':'locked'}" onclick="${enabled? `goTo('${id}')` : ''}">${ICON[icon]||ICON.dept||''}<span>${label}</span></div>`;
+  return `<div class="nav-item ${currentModule===id?'active':''} ${enabled?'':'locked'}" role="button" tabindex="${enabled?'0':'-1'}" data-module="${id}" data-enabled="${enabled?'true':'false'}" aria-current="${currentModule===id?'page':'false'}" aria-disabled="${enabled?'false':'true'}">${ICON[icon]||ICON.dept||''}<span>${label}</span></div>`;
 }
 
 function navDeptItem(id, icon, label, enabled){
   const active=currentModule==='dept-detail' && currentDeptView===id;
-  return `<div class="nav-item ${active?'active':''} ${enabled?'':'locked'}" onclick="${enabled? `openDept('${id}')` : ''}">${ICON[icon]||ICON.dept||''}<span>${label}</span></div>`;
+  return `<div class="nav-item ${active?'active':''} ${enabled?'':'locked'}" role="button" tabindex="${enabled?'0':'-1'}" data-department="${id}" data-enabled="${enabled?'true':'false'}" aria-current="${active?'page':'false'}" aria-disabled="${enabled?'false':'true'}">${ICON[icon]||ICON.dept||''}<span>${label}</span></div>`;
 }
 
 function renderShell(){
@@ -5487,6 +5487,20 @@ async function cmsCriar(){if(!exigirPermissao('site-publico','inserir'))return;c
 async function cmsGuardar(key){if(!exigirPermissao('site-publico','editar'))return;const type=cmsTypeFromKey(key),get=s=>document.getElementById(`cms-${key}-${s}`),file=get('file').files[0];let url=get('url').value.trim();try{const media=await cmsUpload(file,type);if(media)url=media;const{data:{user}}=await admsSupabase.auth.getUser();const{error}=await admsSupabase.from('site_conteudos').update({titulo:get('titulo').value.trim()||null,subtitulo:get('subtitulo').value.trim()||null,conteudo:get('conteudo').value.trim()||null,url:url||null,updated_by:user?.id||null,updated_at:new Date().toISOString()}).eq('chave',key);if(error)throw error;showToast('Alterações guardadas.');renderSitePublico()}catch(error){console.error(error);showToast(error.message||'Não foi possível guardar.')}}
 async function cmsAlternar(key,ativo){if(!exigirPermissao('site-publico','editar'))return;const{error}=await admsSupabase.from('site_conteudos').update({ativo,updated_at:new Date().toISOString()}).eq('chave',key);if(error){showToast('Não foi possível alterar a publicação.');return}showToast(ativo?'Conteúdo publicado.':'Conteúdo ocultado.');renderSitePublico()}
 async function cmsRemover(key){if(!exigirPermissao('site-publico','arquivar'))return;if(!confirm('Remover definitivamente este conteúdo?'))return;const{data}=await admsSupabase.from('site_conteudos').select('url').eq('chave',key).maybeSingle();const{error}=await admsSupabase.from('site_conteudos').delete().eq('chave',key);if(error){showToast('Não foi possível remover.');return}const marker='/storage/v1/object/public/site-media/';if(data?.url?.includes(marker)){const path=decodeURIComponent(data.url.split(marker)[1]);await admsSupabase.storage.from('site-media').remove([path])}showToast('Conteúdo removido.');renderSitePublico()}
+const admsNavContainer=document.getElementById('nav-container');
+function admsAtivarNavegacao(alvo){
+  const item=alvo.closest('.nav-item[data-module],.nav-item[data-department]');
+  if(!item||item.dataset.enabled!=='true')return false;
+  if(item.dataset.module)goTo(item.dataset.module);
+  else if(item.dataset.department)openDept(item.dataset.department);
+  return true;
+}
+admsNavContainer?.addEventListener('click',event=>{
+  if(admsAtivarNavegacao(event.target)){event.preventDefault();event.stopPropagation();}
+});
+admsNavContainer?.addEventListener('keydown',event=>{
+  if((event.key==='Enter'||event.key===' ')&&admsAtivarNavegacao(event.target)){event.preventDefault();}
+});
 document.getElementById('app-screen')?.addEventListener('click',event=>{
   const alvo=event.target.closest('[onclick]');
   if(!alvo || !document.getElementById('app-screen').contains(alvo)) return;
