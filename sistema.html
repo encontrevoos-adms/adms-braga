@@ -787,6 +787,19 @@ window.addEventListener('online',()=>{ admsCarregarMembrosCloud(); admsCarregarE
 #app-screen .dept-admin-card .dept-card-actions .btn{flex:1;justify-content:center;}
 #app-screen .dept-leadership{display:grid;gap:7px;margin-top:13px;padding-top:13px;border-top:1px solid #ebe5d9;font-size:13px;color:#566078;}
 #app-screen .dept-leadership strong{color:#07194f;}
+#app-screen .pending-center{margin-top:20px;border-top:3px solid var(--portal-gold);}
+#app-screen .pending-head{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:14px;}
+#app-screen .pending-head h2{margin:0;font-size:27px;}
+#app-screen .pending-count{min-width:30px;height:30px;padding:0 9px;border-radius:999px;background:#07194f;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;}
+#app-screen .pending-list{display:grid;gap:9px;}
+#app-screen .pending-item{width:100%;display:grid;grid-template-columns:10px minmax(0,1fr) auto;align-items:center;gap:12px;text-align:left;padding:13px 14px;border:1px solid #e7dfcf;border-radius:13px;background:#fff;cursor:pointer;color:#17213d;transition:.18s ease;}
+#app-screen .pending-item:hover{border-color:#d6ad45;transform:translateX(2px);box-shadow:0 10px 22px -20px rgba(7,25,79,.8);}
+#app-screen .pending-dot{width:9px;height:9px;border-radius:50%;background:#2f66c9;}
+#app-screen .pending-dot.high{background:#bd2632;}.pending-dot.medium{background:#d6ad45;}.pending-dot.low{background:#27835a;}
+#app-screen .pending-title{font-size:14px;font-weight:800;color:#07194f;}.pending-detail{font-size:12px;color:#667085;margin-top:3px;line-height:1.4;}
+#app-screen .pending-time{font-size:11px;color:#7b849b;white-space:nowrap;}
+#app-screen .pending-empty{padding:20px;text-align:center;border:1px dashed #d8cfbc;border-radius:13px;color:#667085;font-size:14px;}
+@media(max-width:620px){#app-screen .pending-item{grid-template-columns:10px minmax(0,1fr)}#app-screen .pending-time{grid-column:2;white-space:normal}}
 #dept-editor-modal .modal-box{max-width:720px;}
 #dept-editor-modal .modal-body>label{display:block;margin:14px 0 6px;font-size:12px;font-weight:800;letter-spacing:.55px;text-transform:uppercase;color:var(--ink-soft);}
 #dept-editor-modal .dept-checks{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px;}
@@ -1974,7 +1987,11 @@ function renderModule(){
   if(currentModule==='gabinete'){renderGabinetePastoral();return;}
   if(currentModule==='meu-perfil') return el.innerHTML = viewMeuPerfil();
   if(currentModule==='eventos'){ el.innerHTML = permPode('eventos')?viewEventos():viewLocked('Eventos'); return; }
-  if(currentModule==='dashboard') return el.innerHTML = ((session.tipo==='membro'||session.tipo==='consulta')?viewMemberHome():viewDashboard());
+  if(currentModule==='dashboard'){
+    el.innerHTML=((session.tipo==='membro'||session.tipo==='consulta')?viewMemberHome():viewDashboard());
+    if(session.tipo!=='membro'&&session.tipo!=='consulta')setTimeout(carregarCentralPendencias,0);
+    return;
+  }
   if(currentModule==='patrimonio') return el.innerHTML = canAccessPatrimonio()? viewPatrimonio() : viewLocked('Património');
   if(currentModule==='rh'){
     if(!canAccessRH()) return el.innerHTML = viewLocked('Recursos Humanos');
@@ -2310,7 +2327,7 @@ function viewDashboard(){
     ${ruleDivider()}
     <div class="grid grid-4">${rhCard}${deptCard}${patrimonioCard}${financeCard}</div>
     ${securityCard}
-    ${isMaster() ? '<div id="novos-contactos-dashboard"><div class="card" style="margin-top:16px">A carregar novos contactos...</div></div>' : ''}
+    <div id="central-pendencias"><div class="card pending-center"><div class="pending-empty">A organizar as pendências...</div></div></div>
 
     ${myDepts.length ? `
     <div class="section-title"><h2>${myDepts.length>1?'Os seus departamentos':'O seu departamento'}</h2></div>
@@ -3662,6 +3679,28 @@ async function renderPedidosOracao(){
 async function atualizarPedidoOracao(id,status){if(!exigirPermissao('pastoral','editar'))return;const {error}=await admsSupabase.from('pedidos_oracao').update({status,updated_at:new Date().toISOString()}).eq('id',id);if(error){showToast('Não foi possível atualizar o pedido.');return;}logAction('sistema','Pedido de oração atualizado',`${id} — ${status}`);showToast('Estado do pedido atualizado.');}
 async function guardarNotaOracao(id){if(!exigirPermissao('pastoral','editar'))return;const observacoes=document.getElementById(`oracao-nota-${id}`).value.trim();const {error}=await admsSupabase.from('pedidos_oracao').update({observacoes:observacoes||null,updated_at:new Date().toISOString()}).eq('id',id);if(error){showToast('Não foi possível guardar a nota.');return;}logAction('sistema','Acompanhamento de oração registado',id);showToast('Nota de acompanhamento guardada.');}
 
+function tempoPendencia(data){
+ const d=new Date(data);if(Number.isNaN(d.getTime()))return'';if(d.getTime()>Date.now()+3600000)return d.toLocaleDateString('pt-PT',{day:'2-digit',month:'short'});const min=Math.max(0,Math.floor((Date.now()-d.getTime())/60000));
+ if(min<60)return min<2?'agora':`há ${min} min`;const h=Math.floor(min/60);if(h<24)return`há ${h}h`;const dias=Math.floor(h/24);return`há ${dias} dia${dias===1?'':'s'}`;
+}
+function abrirPendencia(modulo){goTo(modulo)}
+async function carregarCentralPendencias(){
+ const host=document.getElementById('central-pendencias');if(!host||!admsSupabase)return;
+ const itens=[];
+ const tarefas=[];
+ if(canAccessGestaoAcessos()){
+  tarefas.push(admsSupabase.from('solicitacoes_acesso').select('id,nome_completo,status,created_at').eq('status','pendente').order('created_at',{ascending:false}).limit(8).then(({data})=>(data||[]).forEach(x=>itens.push({prioridade:'high',titulo:'Solicitação de acesso',detalhe:x.nome_completo||'Novo utilizador',modulo:'acessos',data:x.created_at}))));
+  tarefas.push(admsSupabase.from('notificacoes_internas').select('id,tipo,titulo,mensagem,created_at').eq('lida',false).order('created_at',{ascending:false}).limit(8).then(({data})=>(data||[]).filter(x=>x.tipo!=='novo_contacto'||!isMaster()).forEach(x=>itens.push({prioridade:'medium',titulo:x.titulo||'Nova notificação',detalhe:x.mensagem||'',modulo:x.tipo==='novo_contacto'?'novos-contactos':'avisos',data:x.created_at}))));
+ }
+ if(canAccessPrayerRequests())tarefas.push(admsSupabase.from('pedidos_oracao').select('id,nome,status,created_at').eq('status','novo').order('created_at',{ascending:false}).limit(8).then(({data})=>(data||[]).forEach(x=>itens.push({prioridade:'high',titulo:'Novo pedido de oração',detalhe:`Enviado por ${x.nome||'Anónimo'}`,modulo:'pedidos-oracao',data:x.created_at}))));
+ if(isMaster())tarefas.push(admsSupabase.from('novos_contactos').select('id,nome,status,origem,created_at').eq('status','novo').order('created_at',{ascending:false}).limit(8).then(({data})=>(data||[]).forEach(x=>itens.push({prioridade:'medium',titulo:'Novo contacto',detalhe:`${x.nome}${x.origem?' · '+x.origem:''}`,modulo:'novos-contactos',data:x.created_at}))));
+ await Promise.allSettled(tarefas);
+ if(canAccessFinanceiro())CONTAS_PAGAR.filter(c=>statusConta(c)==='Atrasado').slice(0,6).forEach(c=>itens.push({prioridade:'high',titulo:'Conta vencida',detalhe:`${c.fornecedor} · ${formatEuro(c.valor)}`,modulo:'contas-pagar',data:c.vencimento}));
+ const hoje=new Date(),limite=new Date();limite.setDate(limite.getDate()+7);EVENTOS.filter(e=>{const d=new Date(`${e.data}T12:00:00`);return d>=hoje&&d<=limite}).slice(0,5).forEach(e=>itens.push({prioridade:'low',titulo:'Evento próximo',detalhe:`${e.titulo} · ${formatDate(e.data)}`,modulo:'eventos',data:e.data}));
+ const ordem={high:0,medium:1,low:2};itens.sort((a,b)=>ordem[a.prioridade]-ordem[b.prioridade]||new Date(b.data)-new Date(a.data));
+ const lista=itens.slice(0,10);
+ host.innerHTML=`<section class="card pending-center"><div class="pending-head"><div><div class="panel-kicker">Acompanhamento</div><h2>Central de Pendências</h2></div><span class="pending-count">${itens.length}</span></div>${lista.length?`<div class="pending-list">${lista.map(x=>`<button class="pending-item" onclick="abrirPendencia('${x.modulo}')"><span class="pending-dot ${x.prioridade}"></span><span><span class="pending-title">${admsEsc(x.titulo)}</span><span class="pending-detail">${admsEsc(x.detalhe)}</span></span><span class="pending-time">${tempoPendencia(x.data)}</span></button>`).join('')}</div>`:'<div class="pending-empty">Tudo em ordem. Não existem pendências prioritárias.</div>'}</section>`;
+}
 
 async function carregarResumoNovosContactos(){
  const host=document.getElementById('novos-contactos-dashboard');
