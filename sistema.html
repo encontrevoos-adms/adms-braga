@@ -600,7 +600,7 @@ async function admsIniciarEstadoRealtime(){
     }).subscribe();
 }
 
-window.addEventListener('online',()=>{ admsCarregarMembrosCloud(); admsCarregarEstadoCloud({bootstrap:false}); admsIniciarRealtime(); admsIniciarEstadoRealtime(); });
+window.addEventListener('online',()=>{ admsCarregarMembrosCloud(); admsCarregarEstadoCloud({bootstrap:false}); admsCarregarAuditoriaCloud(); admsIniciarRealtime(); admsIniciarEstadoRealtime(); admsIniciarAuditoriaRealtime(); });
 </script>
 <style id="adms-v14">
 .member-view #main-content input,.member-view #main-content textarea,.member-view #main-content select{pointer-events:none}
@@ -1239,12 +1239,16 @@ let AVISOS = [];
 // registo de atividade (logs) — auditoria de lançamentos, correções e gestão de acessos
 let AUDIT_LOG = [];
 function logAction(tipo, acao, detalhes){
-  AUDIT_LOG.unshift({
-    id:'log'+Date.now()+Math.random().toString(36).slice(2,6),
-    quando: new Date().toLocaleString('pt-PT'),
-    autor: session ? session.label : 'Sistema',
-    tipo, acao, detalhes
-  });
+  const createdAt=new Date().toISOString();
+  const item={id:'log'+Date.now()+Math.random().toString(36).slice(2,6),quando:new Date(createdAt).toLocaleString('pt-PT'),createdAt,autor:session?.label||'Sistema',tipo,acao,detalhes};
+  AUDIT_LOG.unshift(item);
+  if(admsSupabase && admsCloudProfile?.id){
+    return admsSupabase.from('registo_atividade').insert({
+      user_id:admsCloudProfile.id,utilizador:item.autor,perfil:perfilPermissaoAtual(),
+      modulo:String(tipo||'sistema').slice(0,60),acao:String(acao||'Ação').slice(0,180),detalhes:String(detalhes||'').slice(0,3000)
+    }).then(({error})=>{if(error)console.warn('ADMS Auditoria:',error.message);return !error});
+  }
+  return Promise.resolve(false);
 }
 
 const PATRIMONIO = [];
@@ -1827,7 +1831,7 @@ function permissaoDoComando(comando=''){
     [/addLancamento\(|addContaPagar\(|addContaReceber\(/,'financeiro','inserir'],[/pagarConta\(|receberConta\(|definirOrcamento\(/,'financeiro','editar'],[/abrirRelatorioTipo\(/,'financeiro','exportar'],
     [/criarEvento\(/,'eventos','inserir'],[/addEscala\(/,'escalas','inserir'],[/postAviso\(/,'avisos','inserir'],[/partilharComunicacao\(|enviarComunicacaoEmail\(/,'avisos','exportar'],
     [/cmsCriar\(/,'site-publico','inserir'],[/guardarConteudoSite\(|cmsGuardar\(|cmsAlternar\(/,'site-publico','editar'],[/cmsRemover\(/,'site-publico','arquivar'],[/atualizarPedidoOracao\(|guardarNotaOracao\(/,'pastoral','editar'],
-    [/exportRelatorio\(/,'relatorios','exportar'],[/ativarAcessoMembro\(|revogarAcessoMembro\(|liberarDept\(|createLeader\(|revokeLeaderDept\(|approvePassword\(|rejectPassword\(/,'acessos','editar']
+    [/exportRelatorio\(/,'relatorios','exportar'],[/exportarAuditoriaCSV\(/,'auditoria','exportar'],[/ativarAcessoMembro\(|revogarAcessoMembro\(|liberarDept\(|createLeader\(|revokeLeaderDept\(|approvePassword\(|rejectPassword\(/,'acessos','editar']
   ];
   if(/guardarDepartamento\(/.test(comando)) return {modulo:'departamentos',acao:document.getElementById('dept-edit-id')?.disabled?'editar':'inserir'};
   for(const [padrao,modulo,acao] of regras) if(padrao.test(comando)) return {modulo,acao};
@@ -4515,31 +4519,37 @@ async function partilharComunicacao(id){
 }
 
 /* ================= REGISTO DE ATIVIDADE (AUDITORIA) ================= */
+let AUDIT_FILTER={texto:'',tipo:'',inicio:'',fim:''};
+function auditoriaFiltrada(){
+  const texto=AUDIT_FILTER.texto.toLowerCase();
+  return AUDIT_LOG.filter(l=>{
+    const data=(l.createdAt||'').slice(0,10);
+    if(AUDIT_FILTER.tipo&&l.tipo!==AUDIT_FILTER.tipo)return false;
+    if(AUDIT_FILTER.inicio&&data<AUDIT_FILTER.inicio)return false;
+    if(AUDIT_FILTER.fim&&data>AUDIT_FILTER.fim)return false;
+    return !texto||`${l.autor} ${l.tipo} ${l.acao} ${l.detalhes}`.toLowerCase().includes(texto);
+  });
+}
+function atualizarFiltroAuditoria(campo,valor){AUDIT_FILTER[campo]=valor;renderTabelaAuditoria()}
+function renderTabelaAuditoria(){
+  const el=document.getElementById('auditoria-tabela');if(!el)return;
+  const lista=auditoriaFiltrada();
+  const contador=document.getElementById('auditoria-contador');if(contador)contador.textContent=`${lista.length} de ${AUDIT_LOG.length} registo(s)`;
+  el.innerHTML=lista.length?`<table><thead><tr><th>Data/Hora</th><th>Utilizador</th><th>Perfil</th><th>Módulo</th><th>Ação</th><th>Detalhes</th></tr></thead><tbody>${lista.map(l=>`<tr><td style="white-space:nowrap;font-size:12px">${admsEsc(l.quando)}</td><td style="font-weight:700">${admsEsc(l.autor)}</td><td><span class="tag tag-gold">${admsEsc(l.perfil||'—')}</span></td><td><span class="tag ${l.tipo==='financeiro'?'tag-blue':l.tipo==='acesso'?'tag-gold':'tag-green'}">${admsEsc(l.tipo)}</span></td><td>${admsEsc(l.acao)}</td><td style="font-size:12px;color:var(--ink-soft)">${admsEsc(l.detalhes)}</td></tr>`).join('')}</tbody></table>`:`<div class="empty-state"><p>Nenhuma atividade corresponde aos filtros.</p></div>`;
+}
+function exportarAuditoriaCSV(){
+  if(!exigirPermissao('auditoria','exportar'))return;
+  const linhas=[['Data/Hora','Utilizador','Perfil','Módulo','Ação','Detalhes'],...auditoriaFiltrada().map(l=>[l.quando,l.autor,l.perfil||'',l.tipo,l.acao,l.detalhes])];
+  const csv='\uFEFF'+linhas.map(row=>row.map(v=>`"${String(v??'').replace(/"/g,'""')}"`).join(';')).join('\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download=`auditoria-adms-${new Date().toISOString().slice(0,10)}.csv`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  logAction('auditoria','Registo de atividade exportado',`${linhas.length-1} registo(s) exportados.`);
+}
 function viewAuditoria(){
-  return `
-    <div class="topbar">
-      <div><div class="breadcrumb">Administração</div><h1>Registo de Atividade</h1></div>
-      <span class="access-pill">${ICON.audit} ${AUDIT_LOG.length} registo(s)</span>
-    </div>
-    ${ruleDivider()}
-    <p style="color:var(--ink-soft); font-size:13.5px; max-width:680px; margin-top:0;">Histórico de ações sensíveis do sistema: lançamentos financeiros e respetivas correções, gestão de acessos e avisos publicados. Cada correção de lançamento fica registada com a justificação apresentada.</p>
-    <div class="card">
-      ${AUDIT_LOG.length ? `
-      <table>
-        <thead><tr><th>Data/Hora</th><th>Utilizador</th><th>Tipo</th><th>Ação</th><th>Detalhes</th></tr></thead>
-        <tbody>
-          ${AUDIT_LOG.map(l=>`
-            <tr>
-              <td style="white-space:nowrap; font-size:11.5px;">${l.quando}</td>
-              <td style="font-weight:600;">${l.autor}</td>
-              <td><span class="tag ${l.tipo==='financeiro'?'tag-blue':l.tipo==='acesso'?'tag-gold':'tag-green'}">${l.tipo}</span></td>
-              <td>${l.acao}</td>
-              <td style="font-size:12px; color:var(--ink-soft);">${l.detalhes}</td>
-            </tr>`).join('')}
-        </tbody>
-      </table>` : `<div class="empty-state"><p>Ainda sem atividade registada.</p></div>`}
-    </div>
-  `;
+  const tipos=[...new Set(AUDIT_LOG.map(l=>l.tipo).filter(Boolean))].sort();
+  setTimeout(renderTabelaAuditoria,0);
+  return `<div class="topbar"><div><div class="breadcrumb">Administração</div><h1>Registo de Atividade</h1></div><div style="display:flex;gap:9px;flex-wrap:wrap"><span class="access-pill" id="auditoria-contador">${ICON.audit} ${AUDIT_LOG.length} registo(s)</span>${permPode('auditoria','exportar')?'<button class="btn btn-outline" style="width:auto" onclick="exportarAuditoriaCSV()">Exportar CSV</button>':''}</div></div>
+  ${ruleDivider()}<p style="color:var(--ink-soft);font-size:14px;max-width:760px;margin-top:0">Histórico permanente das ações administrativas. Os registos são acrescentados automaticamente e não podem ser editados ou removidos pelo portal.</p>
+  <div class="card"><div class="search-filter-bar"><input value="${admsEsc(AUDIT_FILTER.texto)}" placeholder="Pesquisar utilizador, ação ou detalhe" oninput="atualizarFiltroAuditoria('texto',this.value)"><select onchange="atualizarFiltroAuditoria('tipo',this.value)"><option value="">Todos os módulos</option>${tipos.map(t=>`<option value="${admsEsc(t)}" ${AUDIT_FILTER.tipo===t?'selected':''}>${admsEsc(t)}</option>`).join('')}</select><input type="date" value="${AUDIT_FILTER.inicio}" aria-label="Data inicial" onchange="atualizarFiltroAuditoria('inicio',this.value)"><input type="date" value="${AUDIT_FILTER.fim}" aria-label="Data final" onchange="atualizarFiltroAuditoria('fim',this.value)"></div><div id="auditoria-tabela"><div class="empty-state"><p>A carregar atividade...</p></div></div></div>`;
 }
 
 /* ================= RELATÓRIOS (PDF / EXCEL) ================= */
@@ -5143,6 +5153,25 @@ async function admsCarregarPermissoesCloud(){
   return PERMISSOES_PERFIS.length>0;
 }
 
+let admsAuditRealtimeChannel=null;
+async function admsCarregarAuditoriaCloud(){
+  if(!admsSupabase || !permPode('auditoria')) return false;
+  const {data,error}=await admsSupabase.from('registo_atividade')
+    .select('id,utilizador,perfil,modulo,acao,detalhes,created_at')
+    .order('created_at',{ascending:false}).limit(500);
+  if(error){console.warn('ADMS Auditoria:',error.message);return false;}
+  AUDIT_LOG=(data||[]).map(r=>({id:r.id,quando:new Date(r.created_at).toLocaleString('pt-PT'),createdAt:r.created_at,autor:r.utilizador,perfil:r.perfil,tipo:r.modulo,acao:r.acao,detalhes:r.detalhes||''}));
+  return true;
+}
+async function admsIniciarAuditoriaRealtime(){
+  if(!admsSupabase || !permPode('auditoria') || admsAuditRealtimeChannel) return;
+  admsAuditRealtimeChannel=admsSupabase.channel('adms-auditoria-live')
+    .on('postgres_changes',{event:'INSERT',schema:'public',table:'registo_atividade'},async()=>{
+      await admsCarregarAuditoriaCloud();
+      if(currentModule==='auditoria') renderModule();
+    }).subscribe();
+}
+
 async function admsPerfilAtual(){
   if(!admsSupabase) return null;
   const {data:{user}, error:userError} = await admsSupabase.auth.getUser();
@@ -5234,8 +5263,11 @@ async function finalizeLogin(){
   await admsCarregarDepartamentosCloud();
   await admsCarregarPermissoesCloud();
   await admsCarregarEstadoCloud({bootstrap:true});
+  await admsCarregarAuditoriaCloud();
   await admsIniciarRealtime();
   await admsIniciarEstadoRealtime();
+  await admsIniciarAuditoriaRealtime();
+  logAction('acesso','Sessão iniciada',`Entrada no portal como ${roleLabel()}.`);
   renderShell();
   return true;
 }
@@ -5251,8 +5283,10 @@ async function tentarRestaurarSessao(){
 }
 
 async function handleLogout(){
+  await logAction('acesso','Sessão terminada','Saída voluntária do portal.');
   if(admsRealtimeChannel){ try{ await admsSupabase.removeChannel(admsRealtimeChannel); }catch(e){} admsRealtimeChannel=null; }
   if(admsStateRealtimeChannel){ try{ await admsSupabase.removeChannel(admsStateRealtimeChannel); }catch(e){} admsStateRealtimeChannel=null; }
+  if(admsAuditRealtimeChannel){ try{ await admsSupabase.removeChannel(admsAuditRealtimeChannel); }catch(e){} admsAuditRealtimeChannel=null; }
   await admsSupabase.auth.signOut();
   session=null; admsCloudProfile=null; pendingLoginKey=null; pendingLoginLeaderId=null; currentProfileRef=null;
   try{ localStorage.removeItem(SESSAO_KEY); }catch(e){}
