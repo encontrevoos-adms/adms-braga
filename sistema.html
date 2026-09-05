@@ -712,6 +712,48 @@ window.addEventListener('online',()=>{ admsCarregarMembrosCloud(); admsCarregarE
   #app-screen table{min-width:640px;}
 }
 @media (prefers-reduced-motion:reduce){#app-screen *,#app-screen *::before,#app-screen *::after{scroll-behavior:auto!important;transition:none!important;}}
+
+/* Página inicial: área de trabalho mais viva e orientada a ações. */
+#app-screen .portal-welcome{position:relative;overflow:hidden;display:grid;grid-template-columns:minmax(0,1.55fr) minmax(250px,.65fr);gap:28px;align-items:end;padding:34px 36px;border-radius:24px;background:linear-gradient(120deg,#07194f 0%,#0e2c7c 72%,#173d96 100%);color:#fff;box-shadow:0 24px 54px -32px rgba(7,25,79,.9);margin-bottom:24px;}
+#app-screen .portal-welcome::after{content:"";position:absolute;width:320px;height:320px;border:1px solid rgba(214,173,69,.28);border-radius:50%;right:-130px;top:-190px;box-shadow:0 0 0 42px rgba(214,173,69,.05),0 0 0 84px rgba(214,173,69,.035);pointer-events:none;}
+#app-screen .portal-welcome .eyebrow{font-size:12px;font-weight:800;letter-spacing:1.8px;text-transform:uppercase;color:#e5c66f;margin-bottom:10px;}
+#app-screen .portal-welcome h1{font-family:'Cormorant Garamond',Georgia,serif;font-size:clamp(34px,4vw,54px);line-height:1;margin:0;color:#fff;max-width:760px;}
+#app-screen .portal-welcome p{font-size:16px;line-height:1.6;color:#d9e1f5;margin:14px 0 0;max-width:720px;}
+#app-screen .portal-welcome-meta{position:relative;z-index:1;padding:18px;border:1px solid rgba(255,255,255,.14);border-radius:18px;background:rgba(255,255,255,.08);backdrop-filter:blur(10px);}
+#app-screen .portal-welcome-meta .date{font-family:'Cormorant Garamond',Georgia,serif;font-size:22px;font-weight:700;color:#fff;line-height:1.15;}
+#app-screen .portal-welcome-meta .role{font-size:13px;color:#e6c972;margin-top:7px;line-height:1.4;}
+#app-screen .portal-actions{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 28px;}
+#app-screen .portal-action{display:inline-flex;align-items:center;gap:9px;min-height:46px;padding:10px 15px;border:1px solid #ddd3bd;border-radius:13px;background:rgba(255,253,248,.9);color:#07194f;font:700 14px 'Inter',sans-serif;cursor:pointer;box-shadow:0 12px 28px -24px rgba(7,25,79,.8);transition:transform .18s,border-color .18s,box-shadow .18s;}
+#app-screen .portal-action:hover{transform:translateY(-2px);border-color:#d6ad45;box-shadow:0 16px 30px -22px rgba(7,25,79,.8);}
+#app-screen .portal-action svg{width:18px;height:18px;color:#9a7418;}
+#app-screen .portal-home-grid{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(290px,.75fr);gap:20px;align-items:stretch;}
+#app-screen .portal-home-grid + .portal-home-grid{grid-template-columns:repeat(3,minmax(0,1fr));margin-top:20px;}
+#app-screen .portal-panel{position:relative;overflow:hidden;min-height:100%;}
+#app-screen .portal-panel .panel-kicker{font-size:11px;font-weight:800;letter-spacing:1.45px;text-transform:uppercase;color:#9b771c;margin-bottom:7px;}
+#app-screen .portal-panel h2{font-size:28px;margin:0 0 16px;}
+#app-screen .portal-video{padding:0!important;background:#07194f!important;border-color:#17336f!important;}
+#app-screen .portal-video-head{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:21px 23px 17px;color:#fff;}
+#app-screen .portal-video-head h2{color:#fff;margin:0;font-size:27px;}
+#app-screen .portal-video-head .panel-kicker{color:#e5c66f;}
+#app-screen .portal-video-frame{aspect-ratio:16/9;background:#030a20;position:relative;}
+#app-screen .portal-video-frame iframe{display:block;width:100%;height:100%;border:0;}
+#app-screen .portal-video-foot{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:15px 23px;color:#d9e1f5;font-size:13px;}
+#app-screen .portal-video-foot a{color:#e6c972;text-decoration:none;font-weight:700;white-space:nowrap;}
+#app-screen .portal-devotional{background:linear-gradient(155deg,#fffdf8,#f6edda)!important;display:flex;flex-direction:column;}
+#app-screen .portal-devotional .verse-mark{font-family:Georgia,serif;font-size:68px;line-height:.7;color:#d6ad45;opacity:.7;margin:14px 0 4px;}
+#app-screen .portal-devotional p{font-size:16px;line-height:1.75;color:#4a5578;margin:0;}
+#app-screen .portal-devotional .portal-card-link{margin-top:auto;padding-top:22px;}
+#app-screen .portal-mini{min-height:218px;display:flex;flex-direction:column;}
+#app-screen .portal-mini p{font-size:15px;line-height:1.65;color:#4a5578;margin:0;}
+#app-screen .portal-mini .portal-card-link{margin-top:auto;padding-top:18px;}
+#app-screen .portal-card-link{display:inline-flex;align-items:center;gap:7px;border:0;background:transparent;color:#0d2b78;font:800 13px 'Inter',sans-serif;padding:0;cursor:pointer;text-align:left;}
+#app-screen .portal-card-link:hover{color:#9a7418;}
+#app-screen .portal-agenda-list{display:grid;gap:9px;margin-top:2px;}
+#app-screen .portal-agenda-item{display:flex;align-items:center;gap:10px;font-size:14px;color:#303b58;}
+#app-screen .portal-agenda-item strong{color:#07194f;min-width:72px;}
+#app-screen .portal-agenda-item span{width:7px;height:7px;border-radius:50%;background:#d6ad45;flex:0 0 auto;}
+@media (max-width:1050px){#app-screen .portal-welcome{grid-template-columns:1fr;}#app-screen .portal-welcome-meta{max-width:430px;}#app-screen .portal-home-grid{grid-template-columns:1fr;}#app-screen .portal-home-grid + .portal-home-grid{grid-template-columns:repeat(2,minmax(0,1fr));}}
+@media (max-width:760px){#app-screen .portal-welcome{padding:26px 22px;border-radius:20px;}#app-screen .portal-welcome h1{font-size:36px;}#app-screen .portal-welcome-meta{padding:14px;}#app-screen .portal-actions{display:grid;grid-template-columns:1fr 1fr;}#app-screen .portal-action{justify-content:center;padding-inline:10px;}#app-screen .portal-home-grid + .portal-home-grid{grid-template-columns:1fr;}#app-screen .portal-video-head,#app-screen .portal-video-foot{padding-inline:18px;}#app-screen .portal-video-foot{align-items:flex-start;flex-direction:column;}#app-screen .portal-mini{min-height:0;}}
 </style>
 </head>
 <body>
@@ -1984,6 +2026,7 @@ function alertasVencimentoHTML(){
 function viewChurchHome(){
  const nome=((session&&session.label)||'').trim().split(/\s+/)[0]||'Irmão(ã)';
  const hoje=new Date(), dd=String(hoje.getDate()).padStart(2,'0'), mm=String(hoje.getMonth()+1).padStart(2,'0');
+ const dataExtensa=new Intl.DateTimeFormat('pt-PT',{weekday:'long',day:'numeric',month:'long'}).format(hoje);
  let anivers=[];
  try{
    anivers=(PESSOAS.membros||[]).filter(p=>{
@@ -1993,26 +2036,38 @@ function viewChurchHome(){
      return parts.length===3 && parts[1]===mm && parts[2]===dd;
    });
  }catch(e){}
- return `<div class="topbar"><div><div class="breadcrumb">Página Inicial</div><h1>A Paz do Senhor Jesus!<br>Seja Bem vindo, ${nome}!</h1><p style="color:var(--ink-soft);margin-top:8px">ADMS Braga — uma igreja para viver a Palavra, servir e crescer em comunhão.</p></div><span class="access-pill">${ICON.acesso||''} ${roleLabel()}</span></div>
- ${ruleDivider()}
- <div class="grid grid-2">
-  <div class="card"><h3>Vídeo da Semana</h3><div style="aspect-ratio:16/9;border-radius:12px;background:var(--surface-2,#eef1f8);display:flex;align-items:center;justify-content:center;margin-top:12px"><span style="color:var(--ink-soft)">Vídeo da Semana</span></div></div>
-  <div class="card"><h3>Devocional Diário</h3><p style="color:var(--ink-soft);line-height:1.7">Uma palavra para fortalecer a sua caminhada com Deus. O conteúdo poderá ser atualizado pela liderança responsável.</p></div>
-  <div class="card"><h3>Versículo do Dia</h3><p style="color:var(--ink-soft);line-height:1.7">A Palavra de Deus para meditação e edificação durante o dia.</p></div>
-  <div class="card"><h3>Aniversariante do Dia</h3>${anivers.length?anivers.map(p=>`<p><b>${p.nome}</b><br><span style="color:var(--ink-soft)">Este é o dia que fez o Senhor; regozijemo-nos e alegremo-nos nele. — Salmos 118:24</span></p>`).join(''):'<p style="color:var(--ink-soft)">Nenhum aniversariante registado para hoje.</p>'}</div>
+ const editorial=hasFullConfidentialAccess()?`<button class="portal-action" onclick="goTo('site-publico')">${ICON.megaphone||''}<span>Gerir conteúdo</span></button>`:'';
+ return `<section class="portal-welcome">
+  <div><div class="eyebrow">Página inicial · ADMS Braga</div><h1>A Paz do Senhor Jesus,<br>${nome}!</h1><p>Informação, serviço e comunhão num só lugar.</p></div>
+  <div class="portal-welcome-meta"><div class="date">${dataExtensa.charAt(0).toUpperCase()+dataExtensa.slice(1)}</div><div class="role">${roleLabel()}</div></div>
+ </section>
+ <nav class="portal-actions" aria-label="Ações rápidas">
+  <button class="portal-action" onclick="goTo('eventos')">${ICON.events||''}<span>Ver eventos</span></button>
+  <button class="portal-action" onclick="goTo('avisos')">${ICON.megaphone||''}<span>Avisos</span></button>
+  <button class="portal-action" onclick="goTo('escalas')">${ICON.shift||''}<span>Consultar escalas</span></button>
+  ${editorial}
+ </nav>
+ <div class="portal-home-grid">
+  <article class="card portal-panel portal-video">
+   <div class="portal-video-head"><div><div class="panel-kicker">Conteúdo em destaque</div><h2>Vídeo da Semana</h2></div><span class="tag tag-gold">ADMS Braga</span></div>
+   <div class="portal-video-frame"><iframe loading="lazy" src="https://www.youtube-nocookie.com/embed/qfimOJI9hUA" title="Vídeo da Semana — ADMS Braga" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>
+   <div class="portal-video-foot"><span>Assista à mensagem e partilhe a Palavra.</span><a href="https://www.youtube.com/live/qfimOJI9hUA" target="_blank" rel="noopener">Abrir no YouTube ↗</a></div>
+  </article>
+  <article class="card portal-panel portal-devotional">
+   <div class="panel-kicker">Para hoje</div><h2>Devocional Diário</h2><div class="verse-mark">“</div>
+   <p>Separe alguns minutos para a Palavra, a oração e a comunhão com Deus. Uma fé cuidada diariamente sustenta uma vida firme.</p>
+   <button class="portal-card-link" onclick="goTo('ebd')">Acessar estudos bíblicos <span>→</span></button>
+  </article>
+ </div>
+ <div class="portal-home-grid">
+  <article class="card portal-panel portal-mini"><div class="panel-kicker">Meditação</div><h2>Versículo do Dia</h2><p>“Este é o dia que fez o Senhor; regozijemo-nos e alegremo-nos nele.”</p><p style="margin-top:8px;font-weight:800;color:#9b771c">Salmos 118:24</p><button class="portal-card-link" onclick="goTo('ebd')">Continuar na Palavra <span>→</span></button></article>
+  <article class="card portal-panel portal-mini"><div class="panel-kicker">Próximos encontros</div><h2>Agenda da Semana</h2><div class="portal-agenda-list"><div class="portal-agenda-item"><span></span><strong>Segunda</strong> 20h</div><div class="portal-agenda-item"><span></span><strong>Quarta</strong> 20h</div><div class="portal-agenda-item"><span></span><strong>Sexta</strong> 20h</div><div class="portal-agenda-item"><span></span><strong>Domingo</strong> 10h30 · 18h30</div></div><button class="portal-card-link" onclick="goTo('eventos')">Ver agenda completa <span>→</span></button></article>
+  <article class="card portal-panel portal-mini"><div class="panel-kicker">Nossa família</div><h2>Aniversariante do Dia</h2>${anivers.length?anivers.map(p=>`<p><strong style="color:#07194f">${p.nome}</strong><br>Celebramos esta vida com gratidão a Deus.</p>`).join(''):'<p>Nenhum aniversariante registado para hoje.</p>'}<button class="portal-card-link" onclick="goTo('avisos')">Ver comunicados <span>→</span></button></article>
  </div>`;
 }
 
 function viewMemberHome(){
- const nome=((session&&session.label)||'').trim().split(/\s+/)[0]||'Irmão(ã)';
- return `<div class="topbar"><div><div class="breadcrumb">Página Inicial</div><h1>A Paz do Senhor Jesus!<br>Seja Bem vindo, ${nome}!</h1></div><span class="access-pill">${ICON.acesso} ${roleLabel()}</span></div>
- ${ruleDivider()}
- <div class="grid grid-2">
-  <div class="card"><h3>Vídeo da Semana</h3><p style="color:var(--ink-soft)">Conteúdo semanal da ADMS Braga.</p></div>
-  <div class="card"><h3>Devocional Diário</h3><p style="color:var(--ink-soft)">Uma palavra para fortalecer a sua caminhada com Deus.</p></div>
-  <div class="card"><h3>Versículo do Dia</h3><p style="color:var(--ink-soft)">A Palavra de Deus para meditação diária.</p></div>
-  <div class="card"><h3>Aniversariante do Dia</h3>${aniversariantesDoMesHTML?aniversariantesDoMesHTML():'<p>Nenhum aniversariante hoje.</p>'}</div>
- </div>`;
+ return viewChurchHome();
 }
 
 function viewDashboard(){
