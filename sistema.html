@@ -739,6 +739,52 @@ window.addEventListener('online',()=>{ admsCarregarMembrosCloud(); admsCarregarE
 }
 @media (prefers-reduced-motion:reduce){#app-screen *,#app-screen *::before,#app-screen *::after{scroll-behavior:auto!important;transition:none!important;}}
 
+/* Centro de notificações */
+#app-screen .nav-item .nav-badge{margin-left:auto;min-width:21px;height:21px;padding:0 6px;display:none;align-items:center;justify-content:center;border-radius:999px;background:#d6ad45;color:#07194f;font-size:11px;font-weight:900;line-height:1;}
+#app-screen .nav-item .nav-badge.visible{display:inline-flex;}
+#app-screen .notification-toolbar{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:18px;}
+#app-screen .notification-list{display:grid;gap:11px;}
+#app-screen .notification-item{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:14px;align-items:start;padding:18px;border:1px solid var(--portal-border);border-radius:17px;background:rgba(255,253,248,.96);box-shadow:0 13px 34px -31px rgba(7,25,79,.75);transition:transform .18s,border-color .18s,box-shadow .18s;}
+#app-screen .notification-item:hover{transform:translateY(-2px);border-color:#d6bd7c;box-shadow:0 18px 38px -30px rgba(7,25,79,.8);}
+#app-screen .notification-item.unread{border-left:4px solid var(--portal-gold);background:#fffdf7;}
+#app-screen .notification-symbol{width:42px;height:42px;border-radius:13px;display:flex;align-items:center;justify-content:center;background:#edf1fb;color:var(--portal-navy);}
+#app-screen .notification-item.unread .notification-symbol{background:#f5e9c5;color:#805d0a;}
+#app-screen .notification-title{display:flex;gap:9px;align-items:center;flex-wrap:wrap;font-weight:800;color:var(--portal-navy);font-size:15px;}
+#app-screen .notification-message{margin-top:6px;color:var(--ink-soft);font-size:14px;line-height:1.55;}
+#app-screen .notification-meta{margin-top:8px;color:#7a8294;font-size:12px;}
+#app-screen .notification-actions{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end;}
+@media(max-width:760px){#app-screen .notification-item{grid-template-columns:auto minmax(0,1fr);}#app-screen .notification-actions{grid-column:1/-1;justify-content:flex-start;padding-left:56px;}}
+
+/* Planeamento do culto — Louvor e Dança */
+#app-screen .worship-planner{margin-top:22px;}
+#app-screen .worship-form{border-top:3px solid var(--portal-gold);}
+#app-screen .worship-form-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px;}
+#app-screen .worship-form-head h2{margin:0;font-size:27px;}
+#app-screen .palette-fields{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:8px 0 16px;}
+#app-screen .palette-fields input[type=color]{width:54px;height:48px;padding:4px;min-height:48px;cursor:pointer;}
+#app-screen .song-editor-list{display:grid;gap:10px;margin-top:10px;}
+#app-screen .song-editor{display:grid;grid-template-columns:minmax(150px,1.5fr) 75px repeat(3,minmax(120px,1fr)) minmax(140px,1fr) auto;gap:8px;align-items:end;padding:12px;border:1px solid #e5ddce;border-radius:14px;background:#faf7f0;}
+#app-screen .song-editor label{font-size:11px;}
+#app-screen .song-editor input{min-width:0;}
+#app-screen .planning-list{display:grid;gap:14px;margin-top:18px;}
+#app-screen .planning-card{overflow:hidden;padding:0!important;}
+#app-screen .planning-card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;padding:20px 22px;background:linear-gradient(120deg,#07194f,#123684);color:#fff;}
+#app-screen .planning-card-head h3{margin:0;color:#fff;font-size:24px;}
+#app-screen .planning-card-head p{margin:5px 0 0;color:#d7e0f4;font-size:13px;}
+#app-screen .planning-date{flex:0 0 auto;text-align:center;padding:8px 12px;border-radius:12px;background:rgba(255,255,255,.11);border:1px solid rgba(214,173,69,.45);font-weight:800;}
+#app-screen .planning-body{padding:20px 22px;}
+#app-screen .palette-preview{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin:10px 0 15px;}
+#app-screen .palette-swatch{width:34px;height:34px;border-radius:10px;border:2px solid #fff;box-shadow:0 0 0 1px #d8d2c6;}
+#app-screen .repertoire-list{display:grid;gap:8px;margin-top:12px;}
+#app-screen .repertoire-song{display:grid;grid-template-columns:30px minmax(0,1fr) auto;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;background:#f5f2eb;}
+#app-screen .song-order{width:26px;height:26px;display:flex;align-items:center;justify-content:center;border-radius:8px;background:#07194f;color:#fff;font-size:11px;font-weight:800;}
+#app-screen .song-links{display:flex;gap:6px;flex-wrap:wrap;}
+#app-screen .music-link{display:inline-flex;align-items:center;padding:6px 9px;border-radius:8px;text-decoration:none;font-size:11px;font-weight:800;border:1px solid #ddd5c5;background:#fff;color:#07194f;}
+#app-screen .music-link.youtube{color:#b41722}.music-link.deezer{color:#5b26ad}.music-link.cifra{color:#13724b}
+#app-screen .planning-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;padding-top:15px;border-top:1px solid #ece5d9;}
+@media(max-width:1100px){#app-screen .song-editor{grid-template-columns:1fr 90px 1fr;}.song-editor .song-remove{grid-column:3;}}
+@media(max-width:760px){#app-screen .song-editor{grid-template-columns:1fr 75px;}.song-editor>div:nth-child(n+3){grid-column:1/-1}.song-editor .song-remove{grid-column:2;grid-row:1}.planning-card-head{padding:18px!important}.planning-body{padding:18px!important}.repertoire-song{grid-template-columns:30px 1fr}.song-links{grid-column:2;}}
+
 /* Página inicial: área de trabalho mais viva e orientada a ações. */
 #app-screen .portal-welcome{position:relative;overflow:hidden;display:grid;grid-template-columns:minmax(0,1.55fr) minmax(250px,.65fr);gap:28px;align-items:end;padding:34px 36px;border-radius:24px;background:linear-gradient(120deg,#07194f 0%,#0e2c7c 72%,#173d96 100%);color:#fff;box-shadow:0 24px 54px -32px rgba(7,25,79,.9);margin-bottom:24px;}
 #app-screen .portal-welcome::after{content:"";position:absolute;width:320px;height:320px;border:1px solid rgba(214,173,69,.28);border-radius:50%;right:-130px;top:-190px;box-shadow:0 0 0 42px rgba(214,173,69,.05),0 0 0 84px rgba(214,173,69,.035);pointer-events:none;}
@@ -1122,6 +1168,7 @@ const ICON = {
   key: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="8" cy="14.5" r="4"/><path d="M11 11.5L20 2.5M17 6l2.5 2.5M14 9l2 2"/></svg>',
   shift: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/><path d="M8 14h3M8 17h6"/></svg>',
   megaphone: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11v3a1 1 0 001 1h2l4 4V6l-4 4H4a1 1 0 00-1 1z"/><path d="M13 8a4 4 0 010 8M17 5a8 8 0 010 14"/></svg>',
+  bell: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 00-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg>',
   crown: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8l4 3 5-6 5 6 4-3-2 10H5z"/></svg>',
   report: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2h9l5 5v15H6z"/><path d="M15 2v5h5M9 12h6M9 16h6M9 8h2"/></svg>',
   pdf: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2h9l5 5v15H6z"/><path d="M15 2v5h5"/><path d="M9 15v3M9 15h1.3a1.5 1.5 0 000-3H9v3zM13 18v-3h2M13 16.3h1.7M17 18v-3h1.5"/></svg>',
@@ -1890,7 +1937,8 @@ function roleLabel(){
    NAVEGAÇÃO / SHELL
 ========================================================= */
 function navItem(id, icon, label, enabled){
-  return `<div class="nav-item ${currentModule===id?'active':''} ${enabled?'':'locked'}" role="button" tabindex="${enabled?'0':'-1'}" data-module="${id}" data-enabled="${enabled?'true':'false'}" aria-current="${currentModule===id?'page':'false'}" aria-disabled="${enabled?'false':'true'}">${ICON[icon]||ICON.dept||''}<span>${label}</span></div>`;
+  const badge=id==='notificacoes'?'<span class="nav-badge" id="notificacoes-nav-badge" aria-label="0 notificações não lidas"></span>':'';
+  return `<div class="nav-item ${currentModule===id?'active':''} ${enabled?'':'locked'}" role="button" tabindex="${enabled?'0':'-1'}" data-module="${id}" data-enabled="${enabled?'true':'false'}" aria-current="${currentModule===id?'page':'false'}" aria-disabled="${enabled?'false':'true'}">${ICON[icon]||ICON.dept||''}<span>${label}</span>${badge}</div>`;
 }
 
 function navDeptItem(id, icon, label, enabled){
@@ -1906,6 +1954,7 @@ function renderShell(){
   const lider=session.tipo==='lider';
   let nav='<div class="nav-group-label">Geral</div>';
   nav+=navItem('home','dashboard','Página Inicial',true);
+  nav+=navItem('notificacoes','bell','Notificações',true);
 
   if(membro){
     nav+='<div class="nav-group-label">Igreja</div>';
@@ -1959,6 +2008,7 @@ function renderShell(){
   document.getElementById('nav-container').innerHTML=nav;
   renderModule();
   setTimeout(aplicarPermissoesNaInterface,0);
+  setTimeout(atualizarBadgeNotificacoes,0);
 }
 
 function goTo(mod){
@@ -1984,6 +2034,7 @@ function ruleDivider(){
 function renderModule(){
   const el = document.getElementById('main-content');
   if(currentModule==='home') return el.innerHTML=viewChurchHome();
+  if(currentModule==='notificacoes'){el.innerHTML='<div class="card">A carregar notificações...</div>';renderNotificacoes();return;}
   if(currentModule==='gabinete'){renderGabinetePastoral();return;}
   if(currentModule==='meu-perfil') return el.innerHTML = viewMeuPerfil();
   if(currentModule==='eventos'){ el.innerHTML = permPode('eventos')?viewEventos():viewLocked('Eventos'); return; }
@@ -2020,7 +2071,11 @@ function renderModule(){
   if(currentModule==='orcamento') return el.innerHTML = canAccessFinanceiro()? viewOrcamento() : viewLocked('Orçamento');
   if(currentModule==='departamentos') return el.innerHTML = permPode('departamentos')?viewDepartamentos():viewLocked('Departamentos');
   if(currentModule==='meu-dept') return el.innerHTML = viewMeuDept();
-  if(currentModule==='dept-detail') return el.innerHTML = canAccessDept(currentDeptView)? viewDeptDetail(currentDeptView) : viewLocked(deptNome(currentDeptView));
+  if(currentModule==='dept-detail'){
+    el.innerHTML = canAccessDept(currentDeptView)? viewDeptDetail(currentDeptView) : viewLocked(deptNome(currentDeptView));
+    if(canAccessDept(currentDeptView)&&['louvor','danca'].includes(currentDeptView))setTimeout(()=>renderPlaneamentosCulto(currentDeptView),0);
+    return;
+  }
   if(currentModule==='escalas') return el.innerHTML = canAccessEscalas()? viewEscalas() : viewLocked('Escalas de Serviço');
   if(currentModule==='celulas'){ el.innerHTML = viewCelulas(); return; }
   if(currentModule==='celula-detalhe'){ el.innerHTML = viewCelulaDetalhe(); return; }
@@ -2522,8 +2577,71 @@ function viewDeptDetail(id){
         </div>
       </div>
     </div>
+    ${['louvor','danca'].includes(id)?'<div id="worship-planner" class="worship-planner"><div class="card">A carregar o planeamento do culto...</div></div>':''}
   `;
 }
+
+let PLANEAMENTOS_CULTO_CACHE=[];
+let PLANEAMENTO_EDITANDO=null;
+function podeEditarPlaneamento(departamento){return isMaster()||(session?.deptIds||[]).includes(departamento)}
+function planoDataPt(data){if(!data)return'—';return new Date(`${data}T12:00:00`).toLocaleDateString('pt-PT',{weekday:'short',day:'2-digit',month:'short',year:'numeric'})}
+function planoMusicaVazia(){return{titulo:'',tom:'',youtube:'',deezer:'',cifra:'',observacao:''}}
+function planoUrlSegura(url){if(!url)return'';try{const u=new URL(url);return['http:','https:'].includes(u.protocol)?u.href:''}catch{return''}}
+function musicaEditorHTML(m=planoMusicaVazia()){
+  return `<div class="song-editor"><div><label>Música</label><input data-song="titulo" value="${admsEsc(m.titulo)}" placeholder="Título da música"></div><div><label>Tom</label><input data-song="tom" value="${admsEsc(m.tom)}" placeholder="Ex.: G"></div><div><label>YouTube</label><input data-song="youtube" value="${admsEsc(m.youtube)}" placeholder="https://..."></div><div><label>Deezer</label><input data-song="deezer" value="${admsEsc(m.deezer)}" placeholder="https://..."></div><div><label>Cifra Club</label><input data-song="cifra" value="${admsEsc(m.cifra)}" placeholder="https://..."></div><div><label>Orientação</label><input data-song="observacao" value="${admsEsc(m.observacao)}" placeholder="Entrada, transição, coreografia..."></div><button class="btn btn-outline song-remove" type="button" style="width:auto;color:var(--red)" onclick="this.closest('.song-editor').remove()" aria-label="Remover música">×</button></div>`;
+}
+function planeamentoFormHTML(departamento,plano=null){
+  const p=plano||{data:'',hora:'',culto:'',vestuario:'',cores:['#07194f','#d6ad45','#ffffff','#b82431'],observacoes:'',repertorio:[planoMusicaVazia()]};
+  const musicas=Array.isArray(p.repertorio)&&p.repertorio.length?p.repertorio:[planoMusicaVazia()];
+  const cores=[...(p.cores||[])];while(cores.length<4)cores.push('#ffffff');
+  return `<article class="card worship-form"><div class="worship-form-head"><div><div class="breadcrumb">${plano?'Editar planeamento':'Novo planeamento'}</div><h2>${departamento==='louvor'?'Repertório do Louvor':'Planeamento da Dança'}</h2></div>${plano?'<button class="btn btn-outline" style="width:auto" onclick="cancelarEdicaoPlaneamento()">Cancelar edição</button>':''}</div>
+    <div class="form-row"><div><label>Data do culto</label><input id="plano-data" type="date" value="${admsEsc(p.data)}"></div><div><label>Horário</label><input id="plano-hora" type="time" value="${admsEsc(String(p.hora||'').slice(0,5))}"></div></div>
+    <div class="form-row"><div><label>Culto / Evento</label><input id="plano-culto" value="${admsEsc(p.culto)}" placeholder="Ex.: Culto de Celebração"></div><div><label>Vestuário</label><input id="plano-vestuario" value="${admsEsc(p.vestuario)}" placeholder="Ex.: Social, camisa branca, sem estampas"></div></div>
+    <label>Paleta de cores</label><div class="palette-fields">${cores.slice(0,4).map((c,i)=>`<input id="plano-cor-${i}" type="color" value="${/^#[0-9a-f]{6}$/i.test(c)?c:'#ffffff'}" aria-label="Cor ${i+1}">`).join('')}<span style="font-size:12px;color:var(--ink-soft)">Escolha até quatro cores para o culto.</span></div>
+    <label>Observações gerais</label><textarea id="plano-observacoes" rows="2" placeholder="Orientações para ensaio, transições, ministração ou coreografia">${admsEsc(p.observacoes)}</textarea>
+    <div class="section-title"><h2>Repertório por ordem</h2></div><div id="song-editor-list" class="song-editor-list">${musicas.map(musicaEditorHTML).join('')}</div>
+    <div style="display:flex;gap:9px;flex-wrap:wrap;margin-top:13px"><button class="btn btn-outline" type="button" style="width:auto" onclick="adicionarMusicaPlaneamento()">+ Adicionar música</button><button class="btn btn-primary" type="button" style="width:auto" onclick="guardarPlaneamentoCulto('${departamento}')">${plano?'Guardar alterações':'Criar planeamento'}</button></div>
+  </article>`;
+}
+function linksMusicaHTML(m){
+  const links=[['youtube','YouTube'],['deezer','Deezer'],['cifra','Cifra Club']].map(([k,l])=>{const u=planoUrlSegura(m[k]);return u?`<a class="music-link ${k}" href="${admsEsc(u)}" target="_blank" rel="noopener noreferrer">${l} ↗</a>`:''}).join('');
+  return links||'<span style="font-size:11px;color:var(--ink-soft)">Sem links</span>';
+}
+function planeamentoCardHTML(p){
+  const repertorio=Array.isArray(p.repertorio)?p.repertorio:[];
+  return `<article class="card planning-card"><div class="planning-card-head"><div><h3>${admsEsc(p.culto)}</h3><p>${p.departamento==='louvor'?'Louvor e Adoração':'Ministério de Dança'}${p.hora?' · '+admsEsc(String(p.hora).slice(0,5)):''}</p></div><div class="planning-date">${admsEsc(planoDataPt(p.data))}</div></div><div class="planning-body">
+    <div><b>Paleta e vestuário</b><div class="palette-preview">${(p.cores||[]).map(c=>`<span class="palette-swatch" style="background:${/^#[0-9a-f]{6}$/i.test(c)?c:'#fff'}" title="${admsEsc(c)}"></span>`).join('')||'<span style="color:var(--ink-soft);font-size:13px">Sem paleta definida</span>'}</div><p style="margin:0;color:var(--ink-soft);font-size:14px"><b>Vestuário:</b> ${admsEsc(p.vestuario||'Não definido')}</p></div>
+    <div class="section-title"><h2>Repertório</h2></div><div class="repertoire-list">${repertorio.map((m,i)=>`<div class="repertoire-song"><span class="song-order">${i+1}</span><div><b>${admsEsc(m.titulo||'Música sem título')}</b>${m.tom?` <span class="tag tag-gold">Tom ${admsEsc(m.tom)}</span>`:''}${m.observacao?`<div style="font-size:12px;color:var(--ink-soft);margin-top:3px">${admsEsc(m.observacao)}</div>`:''}</div><div class="song-links">${linksMusicaHTML(m)}</div></div>`).join('')||'<div style="color:var(--ink-soft);font-size:13px">Nenhuma música adicionada.</div>'}</div>
+    ${p.observacoes?`<div class="hint-box" style="margin-top:15px">${admsEsc(p.observacoes)}</div>`:''}
+    <div class="planning-actions"><button class="btn btn-outline" style="width:auto" onclick="partilharPlaneamento('${p.id}')">Partilhar</button><button class="btn btn-outline" style="width:auto" onclick="imprimirPlaneamento('${p.id}')">Imprimir</button>${podeEditarPlaneamento(p.departamento)?`<button class="btn btn-outline" style="width:auto" onclick="duplicarPlaneamento('${p.id}')">Duplicar</button><button class="btn btn-primary" style="width:auto" onclick="editarPlaneamento('${p.id}')">Editar</button><button class="btn btn-outline" style="width:auto;color:var(--red)" onclick="removerPlaneamento('${p.id}')">Remover</button>`:''}</div>
+  </div></article>`;
+}
+async function renderPlaneamentosCulto(departamento){
+  const host=document.getElementById('worship-planner');if(!host||!admsSupabase)return;
+  const {data,error}=await admsSupabase.from('planeamentos_culto').select('*').eq('departamento',departamento).order('data',{ascending:false}).limit(50);
+  if(error){console.error(error);host.innerHTML='<div class="card"><h2>Planeamento do Culto</h2><p>Não foi possível carregar os planeamentos.</p></div>';return;}
+  PLANEAMENTOS_CULTO_CACHE=data||[];const editar=PLANEAMENTO_EDITANDO&&PLANEAMENTO_EDITANDO.departamento===departamento?PLANEAMENTO_EDITANDO:null;
+  host.innerHTML=`<div class="topbar" style="margin-top:30px"><div><div class="breadcrumb">Organização ministerial</div><h1>Planeamento do Culto</h1></div><span class="access-pill">${departamento==='louvor'?'Louvor':'Dança'} · ${PLANEAMENTOS_CULTO_CACHE.length} registo(s)</span></div>${ruleDivider()}${podeEditarPlaneamento(departamento)?planeamentoFormHTML(departamento,editar):''}<div class="planning-list">${PLANEAMENTOS_CULTO_CACHE.map(planeamentoCardHTML).join('')||'<div class="card empty-state"><p>Ainda não existem planeamentos para este departamento.</p></div>'}</div>`;
+}
+function adicionarMusicaPlaneamento(){document.getElementById('song-editor-list')?.insertAdjacentHTML('beforeend',musicaEditorHTML())}
+function recolherRepertorio(){return[...document.querySelectorAll('#song-editor-list .song-editor')].map(row=>{const get=k=>row.querySelector(`[data-song="${k}"]`)?.value.trim()||'';return{titulo:get('titulo'),tom:get('tom'),youtube:planoUrlSegura(get('youtube')),deezer:planoUrlSegura(get('deezer')),cifra:planoUrlSegura(get('cifra')),observacao:get('observacao')}}).filter(m=>m.titulo)}
+async function guardarPlaneamentoCulto(departamento){
+  if(!podeEditarPlaneamento(departamento)){showToast('Sem permissão para editar este departamento.');return;}
+  const data=document.getElementById('plano-data').value,culto=document.getElementById('plano-culto').value.trim(),repertorio=recolherRepertorio();
+  if(!data||culto.length<3){showToast('Indique a data e o nome do culto.');return;}
+  if(!repertorio.length){showToast('Adicione pelo menos uma música ao repertório.');return;}
+  const row={departamento,data,hora:document.getElementById('plano-hora').value||null,culto,vestuario:document.getElementById('plano-vestuario').value.trim()||null,cores:[0,1,2,3].map(i=>document.getElementById(`plano-cor-${i}`).value),observacoes:document.getElementById('plano-observacoes').value.trim()||null,repertorio,updated_at:new Date().toISOString()};
+  const query=PLANEAMENTO_EDITANDO?.id?admsSupabase.from('planeamentos_culto').update(row).eq('id',PLANEAMENTO_EDITANDO.id):admsSupabase.from('planeamentos_culto').insert(row);const{error}=await query;
+  if(error){console.error(error);showToast('Não foi possível guardar o planeamento.');return;}
+  logAction('sistema',PLANEAMENTO_EDITANDO?.id?'Planeamento atualizado':'Planeamento criado',`${departamento} · ${culto} · ${data}`);PLANEAMENTO_EDITANDO=null;showToast('Planeamento guardado.');renderPlaneamentosCulto(departamento);
+}
+function editarPlaneamento(id){PLANEAMENTO_EDITANDO=PLANEAMENTOS_CULTO_CACHE.find(x=>x.id===id)||null;if(PLANEAMENTO_EDITANDO){renderPlaneamentosCulto(PLANEAMENTO_EDITANDO.departamento);setTimeout(()=>document.querySelector('.worship-form')?.scrollIntoView({behavior:'smooth'}),60)}}
+function cancelarEdicaoPlaneamento(){const dept=currentDeptView;PLANEAMENTO_EDITANDO=null;renderPlaneamentosCulto(dept)}
+function duplicarPlaneamento(id){const p=PLANEAMENTOS_CULTO_CACHE.find(x=>x.id===id);if(!p)return;PLANEAMENTO_EDITANDO={...p,id:null,data:'',culto:`${p.culto} — cópia`};renderPlaneamentosCulto(p.departamento);setTimeout(()=>document.getElementById('plano-data')?.focus(),60)}
+async function removerPlaneamento(id){const p=PLANEAMENTOS_CULTO_CACHE.find(x=>x.id===id);if(!p||!podeEditarPlaneamento(p.departamento)||!confirm(`Remover o planeamento de ${p.culto}?`))return;const{error}=await admsSupabase.from('planeamentos_culto').delete().eq('id',id);if(error){showToast('Não foi possível remover.');return;}logAction('sistema','Planeamento removido',`${p.departamento} · ${p.culto}`);showToast('Planeamento removido.');renderPlaneamentosCulto(p.departamento)}
+function textoPlaneamento(p){const cores=(p.cores||[]).join(', '),musicas=(p.repertorio||[]).map((m,i)=>`${i+1}. ${m.titulo}${m.tom?' — Tom '+m.tom:''}`).join('\n');return`${p.culto}\n${planoDataPt(p.data)}${p.hora?' às '+String(p.hora).slice(0,5):''}\nDepartamento: ${p.departamento==='louvor'?'Louvor':'Dança'}\nVestuário: ${p.vestuario||'Não definido'}\nCores: ${cores||'Não definidas'}\n\nRepertório:\n${musicas}\n\n${p.observacoes||''}`}
+async function partilharPlaneamento(id){const p=PLANEAMENTOS_CULTO_CACHE.find(x=>x.id===id);if(!p)return;const text=textoPlaneamento(p);try{if(navigator.share)await navigator.share({title:p.culto,text});else{await navigator.clipboard.writeText(text);showToast('Planeamento copiado para partilhar.')}}catch(e){if(e.name!=='AbortError')showToast('Não foi possível partilhar agora.')}}
+function imprimirPlaneamento(id){const p=PLANEAMENTOS_CULTO_CACHE.find(x=>x.id===id);if(!p)return;const w=window.open('','_blank','width=850,height=720');if(!w){showToast('Permita janelas pop-up para imprimir.');return;}w.document.write(`<title>${admsEsc(p.culto)}</title><style>body{font:15px Arial;color:#111b38;padding:35px;line-height:1.5}h1{font-family:Georgia}li{margin:9px 0}.cores{display:flex;gap:8px}.cor{width:32px;height:32px;border-radius:8px;border:1px solid #aaa}</style><h1>${admsEsc(p.culto)}</h1><p><b>${admsEsc(planoDataPt(p.data))}${p.hora?' · '+admsEsc(String(p.hora).slice(0,5)):''}</b></p><p><b>Vestuário:</b> ${admsEsc(p.vestuario||'Não definido')}</p><div class="cores">${(p.cores||[]).map(c=>`<span class="cor" style="background:${c}"></span>`).join('')}</div><h2>Repertório</h2><ol>${(p.repertorio||[]).map(m=>`<li><b>${admsEsc(m.titulo)}</b>${m.tom?' — Tom '+admsEsc(m.tom):''}</li>`).join('')}</ol>${p.observacoes?`<h2>Observações</h2><p>${admsEsc(p.observacoes)}</p>`:''}`);w.document.close();setTimeout(()=>w.print(),250)}
 
 function viewPatrimonio(){
   return `
@@ -3678,6 +3796,53 @@ async function renderPedidosOracao(){
 }
 async function atualizarPedidoOracao(id,status){if(!exigirPermissao('pastoral','editar'))return;const {error}=await admsSupabase.from('pedidos_oracao').update({status,updated_at:new Date().toISOString()}).eq('id',id);if(error){showToast('Não foi possível atualizar o pedido.');return;}logAction('sistema','Pedido de oração atualizado',`${id} — ${status}`);showToast('Estado do pedido atualizado.');}
 async function guardarNotaOracao(id){if(!exigirPermissao('pastoral','editar'))return;const observacoes=document.getElementById(`oracao-nota-${id}`).value.trim();const {error}=await admsSupabase.from('pedidos_oracao').update({observacoes:observacoes||null,updated_at:new Date().toISOString()}).eq('id',id);if(error){showToast('Não foi possível guardar a nota.');return;}logAction('sistema','Acompanhamento de oração registado',id);showToast('Nota de acompanhamento guardada.');}
+
+/* ================= CENTRO DE NOTIFICAÇÕES ================= */
+function moduloDaNotificacao(n){
+  const tipo=String(n.tipo||'').toLowerCase(),ref=String(n.referencia_tipo||'').toLowerCase();
+  if(tipo.includes('contact')||ref.includes('contact'))return'novos-contactos';
+  if(tipo.includes('acesso')||ref.includes('acesso'))return'acessos';
+  if(tipo.includes('oracao')||tipo.includes('oração')||ref.includes('oracao'))return'pedidos-oracao';
+  if(tipo.includes('evento')||ref.includes('evento'))return'eventos';
+  return'avisos';
+}
+function etiquetaTipoNotificacao(tipo){
+  const labels={novo_contacto:'Novo contacto',solicitacao_acesso:'Acesso',pedido_oracao:'Oração',aviso:'Aviso',evento:'Evento'};
+  return labels[tipo]||String(tipo||'Notificação').replaceAll('_',' ');
+}
+async function atualizarBadgeNotificacoes(){
+  const badge=document.getElementById('notificacoes-nav-badge');if(!badge||!admsSupabase)return;
+  const {count,error}=await admsSupabase.from('notificacoes_internas').select('id',{count:'exact',head:true}).eq('lida',false);
+  if(error)return;
+  const total=count||0;badge.textContent=total>99?'99+':String(total);badge.classList.toggle('visible',total>0);badge.setAttribute('aria-label',`${total} notificação${total===1?'':'ões'} não lida${total===1?'':'s'}`);
+}
+async function renderNotificacoes(){
+  const el=document.getElementById('main-content');if(!el||!admsSupabase)return;
+  const {data,error}=await admsSupabase.from('notificacoes_internas').select('*').order('created_at',{ascending:false}).limit(100);
+  if(error){el.innerHTML='<div class="card"><h2>Notificações</h2><p>Não foi possível carregar as notificações.</p></div>';return;}
+  const lista=data||[],naoLidas=lista.filter(n=>!n.lida).length;
+  const items=lista.map(n=>`<article class="notification-item ${n.lida?'':'unread'}">
+    <span class="notification-symbol">${ICON.bell}</span>
+    <div><div class="notification-title">${admsEsc(n.titulo||'Nova notificação')}<span class="tag ${n.lida?'':'tag-gold'}">${n.lida?'Lida':admsEsc(etiquetaTipoNotificacao(n.tipo))}</span></div><div class="notification-message">${admsEsc(n.mensagem||'Sem detalhes adicionais.')}</div><div class="notification-meta">${new Date(n.created_at).toLocaleString('pt-PT')}</div></div>
+    <div class="notification-actions">${n.lida?`<button class="btn btn-outline" style="width:auto" onclick="alterarLeituraNotificacao('${n.id}',false)">Marcar não lida</button>`:`<button class="btn btn-outline" style="width:auto" onclick="alterarLeituraNotificacao('${n.id}',true)">Marcar lida</button>`}<button class="btn btn-primary" style="width:auto" onclick="abrirNotificacao('${n.id}','${moduloDaNotificacao(n)}')">Abrir</button></div>
+  </article>`).join('');
+  el.innerHTML=`<div class="topbar"><div><div class="breadcrumb">Comunicação interna</div><h1>Notificações</h1></div><span class="access-pill">${ICON.bell} ${naoLidas} não lida(s)</span></div>${ruleDivider()}<div class="notification-toolbar"><p style="margin:0;color:var(--ink-soft)">Acompanhe avisos, pedidos e atualizações importantes num único lugar.</p>${naoLidas?'<button class="btn btn-outline" style="width:auto" onclick="marcarTodasNotificacoesLidas()">Marcar todas como lidas</button>':''}</div><div class="notification-list">${items||'<div class="card empty-state"><p>Ainda não existem notificações.</p></div>'}</div>`;
+}
+async function alterarLeituraNotificacao(id,lida){
+  const {error}=await admsSupabase.from('notificacoes_internas').update({lida,lida_at:lida?new Date().toISOString():null}).eq('id',id);
+  if(error){showToast('Não foi possível atualizar a notificação.');return;}
+  showToast(lida?'Notificação marcada como lida.':'Notificação marcada como não lida.');renderNotificacoes();atualizarBadgeNotificacoes();
+}
+async function marcarTodasNotificacoesLidas(){
+  const {error}=await admsSupabase.from('notificacoes_internas').update({lida:true,lida_at:new Date().toISOString()}).eq('lida',false);
+  if(error){showToast('Não foi possível atualizar as notificações.');return;}
+  logAction('sistema','Notificações atualizadas','Todas as notificações visíveis foram marcadas como lidas.');showToast('Todas as notificações foram marcadas como lidas.');renderNotificacoes();atualizarBadgeNotificacoes();
+}
+async function abrirNotificacao(id,modulo){
+  await admsSupabase.from('notificacoes_internas').update({lida:true,lida_at:new Date().toISOString()}).eq('id',id);
+  const permitidos={novos_contactos:isMaster(),acessos:canAccessGestaoAcessos(),pedidos_oracao:canAccessPrayerRequests(),eventos:true,avisos:true};
+  const chave=modulo.replaceAll('-','_');goTo(permitidos[chave]===false?'notificacoes':modulo);
+}
 
 function tempoPendencia(data){
  const d=new Date(data);if(Number.isNaN(d.getTime()))return'';if(d.getTime()>Date.now()+3600000)return d.toLocaleDateString('pt-PT',{day:'2-digit',month:'short'});const min=Math.max(0,Math.floor((Date.now()-d.getTime())/60000));
