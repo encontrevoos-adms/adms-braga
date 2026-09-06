@@ -1,142 +1,2593 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-PT">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>ADMS Braga — Igreja Evangélica Assembleia de Deus</title>
-  <meta name="description" content="ADMS Braga: uma igreja para viver a Palavra, crescer em comunhão e servir pessoas.">
-  <meta name="theme-color" content="#07194f">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <style>
-    :root{--navy:#07194f;--navy-2:#0c286e;--blue:#123681;--gold:#d7af46;--gold-dark:#9c7319;--cream:#f5f0e4;--ink:#111b38;--muted:#697086;--white:#fff;--line:#e4e7ee;--header-h:82px}
-    *{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:calc(var(--header-h) + 18px)}body{margin:0;font-family:Inter,sans-serif;color:var(--ink);background:#fbfbfd}body.modal-open{overflow:hidden}a{text-decoration:none;color:inherit}button,input,textarea,select{font:inherit}button{cursor:pointer}
-    [id]{scroll-margin-top:calc(var(--header-h) + 18px)}
-    header{height:var(--header-h);display:flex;align-items:center;justify-content:space-between;padding:0 5vw;background:rgba(255,255,255,.98);position:sticky;top:0;z-index:50;border-bottom:1px solid #eee;box-shadow:0 5px 22px rgba(4,18,56,.06)}
-    .brand{display:flex;align-items:center;gap:13px;min-width:0}.brand img{width:62px;height:62px;object-fit:contain;flex:0 0 auto}.brand b{color:var(--navy);font-size:18px}.brand small{display:block;color:var(--muted);font-size:10px;letter-spacing:1.4px;white-space:nowrap}
-    nav{display:flex;align-items:center;gap:22px;font-size:13px;font-weight:700}nav a:hover{color:var(--gold-dark)}.portal{background:var(--navy);color:#fff!important;padding:13px 18px;border-radius:8px}.portal span{color:var(--gold)}
-    .mobile-menu{display:none;border:1px solid var(--line);background:#fff;color:var(--navy);width:44px;height:44px;border-radius:9px;font-size:22px}
-    .hero{min-height:650px;display:grid;grid-template-columns:1.02fr .98fr;align-items:center;gap:48px;padding:76px 7vw 95px;background:radial-gradient(circle at 76% 43%,#153a83 0,#09275f 31%,#06194a 64%,#041337 100%);position:relative;overflow:hidden;color:#fff}
-    .hero:before{content:"";position:absolute;width:820px;height:820px;border:1px solid rgba(215,175,70,.45);border-radius:50%;right:-170px;top:-210px;box-shadow:0 0 0 95px rgba(215,175,70,.035),0 0 0 190px rgba(215,175,70,.022)}
-    .hero-copy{max-width:720px;position:relative;z-index:3}.eyebrow{color:var(--gold);font-size:12px;font-weight:800;letter-spacing:2.6px;text-transform:uppercase}.hero h1{font:600 clamp(52px,5.6vw,83px)/.98 "Cormorant Garamond";margin:25px 0 28px}.hero h1 em{font-style:normal;color:#e7b52e}.hero p{font-size:19px;max-width:650px;line-height:1.7;color:rgba(255,255,255,.82)}
-    .actions{display:flex;gap:12px;margin-top:32px;flex-wrap:wrap}.btn{display:inline-flex;align-items:center;justify-content:center;padding:14px 20px;border-radius:8px;border:0;font-size:14px;font-weight:800}.btn-gold{background:var(--gold);color:var(--navy)}.btn-gold:hover{background:#e4bc4c}.btn-line{border:1px solid rgba(255,255,255,.38);color:#fff;background:transparent}.btn-navy{background:var(--navy);color:#fff}.btn-soft{background:#edf1fa;color:var(--navy)}
-    .hero-video-wrap{height:500px;position:relative;z-index:2;border-radius:50%;overflow:hidden;border:1px solid rgba(215,175,70,.72);background:#06143c;box-shadow:0 18px 55px rgba(0,0,0,.28)}.hero-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 45%;transform:scale(1.02)}.hero-video-shade{position:absolute;inset:0;pointer-events:none;background:linear-gradient(0deg,rgba(4,19,55,.18),transparent 38%)}.hero-sound{position:absolute;right:28px;bottom:25px;padding:11px 16px;border:1px solid rgba(255,255,255,.55);border-radius:999px;background:rgba(4,19,55,.78);color:#fff;font-size:12px;font-weight:800;z-index:4}
-    .quick-actions{max-width:1180px;margin:-42px auto 70px;padding:0 24px;position:relative;z-index:8;display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.quick-card{border:1px solid rgba(213,173,69,.5);background:#fff;border-radius:17px;padding:22px;box-shadow:0 16px 42px rgba(4,18,56,.12);text-align:left}.quick-card strong{display:block;color:var(--navy);font-size:17px;margin-bottom:6px}.quick-card span{color:var(--muted);line-height:1.5;font-size:14px}.quick-card:hover{transform:translateY(-2px);border-color:var(--gold)}
-    .section{padding:82px 7vw}.section.alt{background:var(--cream)}.section-head{max-width:760px;margin-bottom:38px}.section h2,.section-head h2{font:600 clamp(38px,5vw,52px)/1.05 "Cormorant Garamond";color:var(--navy);margin:8px 0 12px}.section-head p{color:var(--muted);line-height:1.7;font-size:16px}.content-shell{max-width:1180px;margin:0 auto}
-    .story-grid{display:grid;grid-template-columns:1.08fr .92fr;gap:28px;align-items:start}.story-card,.mission-card{border-radius:22px;padding:32px}.story-card{background:#fff;border:1px solid var(--line);box-shadow:0 14px 36px rgba(16,34,82,.07)}.story-card p,.mission-card p{line-height:1.75;margin:0 0 15px}.story-card p{color:#30384b}.mission-card{background:var(--navy);color:#eaf0ff}.mission-card h3{font:600 34px "Cormorant Garamond";color:var(--gold);margin:0 0 12px}.facts{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}.fact{background:#edf2ff;border:1px solid #d5dff4;border-radius:12px;padding:11px 13px;font-weight:800;color:var(--navy);font-size:13px}
-    details.more{margin-top:18px;border-top:1px solid var(--line);padding-top:14px}details.more summary{cursor:pointer;color:var(--gold-dark);font-weight:800;list-style:none}details.more summary::-webkit-details-marker{display:none}details.more summary:after{content:" +"}details.more[open] summary:after{content:" −"}.sources{font-size:12px;color:var(--muted);line-height:1.6;margin-top:18px}.sources a{color:var(--blue);font-weight:700}
-    .leadership-panel{background:linear-gradient(145deg,#0a235e,#041237);border:1px solid rgba(213,173,69,.5);border-radius:25px;padding:34px;color:#dbe6ff}.leadership-panel h2{color:#fff}.leader{display:grid;grid-template-columns:minmax(260px,390px) 1fr;gap:32px;align-items:center;padding:26px;margin-top:24px;border-radius:20px;background:rgba(255,255,255,.06)}.leader img{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:17px;border:2px solid var(--gold);background:#10265f}.leader h3{font:600 clamp(29px,4vw,40px) "Cormorant Garamond";color:#fff;margin:4px 0 10px}.leader-role{color:var(--gold);font-weight:800;letter-spacing:.08em;font-size:12px}.leader p{line-height:1.75;margin:0 0 14px}.presidents{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:22px 0}.president{padding:15px 12px;border:1px solid rgba(213,173,69,.3);border-radius:13px;text-align:center;color:#fff;font-weight:700}.president small{display:block;color:var(--gold);margin-top:5px}
-    .media-grid{display:grid;grid-template-columns:1.35fr .65fr;gap:24px}.video-frame{min-height:390px;border-radius:20px;background:linear-gradient(135deg,rgba(4,18,56,.72),rgba(23,68,155,.42)),url('/video-fundo.webp') center/cover no-repeat;display:grid;place-items:center;overflow:hidden;position:relative;border:1px solid rgba(213,173,69,.65);box-shadow:0 20px 48px rgba(4,18,56,.2)}.video-frame:after{content:"";position:absolute;inset:0;background:radial-gradient(circle at center,transparent 0 18%,rgba(3,15,47,.18) 62%,rgba(3,15,47,.58) 100%);pointer-events:none}.video-frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0;z-index:2}.play{width:78px;height:78px;border-radius:50%;border:2px solid rgba(255,255,255,.78);background:var(--gold);color:var(--navy);font-size:25px;position:relative;z-index:1;box-shadow:0 0 0 12px rgba(213,173,69,.18),0 14px 35px rgba(0,0,0,.34);transition:.2s ease}.play:hover{transform:scale(1.07);background:#e8c35b}.dark-card{background:var(--navy);color:#fff;border-radius:20px;padding:35px}.dark-card h3{font:600 35px "Cormorant Garamond";margin:12px 0}.dark-card p{color:rgba(255,255,255,.78);line-height:1.7}
-    .gallery-grid{display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:230px;gap:13px}.gallery-item{position:relative;border:0;padding:0;border-radius:17px;overflow:hidden;background:#0a235e;cursor:pointer}.gallery-item:first-child,.gallery-item:nth-child(6){grid-column:span 2}.gallery-item img{width:100%;height:100%;object-fit:cover;transition:transform .45s ease,filter .45s ease}.gallery-item:after{content:"Ver fotografia";position:absolute;inset:auto 0 0;padding:35px 16px 15px;color:#fff;font-weight:800;font-size:12px;text-align:left;background:linear-gradient(transparent,rgba(3,15,47,.82));opacity:0;transition:.25s}.gallery-item:hover img{transform:scale(1.055);filter:saturate(1.08)}.gallery-item:hover:after,.gallery-item:focus-visible:after{opacity:1}.gallery-lightbox{display:none;position:fixed;inset:0;z-index:120;background:rgba(2,9,29,.94);padding:28px;align-items:center;justify-content:center}.gallery-lightbox.open{display:flex}.gallery-lightbox img{max-width:min(100%,1100px);max-height:88vh;border-radius:14px;border:1px solid rgba(213,173,69,.55);box-shadow:0 25px 80px #000}.gallery-close{position:absolute;right:22px;top:18px;width:46px;height:46px;border-radius:50%;border:1px solid rgba(255,255,255,.4);background:rgba(4,18,56,.72);color:#fff;font-size:28px;cursor:pointer}.agenda{display:grid;gap:8px}.event{display:grid;grid-template-columns:120px 1fr auto;gap:18px;align-items:center;padding:21px 0;border-bottom:1px solid var(--line)}.event-date{color:var(--gold-dark);font-weight:800;text-transform:uppercase}.event h3{margin:0;color:var(--navy);font-size:17px}.event p{margin:6px 0 0;color:var(--muted);font-size:14px;line-height:1.5}.empty{padding:26px;border:1px dashed #bfc6d5;border-radius:14px;color:var(--muted);text-align:center}
-    .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}.card{background:#fff;border:1px solid var(--line);border-radius:18px;padding:27px;box-shadow:0 10px 30px rgba(16,34,82,.06)}.card h3{font:600 29px "Cormorant Garamond";color:var(--navy);margin:8px 0}.card p{color:var(--muted);line-height:1.65}.card-link{display:inline-block;margin-top:8px;color:var(--gold-dark);font-weight:800;font-size:13px}
-    .prayer{background:var(--navy);color:#fff}.prayer h2{color:#fff}.form{display:grid;grid-template-columns:1fr 1fr;gap:13px;max-width:900px}.form .full{grid-column:1/-1}.form input,.form textarea,.form select{width:100%;padding:14px;border-radius:8px;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.08);color:#fff}.form input::placeholder,.form textarea::placeholder{color:rgba(255,255,255,.62)}.check{display:flex;align-items:flex-start;gap:10px;font-size:13px;line-height:1.5;color:rgba(255,255,255,.82)}.check input{width:auto;margin-top:3px}.form-msg{color:#efd47e;font-weight:700;min-height:22px}
-    .location{display:grid;grid-template-columns:.72fr 1.28fr;gap:28px;align-items:stretch}.map{min-height:360px;border-radius:20px;overflow:hidden;background:#eceef3}.map iframe{width:100%;height:100%;min-height:360px;border:0}.visit-info{padding:28px 0}.visit-info p{color:var(--muted);line-height:1.75}.socials{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.social{border:1px solid var(--line);background:#fff;padding:21px 18px;border-radius:13px;font-weight:800;color:var(--navy);text-align:center;display:flex;align-items:center;justify-content:center;gap:11px}.social svg{width:27px;height:27px;flex:none}.social[data-social="youtube"] svg{color:#ff0000}.social[data-social="instagram"] svg{color:#c13584}.social[data-social="facebook"] svg{color:#1877f2}.social:hover{border-color:var(--gold);color:var(--gold-dark);transform:translateY(-2px);box-shadow:0 10px 25px rgba(16,34,82,.09)}.social.is-hidden{display:none}
-    footer{background:#041238;color:rgba(255,255,255,.75);padding:46px 7vw}.footer-grid{max-width:1180px;margin:auto;display:grid;grid-template-columns:1.1fr .9fr .9fr;gap:35px}.footer-brand{color:#fff;font:600 29px "Cormorant Garamond"}.footer-title{color:var(--gold);font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:1.3px}.footer-links{display:grid;gap:8px;margin-top:12px}.footer-links a:hover{color:#fff}
-    .modal{display:none;position:fixed;inset:0;background:rgba(3,12,40,.78);z-index:100;align-items:center;justify-content:center;padding:20px}.modal.open{display:flex}.modal-card{width:min(560px,100%);max-height:92vh;overflow:auto;background:#fff;border-radius:20px;padding:30px;position:relative;box-shadow:0 30px 90px #0008}.modal-card h2{font:600 37px "Cormorant Garamond";color:var(--navy);margin:0 35px 7px 0}.modal-card p{color:var(--muted);line-height:1.55}.modal-card label{font-size:12px;font-weight:800;color:var(--navy);display:block;margin:13px 0 5px}.modal-card input,.modal-card textarea,.modal-card select{width:100%;border:1px solid var(--line);border-radius:8px;padding:13px;color:var(--ink);background:#fff}.close{position:absolute;right:17px;top:13px;border:0;background:none;color:var(--navy);font-size:26px}.modal-actions{display:flex;gap:10px;margin-top:17px;flex-wrap:wrap}.rgpd{display:flex!important;gap:9px;align-items:flex-start;font-weight:500!important;line-height:1.45;color:var(--muted)!important}.rgpd input{width:auto;margin-top:3px}.status{font-weight:700;color:var(--gold-dark);min-height:22px;margin-top:10px}
-    @media(max-width:1050px){nav>a:not(.portal){display:none}.mobile-menu{display:block}.hero{grid-template-columns:1fr;padding:72px 6vw 95px}.hero-video-wrap{height:390px;border-radius:32px}.quick-actions{margin-top:-34px}.story-grid,.media-grid,.location{grid-template-columns:1fr}.grid3{grid-template-columns:1fr 1fr}.socials{grid-template-columns:repeat(2,1fr)}.gallery-grid{grid-template-columns:repeat(2,1fr)}}
-    @media(max-width:760px){:root{--header-h:72px}header{padding:0 16px}.brand img{width:52px;height:52px}.brand b{font-size:15px}.brand small{font-size:8px}.portal{display:none}.hero{padding:58px 22px 78px;gap:30px}.hero h1{font-size:49px}.hero p{font-size:17px}.hero-video-wrap{height:420px;border-radius:24px}.quick-actions{grid-template-columns:1fr;margin:-28px 18px 55px;padding:0}.section{padding:68px 22px}.story-card,.mission-card,.leadership-panel{padding:23px}.leader{grid-template-columns:1fr;padding:18px}.leader img{order:-1}.presidents{grid-template-columns:1fr 1fr}.grid3{grid-template-columns:1fr}.event{grid-template-columns:1fr;gap:7px}.event .btn{justify-self:start}.form{grid-template-columns:1fr}.form .full{grid-column:auto}.footer-grid{grid-template-columns:1fr}.mobile-menu{display:none}.actions{flex-direction:column;align-items:stretch}.actions .btn{width:100%}}
-    @media(max-width:430px){.brand small{display:none}.hero h1{font-size:43px}.hero-video-wrap{height:345px}.presidents{grid-template-columns:1fr}.socials{grid-template-columns:1fr}.modal-card{padding:24px 20px}.quick-card{padding:18px}.gallery-grid{grid-auto-rows:190px;gap:9px}.gallery-item:first-child,.gallery-item:nth-child(6){grid-column:span 2}}
-  </style>
-  <style>
-    .site-notices{display:grid;gap:13px}.site-notice{padding:20px 22px;border-left:4px solid var(--gold);border-radius:12px;background:#fff;box-shadow:0 8px 25px rgba(16,34,82,.06)}.site-notice h3{margin:0 0 6px;color:var(--navy)}.site-notice p{margin:0;color:var(--muted);line-height:1.6}
-  </style>
-</head>
-<body>
-  <header>
-    <a class="brand" href="#inicio"><img src="/logo-adms-braga.png" alt="ADMS Braga"><div><b>ADMS BRAGA</b><small>ASSEMBLEIA DE DEUS · MINISTÉRIO DE SANTOS</small></div></a>
-    <nav aria-label="Navegação principal"><a href="#sobre">Quem Somos</a><a href="#lideranca">Liderança</a><a href="#galeria">Galeria</a><a href="#agenda">Agenda</a><a href="#estudos">Estudos</a><a href="#oracao">Oração</a><a href="#localizacao">Visite-nos</a><a class="portal" href="/sistema?v=34"><span>◆</span> Acessar Portal</a></nav>
-  </header>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>ADMS Braga — Igreja Evangélica Assembleia de Deus</title>
+    <meta
+      name="description"
+      content="ADMS Braga: uma igreja para viver a Palavra, crescer em comunhão e servir pessoas."
+    />
+    <meta name="theme-color" content="#07194f" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --navy: #07194f;
+        --navy-2: #0c286e;
+        --blue: #123681;
+        --gold: #d7af46;
+        --gold-dark: #9c7319;
+        --cream: #f5f0e4;
+        --ink: #111b38;
+        --muted: #697086;
+        --white: #fff;
+        --line: #e4e7ee;
+        --header-h: 82px;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+        scroll-padding-top: calc(var(--header-h) + 18px);
+      }
+      body {
+        margin: 0;
+        font-family: Inter, sans-serif;
+        color: var(--ink);
+        background: #fbfbfd;
+      }
+      body.modal-open {
+        overflow: hidden;
+      }
+      a {
+        text-decoration: none;
+        color: inherit;
+      }
+      button,
+      input,
+      textarea,
+      select {
+        font: inherit;
+      }
+      button {
+        cursor: pointer;
+      }
+      [id] {
+        scroll-margin-top: calc(var(--header-h) + 18px);
+      }
+      header {
+        height: var(--header-h);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 5vw;
+        background: rgba(255, 255, 255, 0.98);
+        position: sticky;
+        top: 0;
+        z-index: 50;
+        border-bottom: 1px solid #eee;
+        box-shadow: 0 5px 22px rgba(4, 18, 56, 0.06);
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 13px;
+        min-width: 0;
+      }
+      .brand img {
+        width: 62px;
+        height: 62px;
+        object-fit: contain;
+        flex: 0 0 auto;
+      }
+      .brand b {
+        color: var(--navy);
+        font-size: 18px;
+      }
+      .brand small {
+        display: block;
+        color: var(--muted);
+        font-size: 10px;
+        letter-spacing: 1.4px;
+        white-space: nowrap;
+      }
+      nav {
+        display: flex;
+        align-items: center;
+        gap: 22px;
+        font-size: 13px;
+        font-weight: 700;
+      }
+      nav a:hover {
+        color: var(--gold-dark);
+      }
+      .portal {
+        background: var(--navy);
+        color: #fff !important;
+        padding: 13px 18px;
+        border-radius: 8px;
+      }
+      .portal span {
+        color: var(--gold);
+      }
+      .mobile-menu {
+        display: none;
+        border: 1px solid var(--line);
+        background: #fff;
+        color: var(--navy);
+        width: 44px;
+        height: 44px;
+        border-radius: 9px;
+        font-size: 22px;
+      }
+      .hero {
+        min-height: 650px;
+        display: grid;
+        grid-template-columns: 1.02fr 0.98fr;
+        align-items: center;
+        gap: 48px;
+        padding: 76px 7vw 95px;
+        background: radial-gradient(
+          circle at 76% 43%,
+          #153a83 0,
+          #09275f 31%,
+          #06194a 64%,
+          #041337 100%
+        );
+        position: relative;
+        overflow: hidden;
+        color: #fff;
+      }
+      .hero:before {
+        content: "";
+        position: absolute;
+        width: 820px;
+        height: 820px;
+        border: 1px solid rgba(215, 175, 70, 0.45);
+        border-radius: 50%;
+        right: -170px;
+        top: -210px;
+        box-shadow:
+          0 0 0 95px rgba(215, 175, 70, 0.035),
+          0 0 0 190px rgba(215, 175, 70, 0.022);
+      }
+      .hero-copy {
+        max-width: 720px;
+        position: relative;
+        z-index: 3;
+      }
+      .eyebrow {
+        color: var(--gold);
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 2.6px;
+        text-transform: uppercase;
+      }
+      .hero h1 {
+        font: 600 clamp(52px, 5.6vw, 83px)/0.98 "Cormorant Garamond";
+        margin: 25px 0 28px;
+      }
+      .hero h1 em {
+        font-style: normal;
+        color: #e7b52e;
+      }
+      .hero p {
+        font-size: 19px;
+        max-width: 650px;
+        line-height: 1.7;
+        color: rgba(255, 255, 255, 0.82);
+      }
+      .actions {
+        display: flex;
+        gap: 12px;
+        margin-top: 32px;
+        flex-wrap: wrap;
+      }
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 14px 20px;
+        border-radius: 8px;
+        border: 0;
+        font-size: 14px;
+        font-weight: 800;
+      }
+      .btn-gold {
+        background: var(--gold);
+        color: var(--navy);
+      }
+      .btn-gold:hover {
+        background: #e4bc4c;
+      }
+      .btn-line {
+        border: 1px solid rgba(255, 255, 255, 0.38);
+        color: #fff;
+        background: transparent;
+      }
+      .btn-navy {
+        background: var(--navy);
+        color: #fff;
+      }
+      .btn-soft {
+        background: #edf1fa;
+        color: var(--navy);
+      }
+      .hero-video-wrap {
+        height: 500px;
+        position: relative;
+        z-index: 2;
+        border-radius: 50%;
+        overflow: hidden;
+        border: 1px solid rgba(215, 175, 70, 0.72);
+        background: #06143c;
+        box-shadow: 0 18px 55px rgba(0, 0, 0, 0.28);
+      }
+      .hero-video {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center 45%;
+        transform: scale(1.02);
+      }
+      .hero-video-shade {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: linear-gradient(
+          0deg,
+          rgba(4, 19, 55, 0.18),
+          transparent 38%
+        );
+      }
+      .hero-sound {
+        position: absolute;
+        right: 28px;
+        bottom: 25px;
+        padding: 11px 16px;
+        border: 1px solid rgba(255, 255, 255, 0.55);
+        border-radius: 999px;
+        background: rgba(4, 19, 55, 0.78);
+        color: #fff;
+        font-size: 12px;
+        font-weight: 800;
+        z-index: 4;
+      }
+      .quick-actions {
+        max-width: 1180px;
+        margin: -42px auto 70px;
+        padding: 0 24px;
+        position: relative;
+        z-index: 8;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+      }
+      .quick-card {
+        border: 1px solid rgba(213, 173, 69, 0.5);
+        background: #fff;
+        border-radius: 17px;
+        padding: 22px;
+        box-shadow: 0 16px 42px rgba(4, 18, 56, 0.12);
+        text-align: left;
+      }
+      .quick-card strong {
+        display: block;
+        color: var(--navy);
+        font-size: 17px;
+        margin-bottom: 6px;
+      }
+      .quick-card span {
+        color: var(--muted);
+        line-height: 1.5;
+        font-size: 14px;
+      }
+      .quick-card:hover {
+        transform: translateY(-2px);
+        border-color: var(--gold);
+      }
+      .section {
+        padding: 82px 7vw;
+      }
+      .section.alt {
+        background: var(--cream);
+      }
+      .section-head {
+        max-width: 760px;
+        margin-bottom: 38px;
+      }
+      .section h2,
+      .section-head h2 {
+        font: 600 clamp(38px, 5vw, 52px)/1.05 "Cormorant Garamond";
+        color: var(--navy);
+        margin: 8px 0 12px;
+      }
+      .section-head p {
+        color: var(--muted);
+        line-height: 1.7;
+        font-size: 16px;
+      }
+      .content-shell {
+        max-width: 1180px;
+        margin: 0 auto;
+      }
+      .story-grid {
+        display: grid;
+        grid-template-columns: 1.08fr 0.92fr;
+        gap: 28px;
+        align-items: start;
+      }
+      .story-card,
+      .mission-card {
+        border-radius: 22px;
+        padding: 32px;
+      }
+      .story-card {
+        background: #fff;
+        border: 1px solid var(--line);
+        box-shadow: 0 14px 36px rgba(16, 34, 82, 0.07);
+      }
+      .story-card p,
+      .mission-card p {
+        line-height: 1.75;
+        margin: 0 0 15px;
+      }
+      .story-card p {
+        color: #30384b;
+      }
+      .mission-card {
+        background: var(--navy);
+        color: #eaf0ff;
+      }
+      .mission-card h3 {
+        font: 600 34px "Cormorant Garamond";
+        color: var(--gold);
+        margin: 0 0 12px;
+      }
+      .facts {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 20px;
+      }
+      .fact {
+        background: #edf2ff;
+        border: 1px solid #d5dff4;
+        border-radius: 12px;
+        padding: 11px 13px;
+        font-weight: 800;
+        color: var(--navy);
+        font-size: 13px;
+      }
+      details.more {
+        margin-top: 18px;
+        border-top: 1px solid var(--line);
+        padding-top: 14px;
+      }
+      details.more summary {
+        cursor: pointer;
+        color: var(--gold-dark);
+        font-weight: 800;
+        list-style: none;
+      }
+      details.more summary::-webkit-details-marker {
+        display: none;
+      }
+      details.more summary:after {
+        content: " +";
+      }
+      details.more[open] summary:after {
+        content: " −";
+      }
+      .sources {
+        font-size: 12px;
+        color: var(--muted);
+        line-height: 1.6;
+        margin-top: 18px;
+      }
+      .sources a {
+        color: var(--blue);
+        font-weight: 700;
+      }
+      .leadership-panel {
+        background: linear-gradient(145deg, #0a235e, #041237);
+        border: 1px solid rgba(213, 173, 69, 0.5);
+        border-radius: 25px;
+        padding: 34px;
+        color: #dbe6ff;
+      }
+      .leadership-panel h2 {
+        color: #fff;
+      }
+      .leader {
+        display: grid;
+        grid-template-columns: minmax(260px, 390px) 1fr;
+        gap: 32px;
+        align-items: center;
+        padding: 26px;
+        margin-top: 24px;
+        border-radius: 20px;
+        background: rgba(255, 255, 255, 0.06);
+      }
+      .leader img {
+        width: 100%;
+        aspect-ratio: 1/1;
+        object-fit: cover;
+        border-radius: 17px;
+        border: 2px solid var(--gold);
+        background: #10265f;
+      }
+      .leader h3 {
+        font: 600 clamp(29px, 4vw, 40px) "Cormorant Garamond";
+        color: #fff;
+        margin: 4px 0 10px;
+      }
+      .leader-role {
+        color: var(--gold);
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        font-size: 12px;
+      }
+      .leader p {
+        line-height: 1.75;
+        margin: 0 0 14px;
+      }
+      .presidents {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        margin: 22px 0;
+      }
+      .president {
+        padding: 15px 12px;
+        border: 1px solid rgba(213, 173, 69, 0.3);
+        border-radius: 13px;
+        text-align: center;
+        color: #fff;
+        font-weight: 700;
+      }
+      .president small {
+        display: block;
+        color: var(--gold);
+        margin-top: 5px;
+      }
+      .media-grid {
+        display: grid;
+        grid-template-columns: 1.35fr 0.65fr;
+        gap: 24px;
+      }
+      .video-frame {
+        min-height: 390px;
+        border-radius: 20px;
+        background:
+          linear-gradient(
+            135deg,
+            rgba(4, 18, 56, 0.72),
+            rgba(23, 68, 155, 0.42)
+          ),
+          url("/video-fundo.webp") center/cover no-repeat;
+        display: grid;
+        place-items: center;
+        overflow: hidden;
+        position: relative;
+        border: 1px solid rgba(213, 173, 69, 0.65);
+        box-shadow: 0 20px 48px rgba(4, 18, 56, 0.2);
+      }
+      .video-frame:after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(
+          circle at center,
+          transparent 0 18%,
+          rgba(3, 15, 47, 0.18) 62%,
+          rgba(3, 15, 47, 0.58) 100%
+        );
+        pointer-events: none;
+      }
+      .video-frame iframe {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        border: 0;
+        z-index: 2;
+      }
+      .play {
+        width: 78px;
+        height: 78px;
+        border-radius: 50%;
+        border: 2px solid rgba(255, 255, 255, 0.78);
+        background: var(--gold);
+        color: var(--navy);
+        font-size: 25px;
+        position: relative;
+        z-index: 1;
+        box-shadow:
+          0 0 0 12px rgba(213, 173, 69, 0.18),
+          0 14px 35px rgba(0, 0, 0, 0.34);
+        transition: 0.2s ease;
+      }
+      .play:hover {
+        transform: scale(1.07);
+        background: #e8c35b;
+      }
+      .dark-card {
+        background: var(--navy);
+        color: #fff;
+        border-radius: 20px;
+        padding: 35px;
+      }
+      .dark-card h3 {
+        font: 600 35px "Cormorant Garamond";
+        margin: 12px 0;
+      }
+      .dark-card p {
+        color: rgba(255, 255, 255, 0.78);
+        line-height: 1.7;
+      }
+      .gallery-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        grid-auto-rows: 230px;
+        gap: 13px;
+      }
+      .gallery-item {
+        position: relative;
+        border: 0;
+        padding: 0;
+        border-radius: 17px;
+        overflow: hidden;
+        background: #0a235e;
+        cursor: pointer;
+      }
+      .gallery-item:first-child,
+      .gallery-item:nth-child(6) {
+        grid-column: span 2;
+      }
+      .gallery-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition:
+          transform 0.45s ease,
+          filter 0.45s ease;
+      }
+      .gallery-item:after {
+        content: "Ver fotografia";
+        position: absolute;
+        inset: auto 0 0;
+        padding: 35px 16px 15px;
+        color: #fff;
+        font-weight: 800;
+        font-size: 12px;
+        text-align: left;
+        background: linear-gradient(transparent, rgba(3, 15, 47, 0.82));
+        opacity: 0;
+        transition: 0.25s;
+      }
+      .gallery-item:hover img {
+        transform: scale(1.055);
+        filter: saturate(1.08);
+      }
+      .gallery-item:hover:after,
+      .gallery-item:focus-visible:after {
+        opacity: 1;
+      }
+      .gallery-lightbox {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 120;
+        background: rgba(2, 9, 29, 0.94);
+        padding: 28px;
+        align-items: center;
+        justify-content: center;
+      }
+      .gallery-lightbox.open {
+        display: flex;
+      }
+      .gallery-lightbox img {
+        max-width: min(100%, 1100px);
+        max-height: 88vh;
+        border-radius: 14px;
+        border: 1px solid rgba(213, 173, 69, 0.55);
+        box-shadow: 0 25px 80px #000;
+      }
+      .gallery-close {
+        position: absolute;
+        right: 22px;
+        top: 18px;
+        width: 46px;
+        height: 46px;
+        border-radius: 50%;
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        background: rgba(4, 18, 56, 0.72);
+        color: #fff;
+        font-size: 28px;
+        cursor: pointer;
+      }
+      .agenda {
+        display: grid;
+        gap: 8px;
+      }
+      .event {
+        display: grid;
+        grid-template-columns: 120px 1fr auto;
+        gap: 18px;
+        align-items: center;
+        padding: 21px 0;
+        border-bottom: 1px solid var(--line);
+      }
+      .event-date {
+        color: var(--gold-dark);
+        font-weight: 800;
+        text-transform: uppercase;
+      }
+      .event h3 {
+        margin: 0;
+        color: var(--navy);
+        font-size: 17px;
+      }
+      .event p {
+        margin: 6px 0 0;
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.5;
+      }
+      .empty {
+        padding: 26px;
+        border: 1px dashed #bfc6d5;
+        border-radius: 14px;
+        color: var(--muted);
+        text-align: center;
+      }
+      .grid3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+      }
+      .card {
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        padding: 27px;
+        box-shadow: 0 10px 30px rgba(16, 34, 82, 0.06);
+      }
+      .card h3 {
+        font: 600 29px "Cormorant Garamond";
+        color: var(--navy);
+        margin: 8px 0;
+      }
+      .card p {
+        color: var(--muted);
+        line-height: 1.65;
+      }
+      .card-link {
+        display: inline-block;
+        margin-top: 8px;
+        color: var(--gold-dark);
+        font-weight: 800;
+        font-size: 13px;
+      }
+      .prayer {
+        background: var(--navy);
+        color: #fff;
+      }
+      .prayer h2 {
+        color: #fff;
+      }
+      .form {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 13px;
+        max-width: 900px;
+      }
+      .form .full {
+        grid-column: 1/-1;
+      }
+      .form input,
+      .form textarea,
+      .form select {
+        width: 100%;
+        padding: 14px;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        background: rgba(255, 255, 255, 0.08);
+        color: #fff;
+      }
+      .form input::placeholder,
+      .form textarea::placeholder {
+        color: rgba(255, 255, 255, 0.62);
+      }
+      .check {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        font-size: 13px;
+        line-height: 1.5;
+        color: rgba(255, 255, 255, 0.82);
+      }
+      .check input {
+        width: auto;
+        margin-top: 3px;
+      }
+      .form-msg {
+        color: #efd47e;
+        font-weight: 700;
+        min-height: 22px;
+      }
+      .location {
+        display: grid;
+        grid-template-columns: 0.72fr 1.28fr;
+        gap: 28px;
+        align-items: stretch;
+      }
+      .map {
+        min-height: 360px;
+        border-radius: 20px;
+        overflow: hidden;
+        background: #eceef3;
+      }
+      .map iframe {
+        width: 100%;
+        height: 100%;
+        min-height: 360px;
+        border: 0;
+      }
+      .visit-info {
+        padding: 28px 0;
+      }
+      .visit-info p {
+        color: var(--muted);
+        line-height: 1.75;
+      }
+      .socials {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+      }
+      .social {
+        border: 1px solid var(--line);
+        background: #fff;
+        padding: 21px 18px;
+        border-radius: 13px;
+        font-weight: 800;
+        color: var(--navy);
+        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 11px;
+      }
+      .social svg {
+        width: 27px;
+        height: 27px;
+        flex: none;
+      }
+      .social[data-social="youtube"] svg {
+        color: #ff0000;
+      }
+      .social[data-social="instagram"] svg {
+        color: #c13584;
+      }
+      .social[data-social="facebook"] svg {
+        color: #1877f2;
+      }
+      .social:hover {
+        border-color: var(--gold);
+        color: var(--gold-dark);
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(16, 34, 82, 0.09);
+      }
+      .social.is-hidden {
+        display: none;
+      }
+      footer {
+        background: #041238;
+        color: rgba(255, 255, 255, 0.75);
+        padding: 46px 7vw;
+      }
+      .footer-grid {
+        max-width: 1180px;
+        margin: auto;
+        display: grid;
+        grid-template-columns: 1.1fr 0.9fr 0.9fr;
+        gap: 35px;
+      }
+      .footer-brand {
+        color: #fff;
+        font: 600 29px "Cormorant Garamond";
+      }
+      .footer-title {
+        color: var(--gold);
+        font-size: 12px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 1.3px;
+      }
+      .footer-links {
+        display: grid;
+        gap: 8px;
+        margin-top: 12px;
+      }
+      .footer-links a:hover {
+        color: #fff;
+      }
+      .modal {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(3, 12, 40, 0.78);
+        z-index: 100;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+      }
+      .modal.open {
+        display: flex;
+      }
+      .modal-card {
+        width: min(560px, 100%);
+        max-height: 92vh;
+        overflow: auto;
+        background: #fff;
+        border-radius: 20px;
+        padding: 30px;
+        position: relative;
+        box-shadow: 0 30px 90px #0008;
+      }
+      .modal-card h2 {
+        font: 600 37px "Cormorant Garamond";
+        color: var(--navy);
+        margin: 0 35px 7px 0;
+      }
+      .modal-card p {
+        color: var(--muted);
+        line-height: 1.55;
+      }
+      .modal-card label {
+        font-size: 12px;
+        font-weight: 800;
+        color: var(--navy);
+        display: block;
+        margin: 13px 0 5px;
+      }
+      .modal-card input,
+      .modal-card textarea,
+      .modal-card select {
+        width: 100%;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 13px;
+        color: var(--ink);
+        background: #fff;
+      }
+      .close {
+        position: absolute;
+        right: 17px;
+        top: 13px;
+        border: 0;
+        background: none;
+        color: var(--navy);
+        font-size: 26px;
+      }
+      .modal-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: 17px;
+        flex-wrap: wrap;
+      }
+      .rgpd {
+        display: flex !important;
+        gap: 9px;
+        align-items: flex-start;
+        font-weight: 500 !important;
+        line-height: 1.45;
+        color: var(--muted) !important;
+      }
+      .rgpd input {
+        width: auto;
+        margin-top: 3px;
+      }
+      .status {
+        font-weight: 700;
+        color: var(--gold-dark);
+        min-height: 22px;
+        margin-top: 10px;
+      }
+      @media (max-width: 1050px) {
+        nav > a:not(.portal) {
+          display: none;
+        }
+        .mobile-menu {
+          display: block;
+        }
+        .hero {
+          grid-template-columns: 1fr;
+          padding: 72px 6vw 95px;
+        }
+        .hero-video-wrap {
+          height: 390px;
+          border-radius: 32px;
+        }
+        .quick-actions {
+          margin-top: -34px;
+        }
+        .story-grid,
+        .media-grid,
+        .location {
+          grid-template-columns: 1fr;
+        }
+        .grid3 {
+          grid-template-columns: 1fr 1fr;
+        }
+        .socials {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .gallery-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+      @media (max-width: 760px) {
+        :root {
+          --header-h: 72px;
+        }
+        header {
+          padding: 0 16px;
+        }
+        .brand img {
+          width: 52px;
+          height: 52px;
+        }
+        .brand b {
+          font-size: 15px;
+        }
+        .brand small {
+          font-size: 8px;
+        }
+        .portal {
+          display: none;
+        }
+        .hero {
+          padding: 58px 22px 78px;
+          gap: 30px;
+        }
+        .hero h1 {
+          font-size: 49px;
+        }
+        .hero p {
+          font-size: 17px;
+        }
+        .hero-video-wrap {
+          height: 420px;
+          border-radius: 24px;
+        }
+        .quick-actions {
+          grid-template-columns: 1fr;
+          margin: -28px 18px 55px;
+          padding: 0;
+        }
+        .section {
+          padding: 68px 22px;
+        }
+        .story-card,
+        .mission-card,
+        .leadership-panel {
+          padding: 23px;
+        }
+        .leader {
+          grid-template-columns: 1fr;
+          padding: 18px;
+        }
+        .leader img {
+          order: -1;
+        }
+        .presidents {
+          grid-template-columns: 1fr 1fr;
+        }
+        .grid3 {
+          grid-template-columns: 1fr;
+        }
+        .event {
+          grid-template-columns: 1fr;
+          gap: 7px;
+        }
+        .event .btn {
+          justify-self: start;
+        }
+        .form {
+          grid-template-columns: 1fr;
+        }
+        .form .full {
+          grid-column: auto;
+        }
+        .footer-grid {
+          grid-template-columns: 1fr;
+        }
+        .mobile-menu {
+          display: none;
+        }
+        .actions {
+          flex-direction: column;
+          align-items: stretch;
+        }
+        .actions .btn {
+          width: 100%;
+        }
+      }
+      @media (max-width: 430px) {
+        .brand small {
+          display: none;
+        }
+        .hero h1 {
+          font-size: 43px;
+        }
+        .hero-video-wrap {
+          height: 345px;
+        }
+        .presidents {
+          grid-template-columns: 1fr;
+        }
+        .socials {
+          grid-template-columns: 1fr;
+        }
+        .modal-card {
+          padding: 24px 20px;
+        }
+        .quick-card {
+          padding: 18px;
+        }
+        .gallery-grid {
+          grid-auto-rows: 190px;
+          gap: 9px;
+        }
+        .gallery-item:first-child,
+        .gallery-item:nth-child(6) {
+          grid-column: span 2;
+        }
+      }
+    </style>
+    <style>
+      .site-notices {
+        display: grid;
+        gap: 13px;
+      }
+      .site-notice {
+        padding: 20px 22px;
+        border-left: 4px solid var(--gold);
+        border-radius: 12px;
+        background: #fff;
+        box-shadow: 0 8px 25px rgba(16, 34, 82, 0.06);
+      }
+      .site-notice h3 {
+        margin: 0 0 6px;
+        color: var(--navy);
+      }
+      .site-notice p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.6;
+      }
+    </style>
+    <style>
+      .bible-shell {
+        background: linear-gradient(145deg, #07194f, #0c286e);
+        border-radius: 26px;
+        padding: 34px;
+        color: #fff;
+        box-shadow: 0 22px 58px rgba(4, 18, 56, 0.2);
+      }
+      .bible-shell h2 {
+        color: #fff;
+      }
+      .bible-shell .section-head p {
+        color: rgba(255, 255, 255, 0.76);
+      }
+      .bible-start {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 12px;
+        max-width: 650px;
+      }
+      .bible-start input {
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        background: rgba(255, 255, 255, 0.1);
+        color: #fff;
+        padding: 14px;
+        border-radius: 8px;
+      }
+      .bible-start input::placeholder {
+        color: rgba(255, 255, 255, 0.62);
+      }
+      .bible-dashboard {
+        display: none;
+      }
+      .bible-stats {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+        margin: 25px 0 14px;
+      }
+      .bible-stat {
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.13);
+        border-radius: 15px;
+        padding: 16px;
+      }
+      .bible-stat small {
+        color: rgba(255, 255, 255, 0.68);
+      }
+      .bible-stat strong {
+        display: block;
+        color: var(--gold);
+        font-size: 25px;
+        margin-top: 4px;
+      }
+      .bible-track {
+        height: 13px;
+        background: rgba(255, 255, 255, 0.13);
+        border-radius: 20px;
+        overflow: hidden;
+      }
+      .bible-bar {
+        height: 100%;
+        width: 0;
+        background: linear-gradient(90deg, #d7af46, #f1d477);
+        transition: width 0.35s;
+      }
+      .bible-badges {
+        display: flex;
+        gap: 9px;
+        flex-wrap: wrap;
+        margin: 18px 0 24px;
+      }
+      .bible-badge {
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: rgba(255, 255, 255, 0.57);
+        border-radius: 30px;
+        padding: 8px 11px;
+        font-size: 11px;
+        font-weight: 800;
+      }
+      .bible-badge.earned {
+        background: rgba(215, 175, 70, 0.16);
+        border-color: var(--gold);
+        color: #f3d675;
+      }
+      .bible-grid {
+        display: grid;
+        grid-template-columns: 1.1fr 0.9fr;
+        gap: 18px;
+      }
+      .bible-panel {
+        background: #fff;
+        color: var(--ink);
+        border-radius: 18px;
+        padding: 21px;
+      }
+      .bible-panel h3 {
+        font: 600 29px "Cormorant Garamond";
+        color: var(--navy);
+        margin: 0 0 13px;
+      }
+      .bible-controls {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 13px;
+      }
+      .bible-controls select {
+        flex: 1;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 9px;
+      }
+      .bible-controls button {
+        border: 0;
+        border-radius: 8px;
+        background: var(--navy);
+        color: #fff;
+        padding: 9px 13px;
+      }
+      .bible-day {
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 18px;
+      }
+      .bible-day.done {
+        background: #edf8f0;
+        border-color: #8ac69d;
+      }
+      .bible-reading {
+        font: 600 23px "Cormorant Garamond";
+        color: var(--navy);
+        margin: 7px 0 16px;
+      }
+      .bible-rank-row {
+        display: grid;
+        grid-template-columns: 34px 1fr 70px;
+        gap: 8px;
+        align-items: center;
+        padding: 9px 0;
+        border-bottom: 1px solid var(--line);
+      }
+      .bible-rank-pos {
+        width: 29px;
+        height: 29px;
+        border-radius: 50%;
+        background: var(--navy);
+        color: #fff;
+        display: grid;
+        place-items: center;
+        font-weight: 900;
+        font-size: 12px;
+      }
+      .bible-rank-row:nth-child(-n + 3) .bible-rank-pos {
+        background: var(--gold);
+        color: var(--navy);
+      }
+      .bible-rank-value {
+        text-align: right;
+        font-weight: 900;
+        color: var(--blue);
+      }
+      .bible-note {
+        color: var(--muted);
+        font-size: 11px;
+        line-height: 1.5;
+        margin-top: 13px;
+      }
+      .bible-toast {
+        display: none;
+        margin: 15px 0;
+        padding: 12px;
+        border-radius: 10px;
+        background: rgba(215, 175, 70, 0.17);
+        color: #f3d675;
+        font-weight: 800;
+      }
+      @media (max-width: 800px) {
+        .bible-shell {
+          padding: 24px 18px;
+        }
+        .bible-start {
+          grid-template-columns: 1fr;
+        }
+        .bible-stats {
+          grid-template-columns: 1fr 1fr;
+        }
+        .bible-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <a class="brand" href="#inicio"
+        ><img src="/logo-adms-braga.png" alt="ADMS Braga" />
+        <div>
+          <b>ADMS BRAGA</b
+          ><small>ASSEMBLEIA DE DEUS · MINISTÉRIO DE SANTOS</small>
+        </div></a
+      >
+      <nav aria-label="Navegação principal">
+        <a href="#sobre">Quem Somos</a><a href="#lideranca">Liderança</a
+        ><a href="#galeria">Galeria</a><a href="#agenda">Agenda</a
+        ><a href="#estudos">Estudos</a><a href="#plano-biblico">Plano Bíblico</a
+        ><a href="#oracao">Oração</a><a href="#localizacao">Visite-nos</a
+        ><a class="portal" href="/sistema?v=34"
+          ><span>◆</span> Acessar Portal</a
+        >
+      </nav>
+    </header>
 
-  <main>
-    <section class="hero" id="inicio">
-      <div class="hero-copy"><div class="eyebrow">ASSEMBLEIA DE DEUS MINISTÉRIO DE SANTOS</div><h1>Uma igreja para <em>viver a Palavra</em><br>e crescer em comunhão.</h1><p>Bem-vindo à ADMS Braga. Um lugar de fé, família, serviço e transformação pela Palavra de Deus.</p><div class="actions"><a class="btn btn-gold" href="#agenda">Nossa Agenda</a><a class="btn btn-line" href="#localizacao">Venha nos visitar</a></div></div>
-      <div class="hero-video-wrap" aria-label="Vídeo da ADMS Braga"><video id="hero-church-video" class="hero-video" autoplay muted loop playsinline preload="metadata"><source src="/video-igreja-adms.mp4" type="video/mp4"></video><div class="hero-video-shade"></div><button class="hero-sound" type="button" onclick="toggleHeroSound()">Ativar som</button></div>
-    </section>
+    <main>
+      <section class="hero" id="inicio">
+        <div class="hero-copy">
+          <div class="eyebrow">ASSEMBLEIA DE DEUS MINISTÉRIO DE SANTOS</div>
+          <h1>
+            Uma igreja para <em>viver a Palavra</em><br />e crescer em comunhão.
+          </h1>
+          <p>
+            Bem-vindo à ADMS Braga. Um lugar de fé, família, serviço e
+            transformação pela Palavra de Deus.
+          </p>
+          <div class="actions">
+            <a class="btn btn-gold" href="#agenda">Nossa Agenda</a
+            ><a class="btn btn-line" href="#localizacao">Venha nos visitar</a>
+          </div>
+        </div>
+        <div class="hero-video-wrap" aria-label="Vídeo da ADMS Braga">
+          <video
+            id="hero-church-video"
+            class="hero-video"
+            autoplay
+            muted
+            loop
+            playsinline
+            preload="metadata"
+          >
+            <source src="/video-igreja-adms.mp4" type="video/mp4" />
+          </video>
+          <div class="hero-video-shade"></div>
+          <button class="hero-sound" type="button" onclick="toggleHeroSound()">
+            Ativar som
+          </button>
+        </div>
+      </section>
 
-    <section class="quick-actions" aria-label="Como podemos ajudar"><button class="quick-card" type="button" onclick="openContact('novo')"><strong>Sou novo aqui</strong><span>Queremos recebê-lo e ajudar na sua primeira visita.</span></button><button class="quick-card" type="button" onclick="openContact('decisao')"><strong>Quero aceitar Jesus</strong><span>Comece hoje uma nova vida com Cristo.</span></button><button class="quick-card" type="button" onclick="openContact('pastor')"><strong>Preciso falar com um pastor</strong><span>Peça acompanhamento e cuidado pastoral.</span></button></section>
+      <section class="quick-actions" aria-label="Como podemos ajudar">
+        <button class="quick-card" type="button" onclick="openContact('novo')">
+          <strong>Sou novo aqui</strong
+          ><span
+            >Queremos recebê-lo e ajudar na sua primeira visita.</span
+          ></button
+        ><button
+          class="quick-card"
+          type="button"
+          onclick="openContact('decisao')"
+        >
+          <strong>Quero aceitar Jesus</strong
+          ><span>Comece hoje uma nova vida com Cristo.</span></button
+        ><button
+          class="quick-card"
+          type="button"
+          onclick="openContact('pastor')"
+        >
+          <strong>Preciso falar com um pastor</strong
+          ><span>Peça acompanhamento e cuidado pastoral.</span>
+        </button>
+      </section>
 
-    <section class="section" id="sobre"><div class="content-shell"><div class="section-head"><div class="eyebrow">UM LEGADO QUE ATRAVESSA GERAÇÕES</div><h2>Quem somos</h2><p>Uma igreja bíblica, simples e acolhedora, comprometida com a proclamação do Evangelho e o cuidado com pessoas.</p></div><div class="story-grid"><article class="story-card"><h3 style="font:600 32px 'Cormorant Garamond';color:var(--navy);margin:0 0 14px">Assembleia de Deus Ministério de Santos — A Pioneira</h3><p>A história começou em Santos, São Paulo, em <strong>5 de maio de 1924</strong>, a partir do trabalho de evangelização iniciado na Ponta da Praia. Por ter sido a primeira Assembleia de Deus estabelecida no Estado de São Paulo, tornou-se conhecida como “A Pioneira”.</p><div class="facts"><span class="fact">Desde 1924</span><span class="fact">A Pioneira de São Paulo</span><span class="fact">Evangelização · Missões · Cuidado</span></div><details class="more"><summary>Conheça a nossa história completa</summary><p style="margin-top:15px">Vicente Lameira, Hermínia Lameira, Manoel Garcês e sua esposa, vindos de Recife, estão ligados ao início desta obra. Pouco depois, os missionários Daniel Berg e Gunnar Vingren deram continuidade ao trabalho e à organização da igreja. Em 1929, a obra já alcançava os bairros de Santos por meio de cultos nos lares, pontos de pregação e novas congregações. Em 1934, adquiriu personalidade jurídica como Sociedade Evangélica Assembleia de Deus.</p><div class="sources">Fontes: <a href="https://plataforma.turismo.sp.gov.br/publico/include/download.php?file=1602" target="_blank" rel="noopener">Secretaria de Turismo de São Paulo</a> · <a href="https://www.al.sp.gov.br/noticia/?id=311059" target="_blank" rel="noopener">Assembleia Legislativa de São Paulo</a>.</div></details></article><aside class="mission-card"><h3>A missão chegou a Portugal</h3><p>O compromisso com a proclamação do Evangelho ultrapassou fronteiras. A presença do Ministério de Santos em Portugal já soma mais de duas décadas.</p><p><strong>Em Braga, vivemos este legado:</strong> anunciar Jesus, fazer discípulos, servir pessoas e construir uma comunidade de amor, comunhão, serviço e missão.</p></aside></div></div></section>
+      <section class="section" id="sobre">
+        <div class="content-shell">
+          <div class="section-head">
+            <div class="eyebrow">UM LEGADO QUE ATRAVESSA GERAÇÕES</div>
+            <h2>Quem somos</h2>
+            <p>
+              Uma igreja bíblica, simples e acolhedora, comprometida com a
+              proclamação do Evangelho e o cuidado com pessoas.
+            </p>
+          </div>
+          <div class="story-grid">
+            <article class="story-card">
+              <h3
+                style="
+                  font: 600 32px &quot;Cormorant Garamond&quot;;
+                  color: var(--navy);
+                  margin: 0 0 14px;
+                "
+              >
+                Assembleia de Deus Ministério de Santos — A Pioneira
+              </h3>
+              <p>
+                A história começou em Santos, São Paulo, em
+                <strong>5 de maio de 1924</strong>, a partir do trabalho de
+                evangelização iniciado na Ponta da Praia. Por ter sido a
+                primeira Assembleia de Deus estabelecida no Estado de São Paulo,
+                tornou-se conhecida como “A Pioneira”.
+              </p>
+              <div class="facts">
+                <span class="fact">Desde 1924</span
+                ><span class="fact">A Pioneira de São Paulo</span
+                ><span class="fact">Evangelização · Missões · Cuidado</span>
+              </div>
+              <details class="more">
+                <summary>Conheça a nossa história completa</summary>
+                <p style="margin-top: 15px">
+                  Vicente Lameira, Hermínia Lameira, Manoel Garcês e sua esposa,
+                  vindos de Recife, estão ligados ao início desta obra. Pouco
+                  depois, os missionários Daniel Berg e Gunnar Vingren deram
+                  continuidade ao trabalho e à organização da igreja. Em 1929, a
+                  obra já alcançava os bairros de Santos por meio de cultos nos
+                  lares, pontos de pregação e novas congregações. Em 1934,
+                  adquiriu personalidade jurídica como Sociedade Evangélica
+                  Assembleia de Deus.
+                </p>
+                <div class="sources">
+                  Fontes:
+                  <a
+                    href="https://plataforma.turismo.sp.gov.br/publico/include/download.php?file=1602"
+                    target="_blank"
+                    rel="noopener"
+                    >Secretaria de Turismo de São Paulo</a
+                  >
+                  ·
+                  <a
+                    href="https://www.al.sp.gov.br/noticia/?id=311059"
+                    target="_blank"
+                    rel="noopener"
+                    >Assembleia Legislativa de São Paulo</a
+                  >.
+                </div>
+              </details>
+            </article>
+            <aside class="mission-card">
+              <h3>A missão chegou a Portugal</h3>
+              <p>
+                O compromisso com a proclamação do Evangelho ultrapassou
+                fronteiras. A presença do Ministério de Santos em Portugal já
+                soma mais de duas décadas.
+              </p>
+              <p>
+                <strong>Em Braga, vivemos este legado:</strong> anunciar Jesus,
+                fazer discípulos, servir pessoas e construir uma comunidade de
+                amor, comunhão, serviço e missão.
+              </p>
+            </aside>
+          </div>
+        </div>
+      </section>
 
-    <section class="section" id="lideranca"><div class="content-shell leadership-panel"><div class="eyebrow">SOBRE NÓS · UMA HISTÓRIA DE FÉ</div><h2>Uma liderança que serve</h2><p>Desde 1924, homens e mulheres têm cooperado para que esta obra alcance famílias, cidades e nações.</p><details class="more"><summary style="color:var(--gold)">Ver fundadores e presidentes do Ministério</summary><div class="presidents"><div class="president">Pr. Clímaco Bueno Asa<small>Presidente</small></div><div class="president">Pr. Geraldo Machado<small>Presidente</small></div><div class="president">Pr. Luiz Gonzaga<small>Presidente</small></div><div class="president">Pr. Simon Lundgren<small>Presidente</small></div><div class="president">Pr. Bruno Skolimowski<small>Presidente</small></div><div class="president">Pr. João Alves Corrêa<small>1962–1993</small></div></div></details>
-      <article class="leader"><img src="https://santaportal.com.br/wp/wp-content/uploads/2021/05/2014116199194g.jpg" alt="Ap. Paulo Alves Corrêa e Pra. Eliane da Cruz Corrêa" loading="lazy"><div><div class="leader-role">PRESIDENTE E VICE-PRESIDENTE</div><h3>Ap. Paulo Alves Corrêa e Pra. Eliane da Cruz Corrêa</h3><p>O Ap. Paulo assumiu a presidência em 1993, dando continuidade a uma história de expansão evangelística, social e missionária. Ao seu lado, a Pra. Eliane desenvolve um expressivo trabalho ministerial, social e humanitário.</p><details class="more"><summary style="color:var(--gold)">Ler biografia completa</summary><p>Paulo Alves Corrêa sucedeu seu pai, Pr. João Alves Corrêa, e conduziu a continuidade da sede ministerial e a expansão da obra para centenas de igrejas, incluindo missões fora do Brasil. A Pra. Eliane atua há mais de três décadas na valorização da mulher, fortalecimento da família e cuidado de pessoas em situação de vulnerabilidade, com iniciativas como Desafiadas a Amar, Educação para Todos e Inverno Quente.</p></details></div></article>
-      <article class="leader"><img src="/lideranca-local-adonias-alecsandra.jpg" alt="Pr. Adonias Alves da Silva e Pra. Alecsandra Corsini" loading="lazy"><div><div class="leader-role">LIDERANÇA LOCAL — ADMS BRAGA</div><h3>Pr. Adonias Alves da Silva e Pra. Alecsandra Corsini</h3><p>Cooperam no cuidado da igreja, no fortalecimento espiritual da congregação e na continuidade da visão ministerial em Braga.</p><details class="more"><summary style="color:var(--gold)">Ler biografia completa</summary><p>Com trajetória marcada pelo ensino da Palavra, formação de obreiros e expansão do Evangelho, o Pr. Adonias exerceu a Vice-Presidência do Ministério de Santos e coordenou a Escola Teológica para Formação de Obreiros. A Pra. Alecsandra serviu na liderança do Mulher V em nível ministerial. A caminhada do casal inclui experiências de residência e estudos internacionais, sempre dedicada ao serviço cristão.</p></details></div></article>
-    </div></section>
+      <section class="section" id="lideranca">
+        <div class="content-shell leadership-panel">
+          <div class="eyebrow">SOBRE NÓS · UMA HISTÓRIA DE FÉ</div>
+          <h2>Uma liderança que serve</h2>
+          <p>
+            Desde 1924, homens e mulheres têm cooperado para que esta obra
+            alcance famílias, cidades e nações.
+          </p>
+          <details class="more">
+            <summary style="color: var(--gold)">
+              Ver fundadores e presidentes do Ministério
+            </summary>
+            <div class="presidents">
+              <div class="president">
+                Pr. Clímaco Bueno Asa<small>Presidente</small>
+              </div>
+              <div class="president">
+                Pr. Geraldo Machado<small>Presidente</small>
+              </div>
+              <div class="president">
+                Pr. Luiz Gonzaga<small>Presidente</small>
+              </div>
+              <div class="president">
+                Pr. Simon Lundgren<small>Presidente</small>
+              </div>
+              <div class="president">
+                Pr. Bruno Skolimowski<small>Presidente</small>
+              </div>
+              <div class="president">
+                Pr. João Alves Corrêa<small>1962–1993</small>
+              </div>
+            </div>
+          </details>
+          <article class="leader">
+            <img
+              src="https://santaportal.com.br/wp/wp-content/uploads/2021/05/2014116199194g.jpg"
+              alt="Ap. Paulo Alves Corrêa e Pra. Eliane da Cruz Corrêa"
+              loading="lazy"
+            />
+            <div>
+              <div class="leader-role">PRESIDENTE E VICE-PRESIDENTE</div>
+              <h3>Ap. Paulo Alves Corrêa e Pra. Eliane da Cruz Corrêa</h3>
+              <p>
+                O Ap. Paulo assumiu a presidência em 1993, dando continuidade a
+                uma história de expansão evangelística, social e missionária. Ao
+                seu lado, a Pra. Eliane desenvolve um expressivo trabalho
+                ministerial, social e humanitário.
+              </p>
+              <details class="more">
+                <summary style="color: var(--gold)">
+                  Ler biografia completa
+                </summary>
+                <p>
+                  Paulo Alves Corrêa sucedeu seu pai, Pr. João Alves Corrêa, e
+                  conduziu a continuidade da sede ministerial e a expansão da
+                  obra para centenas de igrejas, incluindo missões fora do
+                  Brasil. A Pra. Eliane atua há mais de três décadas na
+                  valorização da mulher, fortalecimento da família e cuidado de
+                  pessoas em situação de vulnerabilidade, com iniciativas como
+                  Desafiadas a Amar, Educação para Todos e Inverno Quente.
+                </p>
+              </details>
+            </div>
+          </article>
+          <article class="leader">
+            <img
+              src="/lideranca-local-adonias-alecsandra.jpg"
+              alt="Pr. Adonias Alves da Silva e Pra. Alecsandra Corsini"
+              loading="lazy"
+            />
+            <div>
+              <div class="leader-role">LIDERANÇA LOCAL — ADMS BRAGA</div>
+              <h3>Pr. Adonias Alves da Silva e Pra. Alecsandra Corsini</h3>
+              <p>
+                Cooperam no cuidado da igreja, no fortalecimento espiritual da
+                congregação e na continuidade da visão ministerial em Braga.
+              </p>
+              <details class="more">
+                <summary style="color: var(--gold)">
+                  Ler biografia completa
+                </summary>
+                <p>
+                  Com trajetória marcada pelo ensino da Palavra, formação de
+                  obreiros e expansão do Evangelho, o Pr. Adonias exerceu a
+                  Vice-Presidência do Ministério de Santos e coordenou a Escola
+                  Teológica para Formação de Obreiros. A Pra. Alecsandra serviu
+                  na liderança do Mulher V em nível ministerial. A caminhada do
+                  casal inclui experiências de residência e estudos
+                  internacionais, sempre dedicada ao serviço cristão.
+                </p>
+              </details>
+            </div>
+          </article>
+        </div>
+      </section>
 
-    <section class="section alt" id="video"><div class="content-shell"><div class="section-head"><div class="eyebrow">CONTEÚDO EM DESTAQUE</div><h2 id="video-title">Vídeo da Semana</h2></div><div class="media-grid"><div class="video-frame" id="video-frame"><button class="play" type="button" aria-label="Abrir vídeo" onclick="openWeeklyVideo()">▶</button></div><div class="dark-card"><div class="eyebrow">ADMS BRAGA</div><h3 id="video-subtitle">Uma palavra para a sua semana</h3><p id="video-content">Mensagem e conteúdo especial da ADMS Braga para edificação da igreja.</p><a class="btn btn-gold" href="#redes">Ver nossos canais</a></div></div></div></section>
+      <section class="section alt" id="video">
+        <div class="content-shell">
+          <div class="section-head">
+            <div class="eyebrow">CONTEÚDO EM DESTAQUE</div>
+            <h2 id="video-title">Vídeo da Semana</h2>
+          </div>
+          <div class="media-grid">
+            <div class="video-frame" id="video-frame">
+              <button
+                class="play"
+                type="button"
+                aria-label="Abrir vídeo"
+                onclick="openWeeklyVideo()"
+              >
+                ▶
+              </button>
+            </div>
+            <div class="dark-card">
+              <div class="eyebrow">ADMS BRAGA</div>
+              <h3 id="video-subtitle">Uma palavra para a sua semana</h3>
+              <p id="video-content">
+                Mensagem e conteúdo especial da ADMS Braga para edificação da
+                igreja.
+              </p>
+              <a class="btn btn-gold" href="#redes">Ver nossos canais</a>
+            </div>
+          </div>
+        </div>
+      </section>
 
-    <section class="section" id="galeria"><div class="content-shell"><div class="section-head"><div class="eyebrow">NOSSA COMUNIDADE</div><h2>Momentos que vivemos juntos</h2><p>Registos de fé, louvor, comunhão e serviço na ADMS Braga.</p></div><div class="gallery-grid" id="gallery-grid">
-      <button class="gallery-item" type="button" onclick="openGallery('/adms-01.webp','Momento de oração')"><img src="/adms-01.webp" alt="Momento de oração na ADMS Braga" loading="lazy"></button>
-      <button class="gallery-item" type="button" onclick="openGallery('/adms-02.webp','Comunhão da igreja')"><img src="/adms-02.webp" alt="Comunhão durante o culto na ADMS Braga" loading="lazy"></button>
-      <button class="gallery-item" type="button" onclick="openGallery('/adms-03.webp','Adoração ao Senhor')"><img src="/adms-03.webp" alt="Igreja em adoração ao Senhor" loading="lazy"></button>
-      <button class="gallery-item" type="button" onclick="openGallery('/adms-04.webp','Culto na ADMS Braga')"><img src="/adms-04.webp" alt="Culto na ADMS Braga" loading="lazy"></button>
-      <button class="gallery-item" type="button" onclick="openGallery('/adms-05.webp','Ministério de louvor')"><img src="/adms-05.webp" alt="Ministério de louvor da ADMS Braga" loading="lazy"></button>
-      <button class="gallery-item" type="button" onclick="openGallery('/adms-06.webp','Louvor e celebração')"><img src="/adms-06.webp" alt="Louvor e celebração na ADMS Braga" loading="lazy"></button>
-    </div></div></section>
+      <section class="section" id="galeria">
+        <div class="content-shell">
+          <div class="section-head">
+            <div class="eyebrow">NOSSA COMUNIDADE</div>
+            <h2>Momentos que vivemos juntos</h2>
+            <p>Registos de fé, louvor, comunhão e serviço na ADMS Braga.</p>
+          </div>
+          <div class="gallery-grid" id="gallery-grid">
+            <button
+              class="gallery-item"
+              type="button"
+              onclick="openGallery('/adms-01.webp', 'Momento de oração')"
+            >
+              <img
+                src="/adms-01.webp"
+                alt="Momento de oração na ADMS Braga"
+                loading="lazy"
+              />
+            </button>
+            <button
+              class="gallery-item"
+              type="button"
+              onclick="openGallery('/adms-02.webp', 'Comunhão da igreja')"
+            >
+              <img
+                src="/adms-02.webp"
+                alt="Comunhão durante o culto na ADMS Braga"
+                loading="lazy"
+              />
+            </button>
+            <button
+              class="gallery-item"
+              type="button"
+              onclick="openGallery('/adms-03.webp', 'Adoração ao Senhor')"
+            >
+              <img
+                src="/adms-03.webp"
+                alt="Igreja em adoração ao Senhor"
+                loading="lazy"
+              />
+            </button>
+            <button
+              class="gallery-item"
+              type="button"
+              onclick="openGallery('/adms-04.webp', 'Culto na ADMS Braga')"
+            >
+              <img
+                src="/adms-04.webp"
+                alt="Culto na ADMS Braga"
+                loading="lazy"
+              />
+            </button>
+            <button
+              class="gallery-item"
+              type="button"
+              onclick="openGallery('/adms-05.webp', 'Ministério de louvor')"
+            >
+              <img
+                src="/adms-05.webp"
+                alt="Ministério de louvor da ADMS Braga"
+                loading="lazy"
+              />
+            </button>
+            <button
+              class="gallery-item"
+              type="button"
+              onclick="openGallery('/adms-06.webp', 'Louvor e celebração')"
+            >
+              <img
+                src="/adms-06.webp"
+                alt="Louvor e celebração na ADMS Braga"
+                loading="lazy"
+              />
+            </button>
+          </div>
+        </div>
+      </section>
 
-    <section class="section alt" id="avisos" hidden><div class="content-shell"><div class="section-head"><div class="eyebrow">FIQUE INFORMADO</div><h2>Avisos da igreja</h2></div><div class="site-notices" id="site-notices"></div></div></section>
+      <section class="section alt" id="avisos" hidden>
+        <div class="content-shell">
+          <div class="section-head">
+            <div class="eyebrow">FIQUE INFORMADO</div>
+            <h2>Avisos da igreja</h2>
+          </div>
+          <div class="site-notices" id="site-notices"></div>
+        </div>
+      </section>
 
-    <section class="section" id="agenda"><div class="content-shell"><div class="section-head"><div class="eyebrow">NOSSA AGENDA</div><h2>Próximos encontros</h2><p>Acompanhe cultos, estudos, reuniões e eventos da ADMS Braga.</p></div><div class="agenda" id="agenda-list"><div class="empty">A carregar a programação…</div></div></div></section>
+      <section class="section" id="agenda">
+        <div class="content-shell">
+          <div class="section-head">
+            <div class="eyebrow">NOSSA AGENDA</div>
+            <h2>Próximos encontros</h2>
+            <p>Acompanhe cultos, estudos, reuniões e eventos da ADMS Braga.</p>
+          </div>
+          <div class="agenda" id="agenda-list">
+            <div class="empty">A carregar a programação…</div>
+          </div>
+        </div>
+      </section>
 
-    <section class="section alt" id="estudos"><div class="content-shell"><div class="section-head"><div class="eyebrow">CRESCER NA PALAVRA</div><h2>Estudos Bíblicos</h2><p>Conteúdos para estudo pessoal, família, células e Escola Bíblica.</p></div><div class="grid3"><article class="card" data-content-card="estudo_semana"><h3>Estudo da Semana</h3><p>O estudo mais recente publicado pela igreja.</p><a class="card-link is-hidden" target="_blank" rel="noopener">Abrir conteúdo →</a></article><article class="card" data-content-card="devocional"><h3>Devocionais</h3><p>Reflexões curtas para acompanhar a igreja durante a semana.</p><a class="card-link is-hidden" target="_blank" rel="noopener">Ler devocional →</a></article><article class="card" data-content-card="biblioteca"><h3>Biblioteca</h3><p>Arquivo de estudos e materiais disponibilizados pelo Portal.</p><a class="card-link is-hidden" target="_blank" rel="noopener">Abrir biblioteca →</a></article></div></div></section>
+      <section class="section alt" id="estudos">
+        <div class="content-shell">
+          <div class="section-head">
+            <div class="eyebrow">CRESCER NA PALAVRA</div>
+            <h2>Estudos Bíblicos</h2>
+            <p>
+              Conteúdos para estudo pessoal, família, células e Escola Bíblica.
+            </p>
+          </div>
+          <div class="grid3">
+            <article class="card" data-content-card="estudo_semana">
+              <h3>Estudo da Semana</h3>
+              <p>O estudo mais recente publicado pela igreja.</p>
+              <a class="card-link is-hidden" target="_blank" rel="noopener"
+                >Abrir conteúdo →</a
+              >
+            </article>
+            <article class="card" data-content-card="devocional">
+              <h3>Devocionais</h3>
+              <p>Reflexões curtas para acompanhar a igreja durante a semana.</p>
+              <a class="card-link is-hidden" target="_blank" rel="noopener"
+                >Ler devocional →</a
+              >
+            </article>
+            <article class="card" data-content-card="biblioteca">
+              <h3>Biblioteca</h3>
+              <p>
+                Arquivo de estudos e materiais disponibilizados pelo Portal.
+              </p>
+              <a class="card-link is-hidden" target="_blank" rel="noopener"
+                >Abrir biblioteca →</a
+              >
+            </article>
+          </div>
+        </div>
+      </section>
 
-    <section class="section prayer" id="oracao"><div class="content-shell"><div class="section-head"><div class="eyebrow">PODEMOS ORAR POR SI?</div><h2>Pedidos de Oração</h2><p style="color:rgba(255,255,255,.76)">Partilhe o seu pedido. A equipa pastoral acompanhará cada registo com cuidado e discrição.</p></div><form class="form" onsubmit="sendPrayer(event)"><input id="oracao-nome" required minlength="2" placeholder="O seu nome"><input id="oracao-email" type="email" placeholder="O seu e-mail"><input id="oracao-contacto" class="full" placeholder="Contacto"><textarea id="oracao-pedido" class="full" required minlength="5" rows="5" placeholder="Escreva o seu pedido de oração"></textarea><label class="check full"><input id="oracao-confidencial" type="checkbox">Desejo que este pedido seja tratado como confidencial e visto apenas pela liderança pastoral autorizada.</label><button class="btn btn-gold full" type="submit" id="oracao-submit">Enviar pedido de oração</button><div id="oracao-msg" class="form-msg full" role="status"></div></form></div></section>
+      <section class="section" id="plano-biblico">
+        <div class="content-shell bible-shell">
+          <div class="section-head">
+            <div class="eyebrow">JORNADA NA PALAVRA · 365 DIAS</div>
+            <h2>A Bíblia Toda, Uma Vida Transformada</h2>
+            <p>
+              Leia os 1.189 capítulos da Bíblia em um ano, acompanhe cada passo
+              e celebre a constância. O ranking existe para encorajar: avançar
+              juntos é a verdadeira vitória.
+            </p>
+          </div>
+          <div class="bible-start" id="bible-start">
+            <input
+              id="bible-name"
+              maxlength="60"
+              placeholder="Digite o seu nome"
+            /><button class="btn btn-gold" type="button" id="bible-join">
+              Iniciar o plano
+            </button>
+          </div>
+          <div class="bible-toast" id="bible-toast"></div>
+          <div class="bible-dashboard" id="bible-dashboard">
+            <div class="bible-stats">
+              <div class="bible-stat">
+                <small>Progresso</small><strong id="bible-percent">0%</strong>
+              </div>
+              <div class="bible-stat">
+                <small>Dias concluídos</small
+                ><strong id="bible-completed">0</strong>
+              </div>
+              <div class="bible-stat">
+                <small>Capítulos lidos</small
+                ><strong id="bible-chapters">0</strong>
+              </div>
+              <div class="bible-stat">
+                <small>Próxima conquista</small
+                ><strong id="bible-next">7</strong>
+              </div>
+            </div>
+            <div class="bible-track">
+              <div class="bible-bar" id="bible-progress-bar"></div>
+            </div>
+            <div class="bible-badges" id="bible-badges"></div>
+            <div class="bible-grid">
+              <div class="bible-panel">
+                <h3>Leitura diária</h3>
+                <div class="bible-controls">
+                  <button type="button" id="bible-prev">←</button
+                  ><select id="bible-day-select"></select
+                  ><button type="button" id="bible-next-day">→</button>
+                </div>
+                <div class="bible-day" id="bible-day-card">
+                  <small id="bible-day-label">Dia 1</small>
+                  <div class="bible-reading" id="bible-reading"></div>
+                  <button class="btn btn-navy" type="button" id="bible-check">
+                    Marcar como concluído
+                  </button>
+                </div>
+                <p class="bible-note">
+                  A sua identificação fica guardada neste dispositivo. Não limpe
+                  os dados do navegador enquanto estiver no plano.
+                </p>
+              </div>
+              <div class="bible-panel">
+                <h3>Ranking de leitura</h3>
+                <div id="bible-ranking">A carregar...</div>
+                <p class="bible-note">
+                  Em caso de empate, aparece primeiro quem alcançou o progresso
+                  mais cedo.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
-    <section class="section" id="localizacao"><div class="content-shell location"><div class="visit-info"><div class="eyebrow">VENHA NOS VISITAR</div><h2>Estamos em Braga</h2><p>Praça do Bocage, 7<br>São Victor, Braga · Portugal</p><a class="btn btn-gold" href="https://www.google.com/maps/search/?api=1&query=Pra%C3%A7a%20do%20Bocage%2C%207%2C%20S%C3%A3o%20Victor%2C%20Braga" target="_blank" rel="noopener">Abrir no mapa</a></div><div class="map"><iframe title="Mapa da ADMS Braga" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://www.google.com/maps?q=Pra%C3%A7a%20do%20Bocage%207%2C%20Braga%2C%20Portugal&output=embed"></iframe></div></div></section>
+      <section class="section prayer" id="oracao">
+        <div class="content-shell">
+          <div class="section-head">
+            <div class="eyebrow">PODEMOS ORAR POR SI?</div>
+            <h2>Pedidos de Oração</h2>
+            <p style="color: rgba(255, 255, 255, 0.76)">
+              Partilhe o seu pedido. A equipa pastoral acompanhará cada registo
+              com cuidado e discrição.
+            </p>
+          </div>
+          <form class="form" onsubmit="sendPrayer(event)">
+            <input
+              id="oracao-nome"
+              required
+              minlength="2"
+              placeholder="O seu nome"
+            /><input
+              id="oracao-email"
+              type="email"
+              placeholder="O seu e-mail"
+            /><input
+              id="oracao-contacto"
+              class="full"
+              placeholder="Contacto"
+            /><textarea
+              id="oracao-pedido"
+              class="full"
+              required
+              minlength="5"
+              rows="5"
+              placeholder="Escreva o seu pedido de oração"
+            ></textarea
+            ><label class="check full"
+              ><input id="oracao-confidencial" type="checkbox" />Desejo que este
+              pedido seja tratado como confidencial e visto apenas pela
+              liderança pastoral autorizada.</label
+            ><button class="btn btn-gold full" type="submit" id="oracao-submit">
+              Enviar pedido de oração
+            </button>
+            <div id="oracao-msg" class="form-msg full" role="status"></div>
+          </form>
+        </div>
+      </section>
 
-    <section class="section alt" id="redes"><div class="content-shell"><div class="section-head"><div class="eyebrow">CONECTE-SE</div><h2>Redes Sociais</h2><p>Acompanhe a ADMS Braga também durante a semana.</p></div><div class="socials">
-      <a class="social" data-social="youtube" href="https://www.youtube.com/@AdmsBraga" target="_blank" rel="noopener" aria-label="Abrir canal da ADMS Braga no YouTube"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.6 12 3.6 12 3.6s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2 31 31 0 0 0 0 12a31 31 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1A31 31 0 0 0 24 12a31 31 0 0 0-.5-5.8ZM9.6 15.6V8.4l6.3 3.6-6.3 3.6Z"/></svg><span class="social-label">YouTube</span></a>
-      <a class="social" data-social="instagram" href="https://www.instagram.com/adms.bragapt/" target="_blank" rel="noopener" aria-label="Abrir Instagram da ADMS Braga"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="17.5" cy="6.5" r="1.2" fill="currentColor"/></svg><span class="social-label">Instagram</span></a>
-      <a class="social" data-social="facebook" href="https://www.facebook.com/share/1BrJKpPxhP/" target="_blank" rel="noopener" aria-label="Abrir Facebook da ADMS Braga"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M14 8.5V6.8c0-.8.5-1 1-1h2.8V1.2L14.1 1C10.4 1 9 3.2 9 6.4v2.1H6v5h3V23h5v-9.5h3.4l.6-5H14Z"/></svg><span class="social-label">Facebook</span></a>
-    </div></div></section>
-  </main>
+      <section class="section" id="localizacao">
+        <div class="content-shell location">
+          <div class="visit-info">
+            <div class="eyebrow">VENHA NOS VISITAR</div>
+            <h2>Estamos em Braga</h2>
+            <p>Praça do Bocage, 7<br />São Victor, Braga · Portugal</p>
+            <a
+              class="btn btn-gold"
+              href="https://www.google.com/maps/search/?api=1&query=Pra%C3%A7a%20do%20Bocage%2C%207%2C%20S%C3%A3o%20Victor%2C%20Braga"
+              target="_blank"
+              rel="noopener"
+              >Abrir no mapa</a
+            >
+          </div>
+          <div class="map">
+            <iframe
+              title="Mapa da ADMS Braga"
+              loading="lazy"
+              referrerpolicy="no-referrer-when-downgrade"
+              src="https://www.google.com/maps?q=Pra%C3%A7a%20do%20Bocage%207%2C%20Braga%2C%20Portugal&output=embed"
+            ></iframe>
+          </div>
+        </div>
+      </section>
 
-  <footer><div class="footer-grid"><div><div class="footer-brand">ADMS Braga</div><p>Igreja Evangélica Assembleia de Deus · Ministério de Santos</p></div><div><div class="footer-title">Visite-nos</div><p>Praça do Bocage, 7<br>São Victor · Braga</p></div><div><div class="footer-title">Links rápidos</div><div class="footer-links"><a href="#agenda">Agenda</a><a href="#oracao">Pedido de oração</a><a href="#localizacao">Como chegar</a><a href="/sistema?v=34">Portal Administrativo</a></div></div></div></footer>
+      <section class="section alt" id="redes">
+        <div class="content-shell">
+          <div class="section-head">
+            <div class="eyebrow">CONECTE-SE</div>
+            <h2>Redes Sociais</h2>
+            <p>Acompanhe a ADMS Braga também durante a semana.</p>
+          </div>
+          <div class="socials">
+            <a
+              class="social"
+              data-social="youtube"
+              href="https://www.youtube.com/@AdmsBraga"
+              target="_blank"
+              rel="noopener"
+              aria-label="Abrir canal da ADMS Braga no YouTube"
+              ><svg viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  fill="currentColor"
+                  d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.6 12 3.6 12 3.6s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2 31 31 0 0 0 0 12a31 31 0 0 0 .5 5.8 3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1A31 31 0 0 0 24 12a31 31 0 0 0-.5-5.8ZM9.6 15.6V8.4l6.3 3.6-6.3 3.6Z"
+                /></svg
+              ><span class="social-label">YouTube</span></a
+            >
+            <a
+              class="social"
+              data-social="instagram"
+              href="https://www.instagram.com/adms.bragapt/"
+              target="_blank"
+              rel="noopener"
+              aria-label="Abrir Instagram da ADMS Braga"
+              ><svg viewBox="0 0 24 24" aria-hidden="true">
+                <rect
+                  x="3"
+                  y="3"
+                  width="18"
+                  height="18"
+                  rx="5"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                />
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="4"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                />
+                <circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" /></svg
+              ><span class="social-label">Instagram</span></a
+            >
+            <a
+              class="social"
+              data-social="facebook"
+              href="https://www.facebook.com/share/1BrJKpPxhP/"
+              target="_blank"
+              rel="noopener"
+              aria-label="Abrir Facebook da ADMS Braga"
+              ><svg viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  fill="currentColor"
+                  d="M14 8.5V6.8c0-.8.5-1 1-1h2.8V1.2L14.1 1C10.4 1 9 3.2 9 6.4v2.1H6v5h3V23h5v-9.5h3.4l.6-5H14Z"
+                /></svg
+              ><span class="social-label">Facebook</span></a
+            >
+          </div>
+        </div>
+      </section>
+    </main>
 
-  <div class="gallery-lightbox" id="gallery-lightbox" role="dialog" aria-modal="true" aria-label="Fotografia ampliada" onclick="closeGallery(event)"><button class="gallery-close" type="button" aria-label="Fechar fotografia" onclick="closeGallery()">×</button><img id="gallery-lightbox-image" alt=""></div>
+    <footer>
+      <div class="footer-grid">
+        <div>
+          <div class="footer-brand">ADMS Braga</div>
+          <p>Igreja Evangélica Assembleia de Deus · Ministério de Santos</p>
+        </div>
+        <div>
+          <div class="footer-title">Visite-nos</div>
+          <p>Praça do Bocage, 7<br />São Victor · Braga</p>
+        </div>
+        <div>
+          <div class="footer-title">Links rápidos</div>
+          <div class="footer-links">
+            <a href="#agenda">Agenda</a><a href="#oracao">Pedido de oração</a
+            ><a href="#localizacao">Como chegar</a
+            ><a href="/sistema?v=34">Portal Administrativo</a>
+          </div>
+        </div>
+      </div>
+    </footer>
 
-  <div class="modal" id="contact-modal" role="dialog" aria-modal="true" aria-labelledby="contact-title"><div class="modal-card"><button class="close" type="button" aria-label="Fechar" onclick="closeContact()">×</button><h2 id="contact-title">Bem-vindo à ADMS Braga</h2><p id="contact-intro">Deixe o seu contacto. A nossa equipa entrará em contacto consigo.</p><form onsubmit="sendContact(event)"><label>Nome completo *</label><input id="contact-name" required minlength="2"><label>Contacto *</label><input id="contact-phone" required minlength="5"><label>E-mail</label><input id="contact-email" type="email"><label>Melhor horário</label><select id="contact-time"><option>Manhã</option><option>Tarde</option><option>Noite</option><option>Qualquer horário</option></select><label>Mensagem</label><textarea id="contact-message" rows="4"></textarea><label class="rgpd"><input id="contact-rgpd" type="checkbox" required>Autorizo o tratamento destes dados exclusivamente para contacto e acompanhamento pela ADMS Braga.</label><div class="status" id="contact-status" role="status"></div><div class="modal-actions"><button class="btn btn-gold" type="submit" id="contact-submit">Enviar contacto</button><button class="btn btn-soft" type="button" onclick="closeContact()">Cancelar</button></div></form></div></div>
+    <div
+      class="gallery-lightbox"
+      id="gallery-lightbox"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Fotografia ampliada"
+      onclick="closeGallery(event)"
+    >
+      <button
+        class="gallery-close"
+        type="button"
+        aria-label="Fechar fotografia"
+        onclick="closeGallery()"
+      >
+        ×</button
+      ><img id="gallery-lightbox-image" alt="" />
+    </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script>
-    const ADMS_SUPABASE_URL='https://ogbxntxfrkgllegzzwdm.supabase.co';
-    const ADMS_SUPABASE_KEY='sb_publishable_OO6HZ5Cs1wjOecpmcJoiMg_FOzewFq0';
-    const admsSite=window.supabase.createClient(ADMS_SUPABASE_URL,ADMS_SUPABASE_KEY);
-    const siteContent={}; let contactOrigin='site_novo';
-    const weeklyVideoFallback={titulo:'Vídeo da Semana',subtitulo:'Culto ADMS Braga',conteudo:'Assista à mensagem e acompanhe este momento de fé e comunhão com a ADMS Braga.',url:'https://www.youtube.com/live/qfimOJI9hUA'};
-    const safeUrl=value=>{try{const u=new URL(value);return ['http:','https:'].includes(u.protocol)?u.href:''}catch{return ''}};
-    const escapeHtml=value=>String(value||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-    function youtubeEmbed(value){const url=safeUrl(value);if(!url)return '';try{const u=new URL(url);let id='';if(u.hostname.includes('youtu.be'))id=u.pathname.slice(1);else if(u.hostname.includes('youtube.com'))id=u.searchParams.get('v')||u.pathname.split('/').filter(Boolean).pop();return /^[\w-]{6,20}$/.test(id)?`https://www.youtube-nocookie.com/embed/${id}`:''}catch{return ''}}
-    async function loadSiteContent(){const {data,error}=await admsSite.from('site_conteudos').select('*').eq('ativo',true);if(error){console.warn('Conteúdos indisponíveis',error);renderAgenda();return}(data||[]).forEach(x=>siteContent[x.chave]=x);renderDynamicContent()}
-    function renderDynamicContent(){const video=siteContent.video_semana||weeklyVideoFallback;document.getElementById('video-title').textContent=video.titulo||'Vídeo da Semana';document.getElementById('video-subtitle').textContent=video.subtitulo||'Uma palavra para a sua semana';document.getElementById('video-content').textContent=video.conteudo||'Mensagem e conteúdo especial da ADMS Braga para edificação da igreja.';const embed=youtubeEmbed(video.url);if(embed)document.getElementById('video-frame').innerHTML=`<iframe title="${escapeHtml(video.titulo||'Vídeo da Semana')}" src="${embed}" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
-      ['estudo_semana','devocional','biblioteca'].forEach(key=>{const item=siteContent[key],card=document.querySelector(`[data-content-card="${key}"]`);if(!item||!card)return;if(item.titulo)card.querySelector('h3').textContent=item.titulo;if(item.conteudo)card.querySelector('p').textContent=item.conteudo;const link=card.querySelector('a'),url=safeUrl(item.url);if(url){link.href=url;link.classList.remove('is-hidden')}});
-      ['youtube','instagram','facebook'].forEach(key=>{const item=siteContent[key],link=document.querySelector(`[data-social="${key}"]`),url=safeUrl(item?.url);if(link&&url){link.href=url;const label=link.querySelector('.social-label');if(label)label.textContent=item.titulo||label.textContent;link.classList.remove('is-hidden')}});renderGallery();renderNotices();renderEditorialCards();renderAgenda()}
-    function editorialItems(prefix){return Object.values(siteContent).filter(x=>x.chave===prefix||x.chave.startsWith(prefix+'_')).sort((a,b)=>String(b.updated_at||'').localeCompare(String(a.updated_at||'')))}
-    function renderGallery(){const rows=editorialItems('galeria');if(!rows.length)return;document.getElementById('gallery-grid').innerHTML=rows.map(x=>{const url=safeUrl(x.url);return url?`<button class="gallery-item" type="button" onclick="openGallery('${url.replaceAll("'",'%27')}','${escapeHtml(x.titulo||'Fotografia da ADMS Braga')}')"><img src="${url}" alt="${escapeHtml(x.titulo||'Fotografia da ADMS Braga')}" loading="lazy"></button>`:''}).join('')}
-    function renderNotices(){const rows=editorialItems('aviso'),section=document.getElementById('avisos');if(!rows.length){section.hidden=true;return}section.hidden=false;document.getElementById('site-notices').innerHTML=rows.map(x=>`<article class="site-notice"><h3>${escapeHtml(x.titulo||'Aviso')}</h3><p>${escapeHtml(x.conteudo||x.subtitulo||'')}</p>${safeUrl(x.url)?`<a class="card-link" href="${safeUrl(x.url)}" target="_blank" rel="noopener">Mais informações →</a>`:''}</article>`).join('')}
-    function renderEditorialCards(){[['estudo','estudo_semana'],['devocional','devocional'],['livro','biblioteca']].forEach(([prefix,target])=>{const item=editorialItems(prefix)[0]||siteContent[target],card=document.querySelector(`[data-content-card="${target}"]`);if(!item||!card)return;card.querySelector('h3').textContent=item.titulo||card.querySelector('h3').textContent;card.querySelector('p').textContent=item.conteudo||item.subtitulo||card.querySelector('p').textContent;const link=card.querySelector('a'),url=safeUrl(item.url);if(url){link.href=url;link.classList.remove('is-hidden')}})}
-    function renderAgenda(){
-      const host=document.getElementById('agenda-list');
-      const fallback=[
-        {titulo:'SEGUNDA-FEIRA',subtitulo:'Culto de Campanha',conteudo:'20h'},
-        {titulo:'QUARTA-FEIRA',subtitulo:'Culto da Família',conteudo:'20h'},
-        {titulo:'SEXTA-FEIRA',subtitulo:'Escola Bíblica',conteudo:'20h'},
-        {titulo:'DOMINGO',subtitulo:'Culto Manhã com Deus',conteudo:'10h30'},
-        {titulo:'DOMINGO',subtitulo:'Culto de Celebração ao Senhor',conteudo:'18h30'}
+    <div
+      class="modal"
+      id="contact-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="contact-title"
+    >
+      <div class="modal-card">
+        <button
+          class="close"
+          type="button"
+          aria-label="Fechar"
+          onclick="closeContact()"
+        >
+          ×
+        </button>
+        <h2 id="contact-title">Bem-vindo à ADMS Braga</h2>
+        <p id="contact-intro">
+          Deixe o seu contacto. A nossa equipa entrará em contacto consigo.
+        </p>
+        <form onsubmit="sendContact(event)">
+          <label>Nome completo *</label
+          ><input id="contact-name" required minlength="2" /><label
+            >Contacto *</label
+          ><input id="contact-phone" required minlength="5" /><label
+            >E-mail</label
+          ><input id="contact-email" type="email" /><label>Melhor horário</label
+          ><select id="contact-time">
+            <option>Manhã</option>
+            <option>Tarde</option>
+            <option>Noite</option>
+            <option>Qualquer horário</option></select
+          ><label>Mensagem</label
+          ><textarea id="contact-message" rows="4"></textarea
+          ><label class="rgpd"
+            ><input id="contact-rgpd" type="checkbox" required />Autorizo o
+            tratamento destes dados exclusivamente para contacto e
+            acompanhamento pela ADMS Braga.</label
+          >
+          <div class="status" id="contact-status" role="status"></div>
+          <div class="modal-actions">
+            <button class="btn btn-gold" type="submit" id="contact-submit">
+              Enviar contacto</button
+            ><button
+              class="btn btn-soft"
+              type="button"
+              onclick="closeContact()"
+            >
+              Cancelar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+      const ADMS_SUPABASE_URL = "https://ogbxntxfrkgllegzzwdm.supabase.co";
+      const ADMS_SUPABASE_KEY =
+        "sb_publishable_OO6HZ5Cs1wjOecpmcJoiMg_FOzewFq0";
+      const admsSite = window.supabase.createClient(
+        ADMS_SUPABASE_URL,
+        ADMS_SUPABASE_KEY,
+      );
+      const siteContent = {};
+      let contactOrigin = "site_novo";
+      const weeklyVideoFallback = {
+        titulo: "Vídeo da Semana",
+        subtitulo: "Culto ADMS Braga",
+        conteudo:
+          "Assista à mensagem e acompanhe este momento de fé e comunhão com a ADMS Braga.",
+        url: "https://www.youtube.com/live/qfimOJI9hUA",
+      };
+      const safeUrl = (value) => {
+        try {
+          const u = new URL(value);
+          return ["http:", "https:"].includes(u.protocol) ? u.href : "";
+        } catch {
+          return "";
+        }
+      };
+      const escapeHtml = (value) =>
+        String(value || "").replace(
+          /[&<>"]/g,
+          (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
+        );
+      function youtubeEmbed(value) {
+        const url = safeUrl(value);
+        if (!url) return "";
+        try {
+          const u = new URL(url);
+          let id = "";
+          if (u.hostname.includes("youtu.be")) id = u.pathname.slice(1);
+          else if (u.hostname.includes("youtube.com"))
+            id =
+              u.searchParams.get("v") ||
+              u.pathname.split("/").filter(Boolean).pop();
+          return /^[\w-]{6,20}$/.test(id)
+            ? `https://www.youtube-nocookie.com/embed/${id}`
+            : "";
+        } catch {
+          return "";
+        }
+      }
+      async function loadSiteContent() {
+        const { data, error } = await admsSite
+          .from("site_conteudos")
+          .select("*")
+          .eq("ativo", true);
+        if (error) {
+          console.warn("Conteúdos indisponíveis", error);
+          renderAgenda();
+          return;
+        }
+        (data || []).forEach((x) => (siteContent[x.chave] = x));
+        renderDynamicContent();
+      }
+      function renderDynamicContent() {
+        const video = siteContent.video_semana || weeklyVideoFallback;
+        document.getElementById("video-title").textContent =
+          video.titulo || "Vídeo da Semana";
+        document.getElementById("video-subtitle").textContent =
+          video.subtitulo || "Uma palavra para a sua semana";
+        document.getElementById("video-content").textContent =
+          video.conteudo ||
+          "Mensagem e conteúdo especial da ADMS Braga para edificação da igreja.";
+        const embed = youtubeEmbed(video.url);
+        if (embed)
+          document.getElementById("video-frame").innerHTML =
+            `<iframe title="${escapeHtml(video.titulo || "Vídeo da Semana")}" src="${embed}" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+        ["estudo_semana", "devocional", "biblioteca"].forEach((key) => {
+          const item = siteContent[key],
+            card = document.querySelector(`[data-content-card="${key}"]`);
+          if (!item || !card) return;
+          if (item.titulo) card.querySelector("h3").textContent = item.titulo;
+          if (item.conteudo)
+            card.querySelector("p").textContent = item.conteudo;
+          const link = card.querySelector("a"),
+            url = safeUrl(item.url);
+          if (url) {
+            link.href = url;
+            link.classList.remove("is-hidden");
+          }
+        });
+        ["youtube", "instagram", "facebook"].forEach((key) => {
+          const item = siteContent[key],
+            link = document.querySelector(`[data-social="${key}"]`),
+            url = safeUrl(item?.url);
+          if (link && url) {
+            link.href = url;
+            const label = link.querySelector(".social-label");
+            if (label) label.textContent = item.titulo || label.textContent;
+            link.classList.remove("is-hidden");
+          }
+        });
+        renderGallery();
+        renderNotices();
+        renderEditorialCards();
+        renderAgenda();
+      }
+      function editorialItems(prefix) {
+        return Object.values(siteContent)
+          .filter((x) => x.chave === prefix || x.chave.startsWith(prefix + "_"))
+          .sort((a, b) =>
+            String(b.updated_at || "").localeCompare(
+              String(a.updated_at || ""),
+            ),
+          );
+      }
+      function renderGallery() {
+        const rows = editorialItems("galeria");
+        if (!rows.length) return;
+        document.getElementById("gallery-grid").innerHTML = rows
+          .map((x) => {
+            const url = safeUrl(x.url);
+            return url
+              ? `<button class="gallery-item" type="button" onclick="openGallery('${url.replaceAll("'", "%27")}','${escapeHtml(x.titulo || "Fotografia da ADMS Braga")}')"><img src="${url}" alt="${escapeHtml(x.titulo || "Fotografia da ADMS Braga")}" loading="lazy"></button>`
+              : "";
+          })
+          .join("");
+      }
+      function renderNotices() {
+        const rows = editorialItems("aviso"),
+          section = document.getElementById("avisos");
+        if (!rows.length) {
+          section.hidden = true;
+          return;
+        }
+        section.hidden = false;
+        document.getElementById("site-notices").innerHTML = rows
+          .map(
+            (x) =>
+              `<article class="site-notice"><h3>${escapeHtml(x.titulo || "Aviso")}</h3><p>${escapeHtml(x.conteudo || x.subtitulo || "")}</p>${safeUrl(x.url) ? `<a class="card-link" href="${safeUrl(x.url)}" target="_blank" rel="noopener">Mais informações →</a>` : ""}</article>`,
+          )
+          .join("");
+      }
+      function renderEditorialCards() {
+        [
+          ["estudo", "estudo_semana"],
+          ["devocional", "devocional"],
+          ["livro", "biblioteca"],
+        ].forEach(([prefix, target]) => {
+          const item = editorialItems(prefix)[0] || siteContent[target],
+            card = document.querySelector(`[data-content-card="${target}"]`);
+          if (!item || !card) return;
+          card.querySelector("h3").textContent =
+            item.titulo || card.querySelector("h3").textContent;
+          card.querySelector("p").textContent =
+            item.conteudo ||
+            item.subtitulo ||
+            card.querySelector("p").textContent;
+          const link = card.querySelector("a"),
+            url = safeUrl(item.url);
+          if (url) {
+            link.href = url;
+            link.classList.remove("is-hidden");
+          }
+        });
+      }
+      function renderAgenda() {
+        const host = document.getElementById("agenda-list");
+        const fallback = [
+          {
+            titulo: "SEGUNDA-FEIRA",
+            subtitulo: "Culto de Campanha",
+            conteudo: "20h",
+          },
+          {
+            titulo: "QUARTA-FEIRA",
+            subtitulo: "Culto da Família",
+            conteudo: "20h",
+          },
+          {
+            titulo: "SEXTA-FEIRA",
+            subtitulo: "Escola Bíblica",
+            conteudo: "20h",
+          },
+          {
+            titulo: "DOMINGO",
+            subtitulo: "Culto Manhã com Deus",
+            conteudo: "10h30",
+          },
+          {
+            titulo: "DOMINGO",
+            subtitulo: "Culto de Celebração ao Senhor",
+            conteudo: "18h30",
+          },
+        ];
+        const publicados = editorialItems("agenda").sort((a, b) =>
+          a.chave.localeCompare(b.chave),
+        );
+        const items = publicados.length ? publicados : fallback;
+        host.innerHTML = items
+          .map((item) => {
+            const url = safeUrl(item.url);
+            return `<article class="event"><div class="event-date">${escapeHtml(item.titulo || "AGENDA")}</div><div><h3>${escapeHtml(item.subtitulo || "Encontro ADMS Braga")}</h3><p>${escapeHtml(item.conteudo || "")}</p></div>${url ? `<a class="btn btn-gold" href="${url}" target="_blank" rel="noopener">Mais informações</a>` : ""}</article>`;
+          })
+          .join("");
+      }
+      function openWeeklyVideo() {
+        const url = safeUrl(
+          (siteContent.video_semana || weeklyVideoFallback).url,
+        );
+        if (url) window.open(url, "_blank", "noopener");
+      }
+      function openGallery(src, alt) {
+        const box = document.getElementById("gallery-lightbox"),
+          img = document.getElementById("gallery-lightbox-image");
+        img.src = src;
+        img.alt = alt || "Fotografia da ADMS Braga";
+        box.classList.add("open");
+        document.body.classList.add("modal-open");
+      }
+      function closeGallery(event) {
+        if (event && event.target !== event.currentTarget) return;
+        const box = document.getElementById("gallery-lightbox"),
+          img = document.getElementById("gallery-lightbox-image");
+        box.classList.remove("open");
+        document.body.classList.remove("modal-open");
+        setTimeout(() => {
+          img.src = "";
+        }, 180);
+      }
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") closeGallery();
+      });
+      function toggleHeroSound() {
+        const v = document.getElementById("hero-church-video"),
+          b = document.querySelector(".hero-sound");
+        v.muted = !v.muted;
+        if (!v.muted) v.play().catch(() => (v.muted = true));
+        b.textContent = v.muted ? "Ativar som" : "Desativar som";
+      }
+      async function sendPrayer(event) {
+        event.preventDefault();
+        const msg = document.getElementById("oracao-msg"),
+          button = document.getElementById("oracao-submit");
+        msg.textContent = "A enviar…";
+        button.disabled = true;
+        const row = {
+          nome: document.getElementById("oracao-nome").value.trim(),
+          email: document.getElementById("oracao-email").value.trim() || null,
+          contacto:
+            document.getElementById("oracao-contacto").value.trim() || null,
+          pedido: document.getElementById("oracao-pedido").value.trim(),
+          confidencial: document.getElementById("oracao-confidencial").checked,
+        };
+        const { error } = await admsSite.from("pedidos_oracao").insert(row);
+        button.disabled = false;
+        if (error) {
+          msg.textContent = "Não foi possível enviar agora. Tente novamente.";
+          return;
+        }
+        event.target.reset();
+        msg.textContent = "Pedido recebido. Estaremos em oração consigo.";
+      }
+      function openContact(kind) {
+        const copy = {
+          novo: [
+            "Bem-vindo à ADMS Braga",
+            "Queremos preparar a sua visita e recebê-lo bem.",
+            "site_novo",
+          ],
+          decisao: [
+            "Quero aceitar Jesus",
+            "Esta é a decisão mais importante da sua vida. Queremos caminhar consigo.",
+            "site_decisao",
+          ],
+          pastor: [
+            "Falar com um pastor",
+            "Partilhe o essencial. A liderança pastoral entrará em contacto consigo.",
+            "site_pastor",
+          ],
+        };
+        const current = copy[kind] || copy.novo;
+        document.getElementById("contact-title").textContent = current[0];
+        document.getElementById("contact-intro").textContent = current[1];
+        contactOrigin = current[2];
+        document.getElementById("contact-modal").classList.add("open");
+        document.body.classList.add("modal-open");
+        setTimeout(() => document.getElementById("contact-name").focus(), 50);
+      }
+      function closeContact() {
+        document.getElementById("contact-modal").classList.remove("open");
+        document.body.classList.remove("modal-open");
+      }
+      async function sendContact(event) {
+        event.preventDefault();
+        const status = document.getElementById("contact-status"),
+          button = document.getElementById("contact-submit");
+        button.disabled = true;
+        status.textContent = "A enviar…";
+        const row = {
+          nome: document.getElementById("contact-name").value.trim(),
+          contacto: document.getElementById("contact-phone").value.trim(),
+          email: document.getElementById("contact-email").value.trim() || null,
+          melhor_horario: document.getElementById("contact-time").value,
+          mensagem:
+            document.getElementById("contact-message").value.trim() || null,
+          origem: contactOrigin,
+          rgpd_aceite: document.getElementById("contact-rgpd").checked,
+        };
+        const { error } = await admsSite.from("novos_contactos").insert(row);
+        button.disabled = false;
+        if (error) {
+          status.textContent =
+            "Não foi possível enviar agora. Tente novamente.";
+          return;
+        }
+        event.target.reset();
+        status.textContent =
+          "Contacto recebido. A nossa equipa falará consigo em breve.";
+        setTimeout(closeContact, 1800);
+      }
+      document
+        .getElementById("contact-modal")
+        .addEventListener("click", (e) => {
+          if (e.target.id === "contact-modal") closeContact();
+        });
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") closeContact();
+      });
+      const bibleBooks = [
+        ["Génesis", 50],
+        ["Êxodo", 40],
+        ["Levítico", 27],
+        ["Números", 36],
+        ["Deuteronómio", 34],
+        ["Josué", 24],
+        ["Juízes", 21],
+        ["Rute", 4],
+        ["1 Samuel", 31],
+        ["2 Samuel", 24],
+        ["1 Reis", 22],
+        ["2 Reis", 25],
+        ["1 Crónicas", 29],
+        ["2 Crónicas", 36],
+        ["Esdras", 10],
+        ["Neemias", 13],
+        ["Ester", 10],
+        ["Jó", 42],
+        ["Salmos", 150],
+        ["Provérbios", 31],
+        ["Eclesiastes", 12],
+        ["Cantares", 8],
+        ["Isaías", 66],
+        ["Jeremias", 52],
+        ["Lamentações", 5],
+        ["Ezequiel", 48],
+        ["Daniel", 12],
+        ["Oseias", 14],
+        ["Joel", 3],
+        ["Amós", 9],
+        ["Obadias", 1],
+        ["Jonas", 4],
+        ["Miqueias", 7],
+        ["Naum", 3],
+        ["Habacuque", 3],
+        ["Sofonias", 3],
+        ["Ageu", 2],
+        ["Zacarias", 14],
+        ["Malaquias", 4],
+        ["Mateus", 28],
+        ["Marcos", 16],
+        ["Lucas", 24],
+        ["João", 21],
+        ["Atos", 28],
+        ["Romanos", 16],
+        ["1 Coríntios", 16],
+        ["2 Coríntios", 13],
+        ["Gálatas", 6],
+        ["Efésios", 6],
+        ["Filipenses", 4],
+        ["Colossenses", 4],
+        ["1 Tessalonicenses", 5],
+        ["2 Tessalonicenses", 3],
+        ["1 Timóteo", 6],
+        ["2 Timóteo", 4],
+        ["Tito", 3],
+        ["Filemom", 1],
+        ["Hebreus", 13],
+        ["Tiago", 5],
+        ["1 Pedro", 5],
+        ["2 Pedro", 3],
+        ["1 João", 5],
+        ["2 João", 1],
+        ["3 João", 1],
+        ["Judas", 1],
+        ["Apocalipse", 22],
       ];
-      const publicados=editorialItems('agenda').sort((a,b)=>a.chave.localeCompare(b.chave));
-      const items=publicados.length?publicados:fallback;
-      host.innerHTML=items.map(item=>{const url=safeUrl(item.url);return `<article class="event"><div class="event-date">${escapeHtml(item.titulo||'AGENDA')}</div><div><h3>${escapeHtml(item.subtitulo||'Encontro ADMS Braga')}</h3><p>${escapeHtml(item.conteudo||'')}</p></div>${url?`<a class="btn btn-gold" href="${url}" target="_blank" rel="noopener">Mais informações</a>`:''}</article>`}).join('')
-    }
-    function openWeeklyVideo(){const url=safeUrl((siteContent.video_semana||weeklyVideoFallback).url);if(url)window.open(url,'_blank','noopener')}
-    function openGallery(src,alt){const box=document.getElementById('gallery-lightbox'),img=document.getElementById('gallery-lightbox-image');img.src=src;img.alt=alt||'Fotografia da ADMS Braga';box.classList.add('open');document.body.classList.add('modal-open')}
-    function closeGallery(event){if(event&&event.target!==event.currentTarget)return;const box=document.getElementById('gallery-lightbox'),img=document.getElementById('gallery-lightbox-image');box.classList.remove('open');document.body.classList.remove('modal-open');setTimeout(()=>{img.src=''},180)}
-    document.addEventListener('keydown',event=>{if(event.key==='Escape')closeGallery()});
-    function toggleHeroSound(){const v=document.getElementById('hero-church-video'),b=document.querySelector('.hero-sound');v.muted=!v.muted;if(!v.muted)v.play().catch(()=>v.muted=true);b.textContent=v.muted?'Ativar som':'Desativar som'}
-    async function sendPrayer(event){event.preventDefault();const msg=document.getElementById('oracao-msg'),button=document.getElementById('oracao-submit');msg.textContent='A enviar…';button.disabled=true;const row={nome:document.getElementById('oracao-nome').value.trim(),email:document.getElementById('oracao-email').value.trim()||null,contacto:document.getElementById('oracao-contacto').value.trim()||null,pedido:document.getElementById('oracao-pedido').value.trim(),confidencial:document.getElementById('oracao-confidencial').checked};const {error}=await admsSite.from('pedidos_oracao').insert(row);button.disabled=false;if(error){msg.textContent='Não foi possível enviar agora. Tente novamente.';return}event.target.reset();msg.textContent='Pedido recebido. Estaremos em oração consigo.'}
-    function openContact(kind){const copy={novo:['Bem-vindo à ADMS Braga','Queremos preparar a sua visita e recebê-lo bem.','site_novo'],decisao:['Quero aceitar Jesus','Esta é a decisão mais importante da sua vida. Queremos caminhar consigo.','site_decisao'],pastor:['Falar com um pastor','Partilhe o essencial. A liderança pastoral entrará em contacto consigo.','site_pastor']};const current=copy[kind]||copy.novo;document.getElementById('contact-title').textContent=current[0];document.getElementById('contact-intro').textContent=current[1];contactOrigin=current[2];document.getElementById('contact-modal').classList.add('open');document.body.classList.add('modal-open');setTimeout(()=>document.getElementById('contact-name').focus(),50)}
-    function closeContact(){document.getElementById('contact-modal').classList.remove('open');document.body.classList.remove('modal-open')}
-    async function sendContact(event){event.preventDefault();const status=document.getElementById('contact-status'),button=document.getElementById('contact-submit');button.disabled=true;status.textContent='A enviar…';const row={nome:document.getElementById('contact-name').value.trim(),contacto:document.getElementById('contact-phone').value.trim(),email:document.getElementById('contact-email').value.trim()||null,melhor_horario:document.getElementById('contact-time').value,mensagem:document.getElementById('contact-message').value.trim()||null,origem:contactOrigin,rgpd_aceite:document.getElementById('contact-rgpd').checked};const {error}=await admsSite.from('novos_contactos').insert(row);button.disabled=false;if(error){status.textContent='Não foi possível enviar agora. Tente novamente.';return}event.target.reset();status.textContent='Contacto recebido. A nossa equipa falará consigo em breve.';setTimeout(closeContact,1800)}
-    document.getElementById('contact-modal').addEventListener('click',e=>{if(e.target.id==='contact-modal')closeContact()});document.addEventListener('keydown',e=>{if(e.key==='Escape')closeContact()});loadSiteContent();
-  </script>
-</body>
+      const allBibleChapters = bibleBooks.flatMap(([book, total]) =>
+          Array.from({ length: total }, (_, i) => ({ book, chapter: i + 1 })),
+        ),
+        biblePlan = [];
+      let bibleCursor = 0;
+      for (let day = 1; day <= 365; day++) {
+        const count = day <= 94 ? 4 : 3;
+        biblePlan.push(
+          allBibleChapters.slice(bibleCursor, bibleCursor + count),
+        );
+        bibleCursor += count;
+      }
+      const bibleMilestones = [
+        [7, "Primeira Semana"],
+        [30, "Firme na Palavra"],
+        [90, "Raízes Profundas"],
+        [180, "Perseverança"],
+        [270, "Reta Final"],
+        [365, "Bíblia Completa"],
+      ];
+      let bibleToken = localStorage.getItem("adms_bible_token"),
+        bibleState = { display_name: "", completed_days: 0, completed_map: {} },
+        selectedBibleDay = 1;
+      const bibleId = (id) => document.getElementById(id),
+        makeBibleToken = () =>
+          crypto.randomUUID
+            ? crypto.randomUUID()
+            : "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+                const r = (Math.random() * 16) | 0,
+                  v = c === "x" ? r : (r & 3) | 8;
+                return v.toString(16);
+              });
+      function bibleReadingLabel(items) {
+        const groups = [];
+        items.forEach((item) => {
+          const last = groups.at(-1);
+          if (last && last.book === item.book && last.end + 1 === item.chapter)
+            last.end = item.chapter;
+          else
+            groups.push({
+              book: item.book,
+              start: item.chapter,
+              end: item.chapter,
+            });
+        });
+        return groups
+          .map(
+            (g) => `${g.book} ${g.start}${g.end > g.start ? "–" + g.end : ""}`,
+          )
+          .join(" · ");
+      }
+      function showBibleToast(message) {
+        const el = bibleId("bible-toast");
+        el.textContent = message;
+        el.style.display = "block";
+        setTimeout(() => (el.style.display = "none"), 4500);
+      }
+      function renderBible() {
+        const map = bibleState.completed_map || {},
+          completed = Object.keys(map).length,
+          percent = Math.round((completed / 365) * 100);
+        bibleState.completed_days = completed;
+        bibleId("bible-dashboard").style.display = "block";
+        bibleId("bible-start").style.display = "none";
+        bibleId("bible-percent").textContent = percent + "%";
+        bibleId("bible-completed").textContent = completed;
+        bibleId("bible-progress-bar").style.width = percent + "%";
+        bibleId("bible-chapters").textContent = Object.keys(map).reduce(
+          (sum, d) => sum + biblePlan[Number(d) - 1].length,
+          0,
+        );
+        const next = bibleMilestones.find(([n]) => completed < n);
+        bibleId("bible-next").textContent = next
+          ? next[0] - completed + " dias"
+          : "Concluído";
+        bibleId("bible-badges").innerHTML = bibleMilestones
+          .map(
+            ([n, label]) =>
+              `<span class="bible-badge ${completed >= n ? "earned" : ""}">${completed >= n ? "🏅" : "○"} ${escapeHtml(label)} · ${n}</span>`,
+          )
+          .join("");
+        const done = Boolean(map[selectedBibleDay]),
+          card = bibleId("bible-day-card");
+        card.classList.toggle("done", done);
+        bibleId("bible-day-label").textContent =
+          `Dia ${selectedBibleDay} de 365`;
+        bibleId("bible-reading").textContent = bibleReadingLabel(
+          biblePlan[selectedBibleDay - 1],
+        );
+        bibleId("bible-check").textContent = done
+          ? "✓ Leitura concluída — desfazer"
+          : "Marcar como concluído";
+        bibleId("bible-day-select").value = selectedBibleDay;
+      }
+      async function loadBibleRanking() {
+        const { data, error } = await admsSite.rpc("get_bible_reading_ranking");
+        bibleId("bible-ranking").innerHTML = error
+          ? "Não foi possível carregar o ranking."
+          : data.length
+            ? data
+                .map(
+                  (r) =>
+                    `<div class="bible-rank-row"><span class="bible-rank-pos">${r.ranking_position}</span><span>${escapeHtml(r.display_name)}</span><span class="bible-rank-value">${r.completed_days}/365</span></div>`,
+                )
+                .join("")
+            : "Seja a primeira pessoa a iniciar esta jornada.";
+      }
+      async function startBiblePlan() {
+        const name = bibleId("bible-name").value.trim();
+        if (name.length < 2) {
+          showBibleToast("Digite o seu nome para iniciar.");
+          return;
+        }
+        if (!bibleToken) bibleToken = makeBibleToken();
+        const { data, error } = await admsSite.rpc("start_bible_plan", {
+          p_name: name,
+          p_token: bibleToken,
+        });
+        if (error) {
+          showBibleToast("Não foi possível iniciar agora. Tente novamente.");
+          return;
+        }
+        localStorage.setItem("adms_bible_token", bibleToken);
+        bibleState = data[0];
+        selectedBibleDay = Math.min(
+          365,
+          Array.from({ length: 365 }, (_, i) => i + 1).find(
+            (d) => !bibleState.completed_map?.[d],
+          ) || 365,
+        );
+        renderBible();
+        loadBibleRanking();
+        showBibleToast("Plano iniciado. Que a Palavra ilumine cada passo!");
+      }
+      async function restoreBiblePlan() {
+        if (!bibleToken) {
+          loadBibleRanking();
+          return;
+        }
+        const { data } = await admsSite.rpc("get_my_bible_progress", {
+          p_token: bibleToken,
+        });
+        if (data && data[0]) {
+          bibleState = data[0];
+          bibleId("bible-name").value = bibleState.display_name;
+          selectedBibleDay = Math.min(
+            365,
+            Array.from({ length: 365 }, (_, i) => i + 1).find(
+              (d) => !bibleState.completed_map?.[d],
+            ) || 365,
+          );
+          renderBible();
+        }
+        loadBibleRanking();
+      }
+      bibleId("bible-day-select").innerHTML = biblePlan
+        .map((_, i) => `<option value="${i + 1}">Dia ${i + 1}</option>`)
+        .join("");
+      bibleId("bible-join").onclick = startBiblePlan;
+      bibleId("bible-day-select").onchange = (e) => {
+        selectedBibleDay = Number(e.target.value);
+        renderBible();
+      };
+      bibleId("bible-prev").onclick = () => {
+        selectedBibleDay = Math.max(1, selectedBibleDay - 1);
+        renderBible();
+      };
+      bibleId("bible-next-day").onclick = () => {
+        selectedBibleDay = Math.min(365, selectedBibleDay + 1);
+        renderBible();
+      };
+      bibleId("bible-check").onclick = async () => {
+        const wasDone = Boolean(bibleState.completed_map?.[selectedBibleDay]),
+          before = Object.keys(bibleState.completed_map || {}).length,
+          { data, error } = await admsSite.rpc("set_bible_reading_day", {
+            p_token: bibleToken,
+            p_day: selectedBibleDay,
+            p_completed: !wasDone,
+          });
+        if (error) {
+          showBibleToast("Não foi possível guardar o progresso.");
+          return;
+        }
+        bibleState.completed_map = data[0].completed_map;
+        renderBible();
+        loadBibleRanking();
+        const after = Object.keys(bibleState.completed_map).length,
+          earned = bibleMilestones.find(([n]) => before < n && after >= n);
+        if (earned) showBibleToast(`🏅 Conquista desbloqueada: ${earned[1]}!`);
+        else if (!wasDone) showBibleToast("Leitura registada. Continue firme!");
+      };
+      loadSiteContent();
+      restoreBiblePlan();
+    </script>
+  </body>
 </html>
