@@ -490,7 +490,7 @@ function membroDaNuvem(r){
 }
 
 async function admsCarregarMembrosCloud(){
-  if(window.session && typeof hasFullConfidentialAccess==='function' && !hasFullConfidentialAccess()){ if(window.PESSOAS) PESSOAS.membros=[]; return {ok:true,restricted:true}; }
+  if(session && typeof hasFullConfidentialAccess==='function' && !hasFullConfidentialAccess()){ if(window.PESSOAS) PESSOAS.membros=[]; return {ok:true,restricted:true}; }
   const sess=await admsCloudSession();
   if(!sess) return {ok:false, reason:'no_session'};
   const {data,error}=await admsSupabase.from('membros').select('*').order('nome');
@@ -498,7 +498,7 @@ async function admsCarregarMembrosCloud(){
   if(window.PESSOAS){
     PESSOAS.membros=(data||[]).map(membroDaNuvem);
     if(typeof buildLoginOptions==='function') buildLoginOptions();
-    if(typeof renderModule==='function' && window.session) renderModule();
+    if(typeof renderModule==='function' && session) renderModule();
   }
   return {ok:true,count:(data||[]).length};
 }
@@ -563,12 +563,24 @@ function admsAplicarModuloCloud(key,p){
 
 async function admsGuardarEstadoCloud(){
   if(admsAplicandoEstadoCloud || !admsSupabase) return {ok:false,reason:'busy_or_unavailable'};
-  if(window.session && typeof hasFullConfidentialAccess==='function' && !hasFullConfidentialAccess()) return {ok:false,reason:'department_scoped_read_only'};
+  if(session && typeof hasFullConfidentialAccess==='function' && !hasFullConfidentialAccess()) return {ok:false,reason:'department_scoped_read_only'};
   const sess=await admsCloudSession(); if(!sess) return {ok:false,reason:'no_session'};
   const snap=admsEstadoCloudSnapshot();
-  const rows=Object.entries(snap).map(([module_key,payload])=>({module_key,payload,updated_by:sess.user.id}));
+  const rows=Object.entries(snap).map(([module_key,payload])=>({module_key,payload,updated_by:sess.user.id,updated_at:new Date().toISOString()}));
   const {error}=await admsSupabase.from('adms_module_state').upsert(rows,{onConflict:'module_key'});
   if(error){ console.error('ADMS cloud state:',error); return {ok:false,error}; }
+  return {ok:true};
+}
+
+async function admsGuardarModulosCloud(moduleKeys){
+  if(admsAplicandoEstadoCloud || !admsSupabase) return {ok:false,reason:'busy_or_unavailable'};
+  const sess=await admsCloudSession(); if(!sess) return {ok:false,reason:'no_session'};
+  const snap=admsEstadoCloudSnapshot(),agora=new Date().toISOString();
+  const keys=[...new Set(moduleKeys||[])].filter(key=>Object.prototype.hasOwnProperty.call(snap,key));
+  if(!keys.length) return {ok:false,reason:'no_modules'};
+  const rows=keys.map(module_key=>({module_key,payload:snap[module_key],updated_by:sess.user.id,updated_at:agora}));
+  const {error}=await admsSupabase.from('adms_module_state').upsert(rows,{onConflict:'module_key'});
+  if(error){ console.error('ADMS cloud modules:',error); return {ok:false,error}; }
   return {ok:true};
 }
 
@@ -595,7 +607,7 @@ async function admsIniciarEstadoRealtime(){
         admsAplicandoEstadoCloud=true;
         try{ admsAplicarModuloCloud(payload.new.module_key,payload.new.payload); }
         finally{ admsAplicandoEstadoCloud=false; }
-        if(typeof renderModule==='function' && window.session) renderModule();
+        if(typeof renderModule==='function' && session) renderModule();
       }
     }).subscribe();
 }
@@ -1359,7 +1371,7 @@ let EVENTOS = []; // {id, titulo, data, hora, local, descricao, departamento, va
 const ESTADO_KEY = 'adms_braga_estado_v1';
 let armazenamentoDisponivel = true;
 
-function salvarEstado(){
+function salvarEstado(modulosCloud=null){
   try{
     const estado = {
       v:1, guardadoEm: new Date().toISOString(),
@@ -1368,9 +1380,13 @@ function salvarEstado(){
       DEPARTMENTS_MEMBROS: DEPARTMENTS.map(d=>({id:d.id, membros:d.membros}))
     };
     localStorage.setItem(ESTADO_KEY, JSON.stringify(estado));
-    if(window.session?.cloud && !admsAplicandoEstadoCloud) void admsGuardarEstadoCloud();
+    if(session?.cloud && !admsAplicandoEstadoCloud){
+      return Array.isArray(modulosCloud) && modulosCloud.length ? admsGuardarModulosCloud(modulosCloud) : admsGuardarEstadoCloud();
+    }
+    return Promise.resolve({ok:true,localOnly:true});
   }catch(e){
     armazenamentoDisponivel = false;
+    return Promise.resolve({ok:false,error:e});
   }
 }
 
@@ -3226,7 +3242,7 @@ function renderLancamentosTable(){
 }
 function entityDeptLabel(id){ return id==='geral' ? 'Geral / Sede' : deptNome(id); }
 
-function addLancamento(){
+async function addLancamento(){
   if(!exigirPermissao('financeiro','inserir')) return;
   const data = document.getElementById('fin-data').value;
   const tipo = document.getElementById('fin-tipo').value;
@@ -3244,16 +3260,24 @@ function addLancamento(){
   const dataFmt = `${d}/${m}/${y}`;
   const lancamento = {id, data:dataFmt, desc, tipo, departamento, valor: formatEuro(valor), criadoPor: session.label, corrigido:false, paraPessoa, beneficiario, reciboId:null};
   FINANCEIRO.lancamentos.unshift(lancamento);
-  logAction('financeiro', 'Lançamento criado', `${tipo} de ${formatEuro(valor)} em ${entityDeptLabel(departamento)} — "${desc}" (${dataFmt})`);
 
   if(paraPessoa){
     const reciboId = 'rec'+Date.now();
     lancamento.reciboId = reciboId;
     RECIBOS.push({id:reciboId, lancamentoId:id, data:dataFmt, departamento, desc, valor: formatEuro(valor), beneficiario, geradoPor:session.label});
-    logAction('financeiro', 'Recibo gerado', `Recibo ${reciboId} — ${formatEuro(valor)} para ${beneficiario} (${entityDeptLabel(departamento)})`);
   }
-  salvarEstado();
-  showToast(paraPessoa ? 'Lançamento adicionado e recibo gerado.' : 'Lançamento adicionado.');
+  const guardado=await salvarEstado(paraPessoa?['financeiro','recibos']:['financeiro']);
+  if(!guardado?.ok){
+    FINANCEIRO.lancamentos=FINANCEIRO.lancamentos.filter(item=>item.id!==id);
+    if(lancamento.reciboId) RECIBOS=RECIBOS.filter(item=>item.id!==lancamento.reciboId);
+    try{ localStorage.setItem(ESTADO_KEY,JSON.stringify({v:1,guardadoEm:new Date().toISOString(),MASTERS,LEADERS,AUTH,ESCALAS,AVISOS,AUDIT_LOG,PATRIMONIO,PESSOAS,FINANCEIRO,RECIBOS,CONTAS_PAGAR,CONTAS_RECEBER,ORCAMENTOS,CELULAS,KIDS_CRIANCAS,KIDS_CHECKINS,EBD_TURMAS,EVENTOS,DEPARTMENTS_MEMBROS:DEPARTMENTS.map(d=>({id:d.id,membros:d.membros}))})) }catch(e){}
+    showToast('Não foi possível gravar o lançamento na nuvem. Tente novamente.');
+    renderModule();
+    return;
+  }
+  await logAction('financeiro', 'Lançamento criado', `${tipo} de ${formatEuro(valor)} em ${entityDeptLabel(departamento)} — "${desc}" (${dataFmt})`);
+  if(lancamento.reciboId) await logAction('financeiro', 'Recibo gerado', `Recibo ${lancamento.reciboId} — ${formatEuro(valor)} para ${beneficiario} (${entityDeptLabel(departamento)})`);
+  showToast(paraPessoa ? 'Lançamento e recibo guardados na nuvem.' : 'Lançamento guardado na nuvem.');
   renderModule();
 }
 
@@ -5487,6 +5511,11 @@ async function tentarRestaurarSessao(){
 }
 
 async function handleLogout(){
+  const sincronizado=await admsGuardarEstadoCloud();
+  if(!sincronizado?.ok){
+    showToast('Não foi possível sincronizar os dados. A sessão permanece aberta para evitar perda de informação.');
+    return;
+  }
   await logAction('acesso','Sessão terminada','Saída voluntária do portal.');
   if(admsRealtimeChannel){ try{ await admsSupabase.removeChannel(admsRealtimeChannel); }catch(e){} admsRealtimeChannel=null; }
   if(admsStateRealtimeChannel){ try{ await admsSupabase.removeChannel(admsStateRealtimeChannel); }catch(e){} admsStateRealtimeChannel=null; }

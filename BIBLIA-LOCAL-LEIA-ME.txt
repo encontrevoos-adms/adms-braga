@@ -1,0 +1,13 @@
+BÍBLIA LOCAL — ADMS BRAGA
+
+Tradução: João Ferreira de Almeida
+Idioma: Português
+Licença do texto: Domínio público
+
+Fonte digital:
+seven1m/open-bibles — por-almeida.usfx.xml
+https://github.com/seven1m/open-bibles
+
+O ficheiro biblia-local.json contém os 66 livros, 1.189 capítulos e 31.098
+versículos utilizados pelo leitor bíblico do site. Mantenha esse ficheiro na
+raiz do projeto ao enviar a atualização para o GitHub.
