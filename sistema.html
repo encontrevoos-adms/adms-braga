@@ -525,6 +525,7 @@ async function admsIniciarRealtime(){
 const ADMS_CLOUD_MODULE_KEYS = ['pessoas','financeiro','contas','recibos','escalas','avisos','patrimonio','orcamentos','celulas','kids','ebd','eventos'];
 let admsStateRealtimeChannel=null;
 let admsAplicandoEstadoCloud=false;
+let admsCloudSaveQueue=Promise.resolve({ok:true});
 
 function admsEstadoCloudSnapshot(){
   return {
@@ -582,6 +583,13 @@ async function admsGuardarModulosCloud(moduleKeys){
   const {error}=await admsSupabase.from('adms_module_state').upsert(rows,{onConflict:'module_key'});
   if(error){ console.error('ADMS cloud modules:',error); return {ok:false,error}; }
   return {ok:true};
+}
+
+function admsEnfileirarEstadoCloud(moduleKeys=null){
+  admsCloudSaveQueue=admsCloudSaveQueue
+    .catch(()=>({ok:false}))
+    .then(()=>Array.isArray(moduleKeys)&&moduleKeys.length?admsGuardarModulosCloud(moduleKeys):admsGuardarEstadoCloud());
+  return admsCloudSaveQueue;
 }
 
 async function admsCarregarEstadoCloud({bootstrap=true}={}){
@@ -1381,7 +1389,7 @@ function salvarEstado(modulosCloud=null){
     };
     localStorage.setItem(ESTADO_KEY, JSON.stringify(estado));
     if(session?.cloud && !admsAplicandoEstadoCloud){
-      return Array.isArray(modulosCloud) && modulosCloud.length ? admsGuardarModulosCloud(modulosCloud) : admsGuardarEstadoCloud();
+      return admsEnfileirarEstadoCloud(modulosCloud);
     }
     return Promise.resolve({ok:true,localOnly:true});
   }catch(e){
@@ -5511,10 +5519,13 @@ async function tentarRestaurarSessao(){
 }
 
 async function handleLogout(){
-  const sincronizado=await admsGuardarEstadoCloud();
-  if(!sincronizado?.ok){
-    showToast('Não foi possível sincronizar os dados. A sessão permanece aberta para evitar perda de informação.');
-    return;
+  if(hasFullConfidentialAccess()){
+    await admsCloudSaveQueue.catch(()=>({ok:false}));
+    const sincronizado=await admsEnfileirarEstadoCloud();
+    if(!sincronizado?.ok){
+      showToast('Não foi possível sincronizar os dados. A sessão permanece aberta para evitar perda de informação.');
+      return;
+    }
   }
   await logAction('acesso','Sessão terminada','Saída voluntária do portal.');
   if(admsRealtimeChannel){ try{ await admsSupabase.removeChannel(admsRealtimeChannel); }catch(e){} admsRealtimeChannel=null; }
