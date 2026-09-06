@@ -2008,6 +2008,7 @@ function renderShell(){
     nav+=navItem('contas-pagar','payable','Contas a Pagar',canAccessFinanceiro());
     nav+=navItem('contas-receber','receivable','Contas a Receber',canAccessFinanceiro());
     nav+=navItem('orcamento','chart','Orçamento',canAccessFinanceiro());
+    nav+=navItem('relatorios','report','Relatórios',permPode('relatorios'));
     nav+='<div class="nav-group-label">Departamentos</div>';
     nav+=navItem('departamentos','dept','Todos os Departamentos',true);
     nav+=navDeptItem('pastoral','pastoral','Pastoral',canAccessDept('pastoral'));
@@ -2120,6 +2121,7 @@ function renderModule(){
   if(currentModule==='pedidos-oracao'){ el.innerHTML='<div class="card">A carregar pedidos de oração...</div>'; renderPedidosOracao(); return; }
   if(currentModule==='novos-contactos'){ el.innerHTML='<div class="card">A carregar novos contactos...</div>'; renderNovosContactos(); return; }
   if(currentModule==='relatorios'){
+    if(!permPode('relatorios')) return el.innerHTML=viewLocked('Relatórios');
     el.innerHTML = viewRelatorios();
     renderRelFilters();
     return;
