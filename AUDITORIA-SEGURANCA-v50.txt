@@ -1,0 +1,36 @@
+AUDITORIA DE SEGURANÇA — ADMS BRAGA — VERSÃO 50
+
+Âmbito verificado
+- Autenticação e encerramento de sessão.
+- Permissões da interface por perfil e módulo.
+- Acesso anónimo às tabelas confidenciais do Supabase.
+- Persistência local de dados pessoais e financeiros.
+- Injeção de HTML/JavaScript em conteúdos recebidos do site público.
+- Links externos, anexos e uploads do gestor de conteúdos.
+- Exportação CSV do registo de atividade.
+- Cabeçalhos HTTP e proteção contra incorporação do portal em páginas externas.
+
+Resultados do teste anónimo
+- profiles: nenhum registo devolvido sem autenticação.
+- membros: nenhum registo devolvido sem autenticação.
+- adms_module_state: nenhum registo devolvido sem autenticação.
+- pedidos_oracao: acesso recusado pela política da base de dados.
+- gabinete_pastoral: nenhum registo devolvido sem autenticação.
+- Algumas ligações excederam o tempo de resposta e devem ser novamente confirmadas diretamente no Supabase.
+
+Melhorias aplicadas
+- Política de Segurança de Conteúdo (CSP).
+- Bloqueio de iframe/clickjacking e deteção incorreta de tipos de ficheiro.
+- HSTS, política de referências e restrição de câmara, microfone, localização, pagamentos e USB.
+- Portal e service worker configurados para não guardar versões privadas em cache.
+- Remoção dos dados locais confidenciais ao terminar sessão, seguida de recarregamento limpo.
+- Proteção contra injeção de código nos contactos, solicitações, gabinete pastoral e avisos.
+- Validação obrigatória de links HTTP/HTTPS.
+- Lista fechada de formatos permitidos e extensão definida pelo MIME real nos uploads.
+- Proteção contra fórmulas maliciosas na exportação CSV.
+- Palavra-passe com mínimo de 10 caracteres, maiúscula, minúscula e número.
+- Alteração de palavra-passe feita diretamente pelo Supabase Auth.
+- Limites de tamanho, campo-armadilha e intervalo mínimo nos formulários públicos.
+
+Nota essencial
+A interface não substitui as políticas RLS. As permissões definitivas de leitura e escrita devem permanecer aplicadas no Supabase para todas as tabelas e buckets. Execute VERIFICACAO-RLS-v50.sql no SQL Editor para conferir a cobertura.

@@ -3985,6 +3985,9 @@ const SITE_CONTENT_DEFS=[
   {key:'playlist',label:'Playlist',help:'Link do Spotify, YouTube Music ou outra playlist oficial.'}
 ];
 function admsEsc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function admsUrlSegura(v){
+  try{const u=new URL(String(v||''),location.origin);return ['http:','https:'].includes(u.protocol)?u.href:'';}catch(e){return '';}
+}
 async function renderSitePublico(){
   const el=document.getElementById('main-content');
   if(!hasFullConfidentialAccess()){el.innerHTML=viewLocked('Conteúdo do Site');return;}
@@ -4124,7 +4127,7 @@ async function carregarResumoNovosContactos(){
      <div style="font-size:12px;color:var(--ink-soft);margin-top:4px">${novos.length} novo(s) contacto(s) · ${naoLidas} notificação(ões) não lida(s)</div></div>
      <button class="btn btn-primary" style="width:auto;margin:0" onclick="goTo('novos-contactos')">Abrir contactos</button>
    </div>
-   ${lista.length?`<div style="margin-top:12px;font-size:12.5px"><b>Mais recente:</b> ${lista[0].nome} · ${new Date(lista[0].created_at).toLocaleString('pt-PT')}</div>`:'<div style="margin-top:12px;font-size:12.5px;color:var(--ink-soft)">Ainda não existem contactos recebidos.</div>'}
+   ${lista.length?`<div style="margin-top:12px;font-size:12.5px"><b>Mais recente:</b> ${admsEsc(lista[0].nome)} · ${new Date(lista[0].created_at).toLocaleString('pt-PT')}</div>`:'<div style="margin-top:12px;font-size:12.5px;color:var(--ink-soft)">Ainda não existem contactos recebidos.</div>'}
  </div>`;
 }
 
@@ -4132,7 +4135,7 @@ async function renderNovosContactos(){
  const el=document.getElementById('main-content'); if(!isMaster()){el.innerHTML=viewLocked('Novos Contactos');return;}
  const {data,error}=await admsSupabase.from('novos_contactos').select('*').order('created_at',{ascending:false});
  if(error){el.innerHTML='<div class="card">Não foi possível carregar os contactos.</div>';return;}
- const rows=(data||[]).map(c=>`<tr><td><b>${c.nome}</b><br><span style="font-size:11px">${new Date(c.created_at).toLocaleString('pt-PT')}</span></td><td>${c.contacto||'—'}<br>${c.email||''}</td><td>${c.melhor_horario||'—'}</td><td>${c.origem||'—'}</td><td><select onchange="atualizarStatusContacto('${c.id}',this.value)">${['novo','contactado','aguardando_retorno','visita_agendada','visitou','integrado'].map(x=>`<option value="${x}" ${c.status===x?'selected':''}>${x.replaceAll('_',' ')}</option>`).join('')}</select></td><td><button class="btn btn-outline" style="width:auto" onclick="converterContactoVisitante('${c.id}')">Converter em visitante</button></td></tr>`).join('');
+ const rows=(data||[]).map(c=>`<tr><td><b>${admsEsc(c.nome)}</b><br><span style="font-size:11px">${new Date(c.created_at).toLocaleString('pt-PT')}</span></td><td>${admsEsc(c.contacto||'—')}<br>${admsEsc(c.email||'')}</td><td>${admsEsc(c.melhor_horario||'—')}</td><td>${admsEsc(c.origem||'—')}</td><td><select onchange="atualizarStatusContacto('${admsEsc(c.id)}',this.value)">${['novo','contactado','aguardando_retorno','visita_agendada','visitou','integrado'].map(x=>`<option value="${x}" ${c.status===x?'selected':''}>${x.replaceAll('_',' ')}</option>`).join('')}</select></td><td><button class="btn btn-outline" style="width:auto" onclick="converterContactoVisitante('${admsEsc(c.id)}')">Converter em visitante</button></td></tr>`).join('');
  el.innerHTML=`<div class="topbar"><div><div class="breadcrumb">Secretaria</div><h1>Novos Contactos</h1></div><span class="access-pill">${(data||[]).filter(x=>x.status==='novo').length} novo(s)</span></div>${ruleDivider()}<div class="card"><table><thead><tr><th>Pessoa</th><th>Contacto</th><th>Melhor horário</th><th>Origem</th><th>Estado</th><th>Ação</th></tr></thead><tbody>${rows||'<tr><td colspan="6">Sem contactos.</td></tr>'}</tbody></table></div>`;
 }
 async function atualizarStatusContacto(id,status){const {error}=await admsSupabase.from('novos_contactos').update({status,updated_at:new Date().toISOString()}).eq('id',id);if(error){showToast('Não foi possível atualizar.');return;}showToast('Estado atualizado.');}
@@ -4899,12 +4902,12 @@ function viewAvisos(){
       <div class="card" style="margin-bottom:14px; ${a.prioridade==='Importante'?'border-left:4px solid var(--red);':''}">
         <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px; flex-wrap:wrap;">
           <div>
-            <h3 style="margin:0 0 4px 0; font-size:16px; color:var(--royal-deep);">${a.titulo}</h3>
-            <p style="margin:0; font-size:11.5px; color:var(--ink-soft);">${a.autor} · ${formatDate(a.data)} · ${rotuloPublicoAviso(a.publico)}</p>
+            <h3 style="margin:0 0 4px 0; font-size:16px; color:var(--royal-deep);">${admsEsc(a.titulo)}</h3>
+            <p style="margin:0; font-size:11.5px; color:var(--ink-soft);">${admsEsc(a.autor)} · ${formatDate(a.data)} · ${admsEsc(rotuloPublicoAviso(a.publico))}</p>
           </div>
           ${a.prioridade==='Importante'? `<span class="tag tag-red">Importante</span>` : `<span class="tag tag-blue">Normal</span>`}
         </div>
-        <p style="margin:8px 0 4px;font-size:11.5px;color:var(--royal-dark);font-weight:700;">${a.tipoComunicacao||'Aviso'}${a.quando?' · '+new Date(a.quando).toLocaleString('pt-PT'):''}${a.local?' · '+a.local:''}</p><p style="margin:8px 0 12px 0; font-size:13.5px; color:var(--ink); line-height:1.6;">${a.mensagem}</p>${a.link?`<p><a href="${a.link}" target="_blank" rel="noopener">Abrir link associado</a></p>`:``}${a.mediaPath?`<button class="btn btn-outline" style="margin-right:8px" onclick="abrirMediaAviso('${a.id}')">Abrir anexo</button>`:``}<button class="btn btn-outline" style="margin-right:8px" onclick="partilharComunicacao('${a.id}')">Partilhar invite</button><button class="btn btn-outline" onclick="enviarComunicacaoEmail('${a.id}')">Enviar por email</button>
+        <p style="margin:8px 0 4px;font-size:11.5px;color:var(--royal-dark);font-weight:700;">${admsEsc(a.tipoComunicacao||'Aviso')}${a.quando?' · '+new Date(a.quando).toLocaleString('pt-PT'):''}${a.local?' · '+admsEsc(a.local):''}</p><p style="margin:8px 0 12px 0; font-size:13.5px; color:var(--ink); line-height:1.6;white-space:pre-wrap;">${admsEsc(a.mensagem)}</p>${admsUrlSegura(a.link)?`<p><a href="${admsEsc(admsUrlSegura(a.link))}" target="_blank" rel="noopener">Abrir link associado</a></p>`:``}${a.mediaPath?`<button class="btn btn-outline" style="margin-right:8px" onclick="abrirMediaAviso('${admsEsc(a.id)}')">Abrir anexo</button>`:``}<button class="btn btn-outline" style="margin-right:8px" onclick="partilharComunicacao('${admsEsc(a.id)}')">Partilhar invite</button><button class="btn btn-outline" onclick="enviarComunicacaoEmail('${admsEsc(a.id)}')">Enviar por email</button>
       </div>`).join('') : `<div class="card empty-state"><p>Sem avisos publicados no momento.</p></div>`}
   `;
 }
@@ -4942,8 +4945,9 @@ async function postAviso(){
   const local=document.getElementById('av-local')?.value.trim()||'';
   const publico = document.getElementById('av-publico').value; const link=document.getElementById('av-link')?.value.trim()||''; const media=document.getElementById('av-media')?.files?.[0]||null;
   if(!titulo || !mensagem){ showToast('Preencha o título e a mensagem do aviso.'); return; }
+  if(link && !admsUrlSegura(link)){showToast('O link deve começar por https:// ou http://');return;}
   const id='a'+Date.now(); let mediaPath='';
-  if(media){if(media.size>25*1024*1024){showToast('O anexo não pode exceder 25 MB.');return;} const pasta=publico==='Todos'?'geral':publico; const ext=(media.name.split('.').pop()||'bin').toLowerCase(); mediaPath=`${pasta}/avisos/${id}/${Date.now()}.${ext}`; const {error}=await admsSupabase.storage.from('comunicacoes-media').upload(mediaPath,media,{contentType:media.type,cacheControl:'3600'}); if(error){showToast('Não foi possível enviar o anexo.');return;}}
+  if(media){const permitidos=['image/jpeg','image/png','image/webp','video/mp4','audio/mpeg','audio/mp4','audio/ogg','application/pdf'];if(media.size>25*1024*1024){showToast('O anexo não pode exceder 25 MB.');return;}if(!permitidos.includes(media.type)){showToast('Tipo de ficheiro não permitido.');return;} const pasta=String(publico==='Todos'?'geral':publico).replace(/[^a-zA-Z0-9_-]/g,''); const ext=(media.name.split('.').pop()||'bin').toLowerCase().replace(/[^a-z0-9]/g,''); mediaPath=`${pasta}/avisos/${id}/${Date.now()}.${ext}`; const {error}=await admsSupabase.storage.from('comunicacoes-media').upload(mediaPath,media,{contentType:media.type,cacheControl:'3600'}); if(error){showToast('Não foi possível enviar o anexo.');return;}}
   const hoje = new Date().toISOString().split('T')[0];
   AVISOS.unshift({id, titulo, mensagem, autor:session.label, data:hoje, publico, prioridade,tipoComunicacao,quando,local,link,mediaPath});
   salvarEstado();
@@ -4982,7 +4986,7 @@ function renderTabelaAuditoria(){
 function exportarAuditoriaCSV(){
   if(!exigirPermissao('auditoria','exportar'))return;
   const linhas=[['Data/Hora','Utilizador','Perfil','Módulo','Ação','Detalhes'],...auditoriaFiltrada().map(l=>[l.quando,l.autor,l.perfil||'',l.tipo,l.acao,l.detalhes])];
-  const csv='\uFEFF'+linhas.map(row=>row.map(v=>`"${String(v??'').replace(/"/g,'""')}"`).join(';')).join('\n');
+  const csv='\uFEFF'+linhas.map(row=>row.map(v=>{let s=String(v??'');if(/^[=+\-@\t\r]/.test(s))s="'"+s;return `"${s.replace(/"/g,'""')}"`;}).join(';')).join('\n');
   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download=`auditoria-adms-${new Date().toISOString().slice(0,10)}.csv`;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
   logAction('auditoria','Registo de atividade exportado',`${linhas.length-1} registo(s) exportados.`);
 }
@@ -5382,17 +5386,16 @@ function closePasswordModal(){
   document.getElementById('pw-new').value = '';
   document.getElementById('pw-confirm').value = '';
 }
-function submitPasswordChange(){
+async function submitPasswordChange(){
   const nova = document.getElementById('pw-new').value.trim();
   const confirma = document.getElementById('pw-confirm').value.trim();
-  if(nova.length < 6){ showToast('A nova senha deve ter pelo menos 6 caracteres.'); return; }
+  if(nova.length < 10 || !/[a-z]/.test(nova) || !/[A-Z]/.test(nova) || !/\d/.test(nova)){ showToast('Use pelo menos 10 caracteres, com maiúscula, minúscula e número.'); return; }
   if(nova !== confirma){ showToast('As senhas não coincidem.'); return; }
-  const person = getSessionAuth();
-  person.pendingSenha = nova;
-  salvarEstado();
+  const {error}=await admsSupabase.auth.updateUser({password:nova});
+  if(error){showToast('Não foi possível alterar a palavra-passe. Tente novamente.');return;}
+  await logAction('acesso','Palavra-passe alterada','O utilizador alterou a própria palavra-passe.');
   closePasswordModal();
-  showToast('Pedido enviado. Aguarda validação de um administrador master.');
-  renderModule();
+  showToast('Palavra-passe alterada com segurança.');
 }
 
 /* ================= MOSTRAR/OCULTAR PALAVRA-PASSE ================= */
@@ -5751,7 +5754,7 @@ async function submitForcePassword(){
   const nova=document.getElementById('fp-new').value.trim();
   const confirma=document.getElementById('fp-confirm').value.trim();
   const err=document.getElementById('fp-error'); err.style.display='none';
-  if(nova.length<8){ err.textContent='A nova palavra-passe deve ter pelo menos 8 caracteres.'; err.style.display='block'; return; }
+  if(nova.length<10 || !/[a-z]/.test(nova) || !/[A-Z]/.test(nova) || !/\d/.test(nova)){ err.textContent='Use pelo menos 10 caracteres, com maiúscula, minúscula e número.'; err.style.display='block'; return; }
   if(nova!==confirma){ err.textContent='As palavras-passe não coincidem.'; err.style.display='block'; return; }
   const {error}=await admsSupabase.auth.updateUser({password:nova});
   if(error){ err.textContent='Não foi possível alterar a palavra-passe.'; err.style.display='block'; return; }
@@ -5806,14 +5809,8 @@ async function handleLogout(){
   if(admsAuditRealtimeChannel){ try{ await admsSupabase.removeChannel(admsAuditRealtimeChannel); }catch(e){} admsAuditRealtimeChannel=null; }
   await admsSupabase.auth.signOut();
   session=null; admsCloudProfile=null; pendingLoginKey=null; pendingLoginLeaderId=null; currentProfileRef=null;
-  try{ localStorage.removeItem(SESSAO_KEY); }catch(e){}
-  document.getElementById('app-screen').style.display='none';
-  document.getElementById('login-screen').style.display='flex';
-  document.getElementById('login-card').classList.remove('wide');
-  document.getElementById('step-credentials').style.display='block';
-  document.getElementById('step-rgpd').style.display='none';
-  document.getElementById('denied-box').style.display='none';
-  if(document.getElementById('login-pass')) document.getElementById('login-pass').value='';
+  try{ localStorage.removeItem(SESSAO_KEY);localStorage.removeItem(ESTADO_KEY); }catch(e){}
+  location.replace('/sistema?v=50');
 }
 
 admsSupabase?.auth.onAuthStateChange((event)=>{
@@ -5910,7 +5907,7 @@ async function renderGabinetePastoral(){
  const {data,error}=await admsSupabase.from('gabinete_pastoral').select('*').order('created_at',{ascending:false});
  if(error){el.innerHTML='<div class="card"><h2>Gabinete Pastoral</h2><p>Não foi possível carregar os pedidos.</p></div>';return}
  const form=pastor?'':`<div class="card gabinete-editavel"><h3>Solicitar reunião de gabinete com o Pastor Local</h3><p>Pedido confidencial.</p><div class="form-row"><div><label>Data</label><input id="gab-data" type="date"></div><div><label>Horário</label><input id="gab-hora" type="time"></div></div><label>Motivo</label><textarea id="gab-motivo"></textarea><label>Participantes</label><input id="gab-participantes"><div class="form-row"><div><label>Contacto</label><input id="gab-contacto"></div><div><label>Email</label><input id="gab-email" type="email"></div></div><button class="btn btn-red" onclick="enviarPedidoGabinete()">Enviar solicitação</button></div>`;
- const rows=(data||[]).map(x=>`<tr><td>${formatDate(x.data_solicitada)} ${String(x.horario_solicitado).slice(0,5)}</td><td>${x.motivo}</td><td>${x.participantes}</td><td>${x.status}</td><td>${pastor?`<button class="btn btn-outline" onclick="decidirGabinete('${x.id}','aprovar')">Aprovar</button> <button class="btn btn-outline" onclick="decidirGabinete('${x.id}','reagendar')">Reagendar</button> <button class="btn btn-outline" onclick="decidirGabinete('${x.id}','reprovar')">Reprovar</button>`:'—'}</td></tr>`).join('');
+ const rows=(data||[]).map(x=>`<tr><td>${formatDate(x.data_solicitada)} ${admsEsc(String(x.horario_solicitado).slice(0,5))}</td><td>${admsEsc(x.motivo)}</td><td>${admsEsc(x.participantes)}</td><td>${admsEsc(x.status)}</td><td>${pastor?`<button class="btn btn-outline" onclick="decidirGabinete('${admsEsc(x.id)}','aprovar')">Aprovar</button> <button class="btn btn-outline" onclick="decidirGabinete('${admsEsc(x.id)}','reagendar')">Reagendar</button> <button class="btn btn-outline" onclick="decidirGabinete('${admsEsc(x.id)}','reprovar')">Reprovar</button>`:'—'}</td></tr>`).join('');
  el.innerHTML=`<div class="topbar"><div><div class="breadcrumb">Cuidado Pastoral</div><h1>${pastor?'Gabinete Pastoral':'Reunião com o Pastor'}</h1></div></div>${ruleDivider()}${form}<div class="card"><table><thead><tr><th>Data</th><th>Motivo</th><th>Participantes</th><th>Estado</th><th>Ação</th></tr></thead><tbody>${rows||'<tr><td colspan="5">Nenhum pedido.</td></tr>'}</tbody></table></div>`;
 }
 async function enviarPedidoGabinete(){const v=id=>document.getElementById(id)?.value?.trim()||'';const {data:{user}}=await admsSupabase.auth.getUser();const row={solicitante_id:user.id,data_solicitada:v('gab-data'),horario_solicitado:v('gab-hora'),motivo:v('gab-motivo'),participantes:v('gab-participantes'),contacto:v('gab-contacto'),email:v('gab-email')};if(Object.values(row).some(x=>!x)){showToast('Preencha todos os campos.');return}const {error}=await admsSupabase.from('gabinete_pastoral').insert(row);if(error){showToast('Falha ao enviar.');return}showToast('Solicitação enviada.');renderGabinetePastoral()}
@@ -5919,7 +5916,7 @@ async function renderSolicitacoesAcesso(){
  const box=document.getElementById('solicitacoes-acesso-lista');if(!box||!admsSupabase)return;
  const {data,error}=await admsSupabase.from('solicitacoes_acesso').select('*').order('created_at',{ascending:false});
  if(error){box.textContent='Não foi possível carregar as solicitações.';return}
- box.innerHTML=(data||[]).map(x=>`<div style="padding:12px 0;border-bottom:1px solid var(--line)"><b>${x.nome_completo}</b> · ${x.email}<br><small>${x.contacto} · ${formatDate(x.data_nascimento)} · ${x.status}</small></div>`).join('')||'<p>Nenhuma solicitação.</p>';
+ box.innerHTML=(data||[]).map(x=>`<div style="padding:12px 0;border-bottom:1px solid var(--line)"><b>${admsEsc(x.nome_completo)}</b> · ${admsEsc(x.email)}<br><small>${admsEsc(x.contacto)} · ${formatDate(x.data_nascimento)} · ${admsEsc(x.status)}</small></div>`).join('')||'<p>Nenhuma solicitação.</p>';
 }
 
 </script>
@@ -5997,11 +5994,11 @@ admsSupabase?.auth.onAuthStateChange((event)=>{
 const CMS_TYPES={video:'Vídeo',galeria:'Fotografia',agenda:'Agenda',aviso:'Aviso',estudo:'Estudo',devocional:'Devocional',livro:'Livro'};
 function cmsTypeFromKey(key){if(key==='video_semana')return'video';if(key==='estudo_semana')return'estudo';if(key==='devocional')return'devocional';if(key==='biblioteca')return'livro';return Object.keys(CMS_TYPES).find(type=>key.startsWith(type+'_'))||''}
 function cmsSafeKey(key){return String(key).replace(/[^a-zA-Z0-9_-]/g,'')}
-function cmsEditorCard(x){const key=cmsSafeKey(x.chave),type=cmsTypeFromKey(key),preview=type==='galeria'&&x.url?`<img src="${admsEsc(x.url)}" alt="" style="width:110px;height:90px;object-fit:cover;border-radius:10px;margin-top:10px">`:'';return `<article class="card" style="margin-bottom:14px;border-left:4px solid ${x.ativo?'var(--ok)':'var(--gold)'}"><div style="display:flex;justify-content:space-between;gap:12px;align-items:start"><div><b>${admsEsc(CMS_TYPES[type])}</b><div style="font-size:11px;color:var(--ink-soft)">${admsEsc(key)}</div>${preview}</div><span class="tag ${x.ativo?'tag-green':'tag-gold'}">${x.ativo?'Publicado':'Oculto'}</span></div><div class="form-row" style="margin-top:12px"><div><label>Título / Dia</label><input id="cms-${key}-titulo" value="${admsEsc(x.titulo)}"></div><div><label>Subtítulo / Nome</label><input id="cms-${key}-subtitulo" value="${admsEsc(x.subtitulo)}"></div></div><label>Conteúdo / Horário / Descrição</label><textarea id="cms-${key}-conteudo" rows="2">${admsEsc(x.conteudo)}</textarea><div class="form-row"><div><label>Link externo</label><input id="cms-${key}-url" value="${admsEsc(x.url)}" placeholder="https://..."></div><div><label>Substituir ficheiro</label><input id="cms-${key}-file" type="file" accept="image/jpeg,image/png,image/webp,application/pdf"></div></div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button class="btn btn-primary" style="width:auto" onclick="cmsGuardar('${key}')">Guardar</button><button class="btn btn-outline" style="width:auto" onclick="cmsAlternar('${key}',${!x.ativo})">${x.ativo?'Ocultar':'Publicar'}</button><button class="btn btn-outline" style="width:auto;color:var(--red)" onclick="cmsRemover('${key}')">Remover</button></div></article>`}
+function cmsEditorCard(x){const key=cmsSafeKey(x.chave),type=cmsTypeFromKey(key),imagem=admsUrlSegura(x.url),preview=type==='galeria'&&imagem?`<img src="${admsEsc(imagem)}" alt="" style="width:110px;height:90px;object-fit:cover;border-radius:10px;margin-top:10px">`:'';return `<article class="card" style="margin-bottom:14px;border-left:4px solid ${x.ativo?'var(--ok)':'var(--gold)'}"><div style="display:flex;justify-content:space-between;gap:12px;align-items:start"><div><b>${admsEsc(CMS_TYPES[type])}</b><div style="font-size:11px;color:var(--ink-soft)">${admsEsc(key)}</div>${preview}</div><span class="tag ${x.ativo?'tag-green':'tag-gold'}">${x.ativo?'Publicado':'Oculto'}</span></div><div class="form-row" style="margin-top:12px"><div><label>Título / Dia</label><input id="cms-${key}-titulo" value="${admsEsc(x.titulo)}"></div><div><label>Subtítulo / Nome</label><input id="cms-${key}-subtitulo" value="${admsEsc(x.subtitulo)}"></div></div><label>Conteúdo / Horário / Descrição</label><textarea id="cms-${key}-conteudo" rows="2">${admsEsc(x.conteudo)}</textarea><div class="form-row"><div><label>Link externo</label><input id="cms-${key}-url" value="${admsEsc(x.url)}" placeholder="https://..."></div><div><label>Substituir ficheiro</label><input id="cms-${key}-file" type="file" accept="image/jpeg,image/png,image/webp,application/pdf"></div></div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button class="btn btn-primary" style="width:auto" onclick="cmsGuardar('${key}')">Guardar</button><button class="btn btn-outline" style="width:auto" onclick="cmsAlternar('${key}',${!x.ativo})">${x.ativo?'Ocultar':'Publicar'}</button><button class="btn btn-outline" style="width:auto;color:var(--red)" onclick="cmsRemover('${key}')">Remover</button></div></article>`}
 renderSitePublico=async function(){const el=document.getElementById('main-content');if(!permPode('site-publico')){el.innerHTML=viewLocked('Conteúdo do Site');return}const{data,error}=await admsSupabase.from('site_conteudos').select('*').order('updated_at',{ascending:false});if(error){el.innerHTML='<div class="card"><h2>Gestor do Site</h2><p>Não foi possível carregar os conteúdos.</p></div>';return}const items=(data||[]).filter(x=>cmsTypeFromKey(x.chave));el.innerHTML=`<div class="topbar"><div><div class="breadcrumb">Comunicação</div><h1>Gestor do Site Público</h1></div><a class="access-pill" href="/" target="_blank" rel="noopener">Abrir site público ↗</a></div>${ruleDivider()}<div class="hint-box" style="margin-bottom:16px">Adicione, edite, publique, oculte ou remova vídeos, fotografias, agenda, avisos, estudos, devocionais e livros.</div><article class="card" style="margin-bottom:20px;border:1px solid var(--gold)"><h3 style="margin-top:0">Adicionar conteúdo</h3><div class="form-row"><div><label>Tipo</label><select id="cms-new-type">${Object.entries(CMS_TYPES).map(([v,l])=>`<option value="${v}">${l}</option>`).join('')}</select></div><div><label>Título / Dia</label><input id="cms-new-titulo"></div></div><div class="form-row"><div><label>Subtítulo / Nome</label><input id="cms-new-subtitulo"></div><div><label>Link externo</label><input id="cms-new-url" placeholder="https://..."></div></div><label>Conteúdo / Horário / Descrição</label><textarea id="cms-new-conteudo" rows="3"></textarea><label>Fotografia ou PDF (opcional)</label><input id="cms-new-file" type="file" accept="image/jpeg,image/png,image/webp,application/pdf"><button class="btn btn-primary" style="width:auto;margin-top:14px" onclick="cmsCriar()">Adicionar e publicar</button></article><div id="cms-items">${items.map(cmsEditorCard).join('')||'<div class="card">Nenhum conteúdo editorial.</div>'}</div>`;aplicarPermissoesNaInterface()}
-async function cmsUpload(file,type){if(!file)return'';if(file.size>10*1024*1024)throw new Error('O ficheiro não pode ultrapassar 10 MB.');const ext=(file.name.split('.').pop()||'bin').toLowerCase().replace(/[^a-z0-9]/g,'');const path=`${type}/${Date.now()}-${crypto.randomUUID()}.${ext}`;const{error}=await admsSupabase.storage.from('site-media').upload(path,file,{cacheControl:'3600',upsert:false,contentType:file.type});if(error)throw error;return admsSupabase.storage.from('site-media').getPublicUrl(path).data.publicUrl}
-async function cmsCriar(){if(!exigirPermissao('site-publico','inserir'))return;const type=document.getElementById('cms-new-type').value,file=document.getElementById('cms-new-file').files[0];let url=document.getElementById('cms-new-url').value.trim();try{const media=await cmsUpload(file,type);if(media)url=media;const{data:{user}}=await admsSupabase.auth.getUser();const key=type==='video'?'video_semana':`${type}_${Date.now()}`;const row={chave:key,titulo:document.getElementById('cms-new-titulo').value.trim()||null,subtitulo:document.getElementById('cms-new-subtitulo').value.trim()||null,conteudo:document.getElementById('cms-new-conteudo').value.trim()||null,url:url||null,ativo:true,updated_by:user?.id||null,updated_at:new Date().toISOString()};const{error}=await admsSupabase.from('site_conteudos').upsert(row,{onConflict:'chave'});if(error)throw error;showToast('Conteúdo publicado.');renderSitePublico()}catch(error){console.error(error);showToast(error.message||'Não foi possível publicar.')}}
-async function cmsGuardar(key){if(!exigirPermissao('site-publico','editar'))return;const type=cmsTypeFromKey(key),get=s=>document.getElementById(`cms-${key}-${s}`),file=get('file').files[0];let url=get('url').value.trim();try{const media=await cmsUpload(file,type);if(media)url=media;const{data:{user}}=await admsSupabase.auth.getUser();const{error}=await admsSupabase.from('site_conteudos').update({titulo:get('titulo').value.trim()||null,subtitulo:get('subtitulo').value.trim()||null,conteudo:get('conteudo').value.trim()||null,url:url||null,updated_by:user?.id||null,updated_at:new Date().toISOString()}).eq('chave',key);if(error)throw error;showToast('Alterações guardadas.');renderSitePublico()}catch(error){console.error(error);showToast(error.message||'Não foi possível guardar.')}}
+async function cmsUpload(file,type){if(!file)return'';const permitidos={'image/jpeg':'jpg','image/png':'png','image/webp':'webp','application/pdf':'pdf'};if(file.size>10*1024*1024)throw new Error('O ficheiro não pode ultrapassar 10 MB.');if(!permitidos[file.type])throw new Error('Tipo de ficheiro não permitido.');const ext=permitidos[file.type],pasta=String(type).replace(/[^a-zA-Z0-9_-]/g,'');const path=`${pasta}/${Date.now()}-${crypto.randomUUID()}.${ext}`;const{error}=await admsSupabase.storage.from('site-media').upload(path,file,{cacheControl:'3600',upsert:false,contentType:file.type});if(error)throw error;return admsSupabase.storage.from('site-media').getPublicUrl(path).data.publicUrl}
+async function cmsCriar(){if(!exigirPermissao('site-publico','inserir'))return;const type=document.getElementById('cms-new-type').value,file=document.getElementById('cms-new-file').files[0];let url=document.getElementById('cms-new-url').value.trim();try{if(url&&!admsUrlSegura(url))throw new Error('O link deve começar por https:// ou http://');const media=await cmsUpload(file,type);if(media)url=media;const{data:{user}}=await admsSupabase.auth.getUser();const key=type==='video'?'video_semana':`${type}_${Date.now()}`;const row={chave:key,titulo:document.getElementById('cms-new-titulo').value.trim()||null,subtitulo:document.getElementById('cms-new-subtitulo').value.trim()||null,conteudo:document.getElementById('cms-new-conteudo').value.trim()||null,url:url||null,ativo:true,updated_by:user?.id||null,updated_at:new Date().toISOString()};const{error}=await admsSupabase.from('site_conteudos').upsert(row,{onConflict:'chave'});if(error)throw error;showToast('Conteúdo publicado.');renderSitePublico()}catch(error){console.error(error);showToast(error.message||'Não foi possível publicar.')}}
+async function cmsGuardar(key){if(!exigirPermissao('site-publico','editar'))return;const type=cmsTypeFromKey(key),get=s=>document.getElementById(`cms-${key}-${s}`),file=get('file').files[0];let url=get('url').value.trim();try{if(url&&!admsUrlSegura(url))throw new Error('O link deve começar por https:// ou http://');const media=await cmsUpload(file,type);if(media)url=media;const{data:{user}}=await admsSupabase.auth.getUser();const{error}=await admsSupabase.from('site_conteudos').update({titulo:get('titulo').value.trim()||null,subtitulo:get('subtitulo').value.trim()||null,conteudo:get('conteudo').value.trim()||null,url:url||null,updated_by:user?.id||null,updated_at:new Date().toISOString()}).eq('chave',key);if(error)throw error;showToast('Alterações guardadas.');renderSitePublico()}catch(error){console.error(error);showToast(error.message||'Não foi possível guardar.')}}
 async function cmsAlternar(key,ativo){if(!exigirPermissao('site-publico','editar'))return;const{error}=await admsSupabase.from('site_conteudos').update({ativo,updated_at:new Date().toISOString()}).eq('chave',key);if(error){showToast('Não foi possível alterar a publicação.');return}showToast(ativo?'Conteúdo publicado.':'Conteúdo ocultado.');renderSitePublico()}
 async function cmsRemover(key){if(!exigirPermissao('site-publico','arquivar'))return;if(!confirm('Remover definitivamente este conteúdo?'))return;const{data}=await admsSupabase.from('site_conteudos').select('url').eq('chave',key).maybeSingle();const{error}=await admsSupabase.from('site_conteudos').delete().eq('chave',key);if(error){showToast('Não foi possível remover.');return}const marker='/storage/v1/object/public/site-media/';if(data?.url?.includes(marker)){const path=decodeURIComponent(data.url.split(marker)[1]);await admsSupabase.storage.from('site-media').remove([path])}showToast('Conteúdo removido.');renderSitePublico()}
 document.getElementById('app-screen')?.addEventListener('click',event=>{
