@@ -2158,7 +2158,11 @@ function ruleDivider(){
 ========================================================= */
 function renderModule(){
   const el = document.getElementById('main-content');
-  if(currentModule==='home') return el.innerHTML=viewChurchHome();
+  if(currentModule==='home'){
+    el.innerHTML=viewChurchHome();
+    atualizarVideoPortal();
+    return;
+  }
   if(currentModule==='notificacoes'){el.innerHTML='<div class="card">A carregar notificações...</div>';renderNotificacoes();return;}
   if(currentModule==='gabinete'){renderGabinetePastoral();return;}
   if(currentModule==='meu-perfil') return el.innerHTML = viewMeuPerfil();
@@ -2457,6 +2461,34 @@ function alertasVencimentoHTML(){
 
 
 
+function youtubeVideoId(url){
+ try{
+  const u=new URL(String(url||'').trim());
+  const host=u.hostname.replace(/^www\./,'').toLowerCase();
+  if(host==='youtu.be') return (u.pathname.split('/').filter(Boolean)[0]||'').replace(/[^a-zA-Z0-9_-]/g,'');
+  if(!['youtube.com','m.youtube.com','youtube-nocookie.com'].includes(host)) return '';
+  const path=u.pathname.split('/').filter(Boolean);
+  const candidate=u.searchParams.get('v')||(['live','embed','shorts'].includes(path[0])?path[1]:'');
+  return String(candidate||'').replace(/[^a-zA-Z0-9_-]/g,'');
+ }catch(e){return ''}
+}
+async function atualizarVideoPortal(){
+ const frame=document.getElementById('portal-weekly-video'),link=document.getElementById('portal-weekly-video-link');
+ if(!frame||!link)return;
+ let url='https://www.youtube.com/live/qfimOJI9hUA',titulo='Vídeo da Semana — ADMS Braga';
+ try{
+  const{data}=await admsSupabase.from('site_conteudos').select('titulo,url,ativo').eq('chave','video_semana').maybeSingle();
+  if(data?.ativo!==false&&data?.url){url=data.url;titulo=data.titulo||titulo}
+ }catch(e){}
+ const id=youtubeVideoId(url);
+ if(!id){frame.hidden=true;link.href='https://www.youtube.com/@AdmsBraga';link.textContent='Visitar o canal no YouTube ↗';return}
+ frame.hidden=false;
+ frame.title=titulo;
+ frame.src=`https://www.youtube-nocookie.com/embed/${encodeURIComponent(id)}?rel=0`;
+ link.href=`https://www.youtube.com/watch?v=${encodeURIComponent(id)}`;
+ link.textContent='Abrir no YouTube ↗';
+}
+
 function viewChurchHome(){
  const nome=((session&&session.label)||'').trim().split(/\s+/)[0]||'Irmão(ã)';
  const hoje=new Date(), dd=String(hoje.getDate()).padStart(2,'0'), mm=String(hoje.getMonth()+1).padStart(2,'0');
@@ -2484,8 +2516,8 @@ function viewChurchHome(){
  <div class="portal-home-grid">
   <article class="card portal-panel portal-video">
    <div class="portal-video-head"><div><div class="panel-kicker">Conteúdo em destaque</div><h2>Vídeo da Semana</h2></div><span class="tag tag-gold">ADMS Braga</span></div>
-   <div class="portal-video-frame"><iframe loading="lazy" src="https://www.youtube-nocookie.com/embed/qfimOJI9hUA" title="Vídeo da Semana — ADMS Braga" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>
-   <div class="portal-video-foot"><span>Assista à mensagem e partilhe a Palavra.</span><a href="https://www.youtube.com/live/qfimOJI9hUA" target="_blank" rel="noopener">Abrir no YouTube ↗</a></div>
+   <div class="portal-video-frame"><iframe id="portal-weekly-video" loading="lazy" src="https://www.youtube-nocookie.com/embed/qfimOJI9hUA?rel=0" title="Vídeo da Semana — ADMS Braga" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div>
+   <div class="portal-video-foot"><span>Assista à mensagem e partilhe a Palavra.</span><a id="portal-weekly-video-link" href="https://www.youtube.com/watch?v=qfimOJI9hUA" target="_blank" rel="noopener noreferrer">Abrir no YouTube ↗</a></div>
   </article>
   <article class="card portal-panel portal-devotional">
    <div class="panel-kicker">Para hoje</div><h2>Devocional Diário</h2><div class="verse-mark">“</div>
@@ -5810,7 +5842,7 @@ async function handleLogout(){
   await admsSupabase.auth.signOut();
   session=null; admsCloudProfile=null; pendingLoginKey=null; pendingLoginLeaderId=null; currentProfileRef=null;
   try{ localStorage.removeItem(SESSAO_KEY);localStorage.removeItem(ESTADO_KEY); }catch(e){}
-  location.replace('/sistema?v=51');
+  location.replace('/sistema?v=52');
 }
 
 admsSupabase?.auth.onAuthStateChange((event)=>{
