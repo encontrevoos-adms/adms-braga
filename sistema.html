@@ -3375,7 +3375,12 @@ function viewFinanceiro(){
         </div>
         <div><label>Valor (€)</label><input id="fin-valor" type="number" step="0.01" placeholder="0,00"></div>
       </div>
-      <div><label>Categoria do lançamento</label><select id="fin-categoria"><option>Dízimos</option><option>Ofertas</option><option>Voto</option><option>Doação</option><option>Outros</option></select></div>
+      <div class="form-row">
+        <div><label>Fornecedor / Pagador (${fornecedoresDisponiveis().length} cadastrados)</label>
+          <select id="fin-fornecedor"><option value="">Selecione o fornecedor ou pagador</option><option value="Não identificado / Diversos">Não identificado / Diversos</option>${opcoesFornecedores()}</select>
+        </div>
+        <div><label>Categoria do lançamento</label><select id="fin-categoria"><option>Dízimos</option><option>Ofertas</option><option>Voto</option><option>Doação</option><option>Outros</option></select></div>
+      </div>
       <div><label>Descrição</label><input id="fin-desc" placeholder="Ex: Dízimos e ofertas — culto domingo"></div>
 
       <div id="fin-pessoa-wrap" style="display:none; margin-top:14px;">
@@ -3415,12 +3420,13 @@ function renderLancamentosTable(){
   const lista = FINANCEIRO.lancamentos.filter(l=>filtro==='todos'||l.departamento===filtro);
   document.getElementById('fin-tabela').innerHTML = lista.length ? `
       <table>
-        <thead><tr><th>Data</th><th>Departamento</th><th>Categoria</th><th>Descrição</th><th>Tipo</th><th>Valor</th><th>Registado por</th><th></th></tr></thead>
+        <thead><tr><th>Data</th><th>Departamento</th><th>Fornecedor / Pagador</th><th>Categoria</th><th>Descrição</th><th>Tipo</th><th>Valor</th><th>Registado por</th><th></th></tr></thead>
         <tbody>
           ${lista.map(l=>`
             <tr>
               <td>${l.data}</td>
               <td><span class="tag tag-blue">${entityDeptLabel(l.departamento)}</span></td>
+              <td style="font-weight:600;">${admsEsc(l.fornecedor||l.beneficiario||'—')}</td>
               <td><span class="tag tag-gold">${admsEsc(categoriaLancamento(l))}</span></td>
               <td>${l.desc}${l.paraPessoa?` <span style="font-size:11px; color:var(--ink-soft);">→ ${l.beneficiario}</span>`:''}</td>
               <td><span class="tag ${l.tipo==='Entrada'?'tag-blue':'tag-red'}">${l.tipo}</span></td>
@@ -3441,10 +3447,11 @@ async function addLancamento(){
   const data = document.getElementById('fin-data').value;
   const tipo = document.getElementById('fin-tipo').value;
   const departamento = document.getElementById('fin-dept').value;
+  const fornecedor = document.getElementById('fin-fornecedor').value.trim();
   const categoria = document.getElementById('fin-categoria').value;
   const desc = document.getElementById('fin-desc').value.trim();
   const valor = parseFloat(document.getElementById('fin-valor').value);
-  if(!data || !desc || !valor){ showToast('Preencha data, descrição e valor.'); return; }
+  if(!data || !fornecedor || !desc || !valor){ showToast('Preencha data, fornecedor/pagador, descrição e valor.'); return; }
 
   const paraPessoa = tipo==='Saída' && document.getElementById('fin-para-pessoa').value==='sim';
   const beneficiario = paraPessoa ? document.getElementById('fin-beneficiario').value.trim() : '';
@@ -3453,7 +3460,7 @@ async function addLancamento(){
   const [y,m,d] = data.split('-');
   const id = 'fin'+Date.now();
   const dataFmt = `${d}/${m}/${y}`;
-  const lancamento = {id, data:dataFmt, desc, tipo, categoria, departamento, valor: formatEuro(valor), criadoPor: session.label, corrigido:false, paraPessoa, beneficiario, reciboId:null};
+  const lancamento = {id, data:dataFmt, desc, tipo, categoria, departamento, fornecedor, valor: formatEuro(valor), criadoPor: session.label, corrigido:false, paraPessoa, beneficiario, reciboId:null};
   FINANCEIRO.lancamentos.unshift(lancamento);
 
   if(paraPessoa){
@@ -3470,7 +3477,7 @@ async function addLancamento(){
     renderModule();
     return;
   }
-  await logAction('financeiro', 'Lançamento criado', `${tipo} · ${categoria} · ${formatEuro(valor)} em ${entityDeptLabel(departamento)} — "${desc}" (${dataFmt})`);
+  await logAction('financeiro', 'Lançamento criado', `${tipo} · ${categoria} · ${fornecedor} · ${formatEuro(valor)} em ${entityDeptLabel(departamento)} — "${desc}" (${dataFmt})`);
   if(lancamento.reciboId) await logAction('financeiro', 'Recibo gerado', `Recibo ${lancamento.reciboId} — ${formatEuro(valor)} para ${beneficiario} (${entityDeptLabel(departamento)})`);
   showToast(paraPessoa ? 'Lançamento e recibo guardados na nuvem.' : 'Lançamento guardado na nuvem.');
   renderModule();
@@ -3594,7 +3601,7 @@ async function pagarConta(id){
   c.dataPagamento = hoje.toISOString().split('T')[0];
   const lancId = 'fin'+Date.now();
   c.lancamentoId = lancId;
-  FINANCEIRO.lancamentos.unshift({id:lancId, data:dataFmt, desc:'Pagamento — ' + c.desc + ' (' + c.fornecedor + ')', tipo:'Saída', categoria:'Outros', departamento:c.departamento, valor:formatEuro(c.valor), criadoPor:session.label, corrigido:false, paraPessoa:false, beneficiario:'', reciboId:null});
+  FINANCEIRO.lancamentos.unshift({id:lancId, data:dataFmt, desc:'Pagamento — ' + c.desc + ' (' + c.fornecedor + ')', tipo:'Saída', categoria:'Outros', departamento:c.departamento, fornecedor:c.fornecedor, valor:formatEuro(c.valor), criadoPor:session.label, corrigido:false, paraPessoa:false, beneficiario:'', reciboId:null});
   const guardado=await salvarEstado(['contas','financeiro']);
   if(!guardado?.ok){c.status='Pendente';c.dataPagamento=null;c.lancamentoId=null;FINANCEIRO.lancamentos=FINANCEIRO.lancamentos.filter(l=>l.id!==lancId);showToast('Não foi possível guardar o pagamento.');return;}
   await logAction('financeiro', 'Conta a pagar liquidada', `${c.fornecedor} — ${formatEuro(c.valor)} (${entityDeptLabel(c.departamento)}). Lançamento de saída gerado automaticamente.`);
@@ -3715,7 +3722,7 @@ async function receberConta(id){
   c.dataPagamento = hoje.toISOString().split('T')[0];
   const lancId = 'fin'+Date.now();
   c.lancamentoId = lancId;
-  FINANCEIRO.lancamentos.unshift({id:lancId, data:dataFmt, desc:'Recebimento — ' + c.desc + ' (' + c.fornecedor + ')', tipo:'Entrada', categoria:'Outros', departamento:c.departamento, valor:formatEuro(c.valor), criadoPor:session.label, corrigido:false, paraPessoa:false, beneficiario:'', reciboId:null});
+  FINANCEIRO.lancamentos.unshift({id:lancId, data:dataFmt, desc:'Recebimento — ' + c.desc + ' (' + c.fornecedor + ')', tipo:'Entrada', categoria:'Outros', departamento:c.departamento, fornecedor:c.fornecedor, valor:formatEuro(c.valor), criadoPor:session.label, corrigido:false, paraPessoa:false, beneficiario:'', reciboId:null});
   const guardado=await salvarEstado(['contas','financeiro']);
   if(!guardado?.ok){c.status='Pendente';c.dataPagamento=null;c.lancamentoId=null;FINANCEIRO.lancamentos=FINANCEIRO.lancamentos.filter(l=>l.id!==lancId);showToast('Não foi possível guardar o recebimento.');return;}
   await logAction('financeiro', 'Conta a receber confirmada', `${c.fornecedor} — ${formatEuro(c.valor)} (${entityDeptLabel(c.departamento)}). Lançamento de entrada gerado automaticamente.`);
