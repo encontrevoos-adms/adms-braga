@@ -498,7 +498,7 @@ async function admsCarregarMembrosCloud(){
   if(window.PESSOAS){
     PESSOAS.membros=(data||[]).map(membroDaNuvem);
     if(typeof buildLoginOptions==='function') buildLoginOptions();
-    if(typeof renderModule==='function' && session && currentModule!=='relatorios') renderModule();
+    if(typeof renderModule==='function' && session && currentModule!=='relatorios' && admsPodeAtualizarInterfaceRealtime()) renderModule();
   }
   return {ok:true,count:(data||[]).length};
 }
@@ -526,6 +526,12 @@ const ADMS_CLOUD_MODULE_KEYS = ['pessoas','financeiro','contas','recibos','forne
 let admsStateRealtimeChannel=null;
 let admsAplicandoEstadoCloud=false;
 let admsCloudSaveQueue=Promise.resolve({ok:true});
+
+function admsPodeAtualizarInterfaceRealtime(){
+  const ativo=document.activeElement;
+  if(!ativo || !document.getElementById('main-content')?.contains(ativo)) return true;
+  return !['INPUT','SELECT','TEXTAREA'].includes(ativo.tagName);
+}
 
 function admsEstadoCloudSnapshot(){
   return {
@@ -617,7 +623,7 @@ async function admsIniciarEstadoRealtime(){
         admsAplicandoEstadoCloud=true;
         try{ admsAplicarModuloCloud(payload.new.module_key,payload.new.payload); }
         finally{ admsAplicandoEstadoCloud=false; }
-        if(typeof renderModule==='function' && session && currentModule!=='relatorios') renderModule();
+        if(typeof renderModule==='function' && session && currentModule!=='relatorios' && admsPodeAtualizarInterfaceRealtime()) renderModule();
       }
     }).subscribe();
 }
@@ -1471,7 +1477,7 @@ function salvarEstado(modulosCloud=null){
       DEPARTMENTS_MEMBROS: DEPARTMENTS.map(d=>({id:d.id, membros:d.membros}))
     };
     localStorage.setItem(ESTADO_KEY, JSON.stringify(estado));
-    if(session?.cloud && !admsAplicandoEstadoCloud){
+    if(modulosCloud!==false && session?.cloud && !admsAplicandoEstadoCloud){
       return admsEnfileirarEstadoCloud(modulosCloud);
     }
     return Promise.resolve({ok:true,localOnly:true});
@@ -5830,9 +5836,9 @@ function admsGarantirFormularioLogin(){
 admsGarantirFormularioLogin();
 setTimeout(admsGarantirFormularioLogin,500);
 setTimeout(admsGarantirFormularioLogin,3000);
-setInterval(salvarEstado, 4000);
-window.addEventListener('beforeunload', salvarEstado);
-window.addEventListener('pagehide', salvarEstado);
+setInterval(()=>salvarEstado(false), 4000);
+window.addEventListener('beforeunload', ()=>salvarEstado(false));
+window.addEventListener('pagehide', ()=>salvarEstado(false));
 
 const paramsUrl = new URLSearchParams(window.location.search);
 if(paramsUrl.get('form') === 'cadastro'){
