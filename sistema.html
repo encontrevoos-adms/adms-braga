@@ -498,7 +498,7 @@ async function admsCarregarMembrosCloud(){
   if(window.PESSOAS){
     PESSOAS.membros=(data||[]).map(membroDaNuvem);
     if(typeof buildLoginOptions==='function') buildLoginOptions();
-    if(typeof renderModule==='function' && session) renderModule();
+    if(typeof renderModule==='function' && session && currentModule!=='relatorios') renderModule();
   }
   return {ok:true,count:(data||[]).length};
 }
@@ -522,7 +522,7 @@ async function admsIniciarRealtime(){
 }
 
 // Fase 9 — estado multiutilizador centralizado no Supabase
-const ADMS_CLOUD_MODULE_KEYS = ['pessoas','financeiro','contas','recibos','escalas','avisos','patrimonio','orcamentos','celulas','kids','ebd','eventos'];
+const ADMS_CLOUD_MODULE_KEYS = ['pessoas','financeiro','contas','recibos','fornecedores','escalas','avisos','patrimonio','orcamentos','celulas','kids','ebd','eventos'];
 let admsStateRealtimeChannel=null;
 let admsAplicandoEstadoCloud=false;
 let admsCloudSaveQueue=Promise.resolve({ok:true});
@@ -533,6 +533,7 @@ function admsEstadoCloudSnapshot(){
     financeiro:{lancamentos:FINANCEIRO?.lancamentos||[]},
     contas:{pagar:CONTAS_PAGAR||[], receber:CONTAS_RECEBER||[]},
     recibos:{itens:RECIBOS||[]},
+    fornecedores:{manuais:FORNECEDORES_MANUAIS||[]},
     escalas:{itens:ESCALAS||{}},
     avisos:{itens:AVISOS||[]},
     patrimonio:{itens:PATRIMONIO||[]},
@@ -551,6 +552,7 @@ function admsAplicarModuloCloud(key,p){
     case 'financeiro': FINANCEIRO.lancamentos=p.lancamentos||[]; break;
     case 'contas': CONTAS_PAGAR=p.pagar||[]; CONTAS_RECEBER=p.receber||[]; break;
     case 'recibos': RECIBOS=p.itens||[]; break;
+    case 'fornecedores': FORNECEDORES_MANUAIS=p.manuais||[]; break;
     case 'escalas': ESCALAS=p.itens||{}; break;
     case 'avisos': AVISOS=p.itens||[]; break;
     case 'patrimonio': PATRIMONIO.length=0; PATRIMONIO.push(...(p.itens||[])); break;
@@ -615,7 +617,7 @@ async function admsIniciarEstadoRealtime(){
         admsAplicandoEstadoCloud=true;
         try{ admsAplicarModuloCloud(payload.new.module_key,payload.new.payload); }
         finally{ admsAplicandoEstadoCloud=false; }
-        if(typeof renderModule==='function' && session) renderModule();
+        if(typeof renderModule==='function' && session && currentModule!=='relatorios') renderModule();
       }
     }).subscribe();
 }
@@ -1357,6 +1359,48 @@ let CONTAS_PAGAR = [];
 // Contas a Receber — valores previstos/esperados, lançados por departamento/centro de custo
 let CONTAS_RECEBER = [];
 
+const FORNECEDORES_BASE = [
+  'Goldenergy','NÓS','Vodafone','Iberdrola','Pr Adonias Alves da Silva','Pra Alecsandra Corsini','AGERE',
+  'ADMS Porto','ADMS Odivelas','ADMS Bragança','ADMS Felgueiras','Pingo Doce','Continente','Mercadona',
+  'Recheio','Action','Froiz','Lidl','Rádio Popular','Homa','IKEA','CASA','Happy China','AliExpress','Shein',
+  'Thomann','José Carlos Garcia Rodriguez (Arrendamento)'
+];
+let FORNECEDORES_MANUAIS = [];
+
+function fornecedoresDisponiveis(){
+  const dizimistas=PESSOAS.membros.filter(m=>m.dizimista&&m.nome).map(m=>m.nome.trim());
+  const vistos=new Set();
+  return [...FORNECEDORES_BASE,...FORNECEDORES_MANUAIS,...dizimistas]
+    .filter(nome=>{const chave=String(nome||'').toLocaleLowerCase('pt-PT');if(!chave||vistos.has(chave))return false;vistos.add(chave);return true;})
+    .sort((a,b)=>a.localeCompare(b,'pt-PT'));
+}
+
+function opcoesFornecedores(selecionado=''){
+  return fornecedoresDisponiveis().map(nome=>`<option value="${admsEsc(nome)}" ${nome===selecionado?'selected':''}>${admsEsc(nome)}</option>`).join('');
+}
+
+function blocoCadastroFornecedor(){
+  return `<div class="card" style="margin-top:16px;">
+    <div class="section-title" style="margin:0 0 12px;"><h2 style="font-size:20px;">Cadastro de fornecedores e pagadores</h2></div>
+    <div class="form-row"><div><label>Novo fornecedor / pagador</label><input id="novo-fornecedor" maxlength="120" placeholder="Nome da empresa ou pessoa"></div><div style="display:flex;align-items:flex-end;"><button class="btn btn-outline" style="width:auto;" onclick="cadastrarFornecedor()">Cadastrar fornecedor</button></div></div>
+    <p style="font-size:12px;color:var(--ink-soft);margin:10px 0 0;">${fornecedoresDisponiveis().length} fornecedor(es) disponível(is). Os membros marcados como dizimistas são incluídos automaticamente.</p>
+  </div>`;
+}
+
+async function cadastrarFornecedor(){
+  if(!exigirPermissao('financeiro','inserir'))return;
+  const input=document.getElementById('novo-fornecedor');
+  const nome=input?.value.trim()||'';
+  if(nome.length<2){showToast('Indique o nome do fornecedor.');return;}
+  if(fornecedoresDisponiveis().some(item=>item.localeCompare(nome,'pt-PT',{sensitivity:'base'})===0)){showToast('Este fornecedor já está cadastrado.');return;}
+  FORNECEDORES_MANUAIS.push(nome);
+  const guardado=await salvarEstado(['fornecedores']);
+  if(!guardado?.ok){FORNECEDORES_MANUAIS=FORNECEDORES_MANUAIS.filter(item=>item!==nome);showToast('Não foi possível guardar o fornecedor.');return;}
+  await logAction('financeiro','Fornecedor cadastrado',nome);
+  showToast('Fornecedor cadastrado com sucesso.');
+  renderModule();
+}
+
 // Orçamento anual por departamento/centro de custo — {deptId: {ano: valorPrevisto}}
 let ORCAMENTOS = {};
 
@@ -1384,7 +1428,7 @@ function salvarEstado(modulosCloud=null){
     const estado = {
       v:1, guardadoEm: new Date().toISOString(),
       MASTERS, LEADERS, AUTH, ESCALAS, AVISOS, AUDIT_LOG,
-      PATRIMONIO, PESSOAS, FINANCEIRO, RECIBOS, CONTAS_PAGAR, CONTAS_RECEBER, ORCAMENTOS, CELULAS, KIDS_CRIANCAS, KIDS_CHECKINS, EBD_TURMAS, EVENTOS,
+      PATRIMONIO, PESSOAS, FINANCEIRO, RECIBOS, CONTAS_PAGAR, CONTAS_RECEBER, FORNECEDORES_MANUAIS, ORCAMENTOS, CELULAS, KIDS_CRIANCAS, KIDS_CHECKINS, EBD_TURMAS, EVENTOS,
       DEPARTMENTS_MEMBROS: DEPARTMENTS.map(d=>({id:d.id, membros:d.membros}))
     };
     localStorage.setItem(ESTADO_KEY, JSON.stringify(estado));
@@ -1422,6 +1466,7 @@ function aplicarEstado(estado){
   if(estado.RECIBOS) RECIBOS = estado.RECIBOS;
   if(estado.CONTAS_PAGAR) CONTAS_PAGAR = estado.CONTAS_PAGAR;
   if(estado.CONTAS_RECEBER) CONTAS_RECEBER = estado.CONTAS_RECEBER;
+  if(estado.FORNECEDORES_MANUAIS) FORNECEDORES_MANUAIS = estado.FORNECEDORES_MANUAIS;
   if(estado.ORCAMENTOS) ORCAMENTOS = estado.ORCAMENTOS;
   if(estado.CELULAS) CELULAS = estado.CELULAS;
   if(estado.KIDS_CRIANCAS) KIDS_CRIANCAS = estado.KIDS_CRIANCAS;
@@ -1458,7 +1503,7 @@ function exportarTudo(){
   const estado = {
     v:1, guardadoEm: new Date().toISOString(),
     MASTERS, LEADERS, AUTH, ESCALAS, AVISOS, AUDIT_LOG,
-    PATRIMONIO, PESSOAS, FINANCEIRO, RECIBOS, CONTAS_PAGAR, CONTAS_RECEBER, ORCAMENTOS, CELULAS, KIDS_CRIANCAS, KIDS_CHECKINS, EBD_TURMAS, EVENTOS,
+    PATRIMONIO, PESSOAS, FINANCEIRO, RECIBOS, CONTAS_PAGAR, CONTAS_RECEBER, FORNECEDORES_MANUAIS, ORCAMENTOS, CELULAS, KIDS_CRIANCAS, KIDS_CHECKINS, EBD_TURMAS, EVENTOS,
     DEPARTMENTS_MEMBROS: DEPARTMENTS.map(d=>({id:d.id, membros:d.membros}))
   };
   const blob = new Blob([JSON.stringify(estado, null, 2)], {type:'application/json'});
@@ -3142,6 +3187,15 @@ async function imprimirFichaPessoa(tipo,index){
 }
 function parseValorEuro(v){ return parseFloat(String(v).replace(/[€\s.]/g,'').replace(',', '.')) || 0; }
 function formatEuro(n){ return '€ ' + n.toLocaleString('pt-PT', {minimumFractionDigits:2, maximumFractionDigits:2}); }
+function categoriaLancamento(l){
+  if(l?.categoria)return l.categoria;
+  const texto=String(l?.desc||'').toLocaleLowerCase('pt-PT');
+  if(texto.includes('dízim')||texto.includes('dizim'))return 'Dízimos';
+  if(texto.includes('oferta'))return 'Ofertas';
+  if(texto.includes('voto'))return 'Voto';
+  if(texto.includes('doaç')||texto.includes('doac'))return 'Doação';
+  return 'Outros';
+}
 function emailValido(v){ return !v || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
 function telemovelValido(v){ return !v || /^[0-9+\s()-]{6,20}$/.test(v); }
 
@@ -3193,6 +3247,7 @@ function viewFinanceiro(){
         </div>
         <div><label>Valor (€)</label><input id="fin-valor" type="number" step="0.01" placeholder="0,00"></div>
       </div>
+      <div><label>Categoria do lançamento</label><select id="fin-categoria"><option>Dízimos</option><option>Ofertas</option><option>Voto</option><option>Doação</option><option>Outros</option></select></div>
       <div><label>Descrição</label><input id="fin-desc" placeholder="Ex: Dízimos e ofertas — culto domingo"></div>
 
       <div id="fin-pessoa-wrap" style="display:none; margin-top:14px;">
@@ -3232,12 +3287,13 @@ function renderLancamentosTable(){
   const lista = FINANCEIRO.lancamentos.filter(l=>filtro==='todos'||l.departamento===filtro);
   document.getElementById('fin-tabela').innerHTML = lista.length ? `
       <table>
-        <thead><tr><th>Data</th><th>Departamento</th><th>Descrição</th><th>Tipo</th><th>Valor</th><th>Registado por</th><th></th></tr></thead>
+        <thead><tr><th>Data</th><th>Departamento</th><th>Categoria</th><th>Descrição</th><th>Tipo</th><th>Valor</th><th>Registado por</th><th></th></tr></thead>
         <tbody>
           ${lista.map(l=>`
             <tr>
               <td>${l.data}</td>
               <td><span class="tag tag-blue">${entityDeptLabel(l.departamento)}</span></td>
+              <td><span class="tag tag-gold">${admsEsc(categoriaLancamento(l))}</span></td>
               <td>${l.desc}${l.paraPessoa?` <span style="font-size:11px; color:var(--ink-soft);">→ ${l.beneficiario}</span>`:''}</td>
               <td><span class="tag ${l.tipo==='Entrada'?'tag-blue':'tag-red'}">${l.tipo}</span></td>
               <td class="mono" style="font-weight:700;">${l.valor}</td>
@@ -3257,6 +3313,7 @@ async function addLancamento(){
   const data = document.getElementById('fin-data').value;
   const tipo = document.getElementById('fin-tipo').value;
   const departamento = document.getElementById('fin-dept').value;
+  const categoria = document.getElementById('fin-categoria').value;
   const desc = document.getElementById('fin-desc').value.trim();
   const valor = parseFloat(document.getElementById('fin-valor').value);
   if(!data || !desc || !valor){ showToast('Preencha data, descrição e valor.'); return; }
@@ -3268,7 +3325,7 @@ async function addLancamento(){
   const [y,m,d] = data.split('-');
   const id = 'fin'+Date.now();
   const dataFmt = `${d}/${m}/${y}`;
-  const lancamento = {id, data:dataFmt, desc, tipo, departamento, valor: formatEuro(valor), criadoPor: session.label, corrigido:false, paraPessoa, beneficiario, reciboId:null};
+  const lancamento = {id, data:dataFmt, desc, tipo, categoria, departamento, valor: formatEuro(valor), criadoPor: session.label, corrigido:false, paraPessoa, beneficiario, reciboId:null};
   FINANCEIRO.lancamentos.unshift(lancamento);
 
   if(paraPessoa){
@@ -3280,12 +3337,12 @@ async function addLancamento(){
   if(!guardado?.ok){
     FINANCEIRO.lancamentos=FINANCEIRO.lancamentos.filter(item=>item.id!==id);
     if(lancamento.reciboId) RECIBOS=RECIBOS.filter(item=>item.id!==lancamento.reciboId);
-    try{ localStorage.setItem(ESTADO_KEY,JSON.stringify({v:1,guardadoEm:new Date().toISOString(),MASTERS,LEADERS,AUTH,ESCALAS,AVISOS,AUDIT_LOG,PATRIMONIO,PESSOAS,FINANCEIRO,RECIBOS,CONTAS_PAGAR,CONTAS_RECEBER,ORCAMENTOS,CELULAS,KIDS_CRIANCAS,KIDS_CHECKINS,EBD_TURMAS,EVENTOS,DEPARTMENTS_MEMBROS:DEPARTMENTS.map(d=>({id:d.id,membros:d.membros}))})) }catch(e){}
+    try{ localStorage.setItem(ESTADO_KEY,JSON.stringify({v:1,guardadoEm:new Date().toISOString(),MASTERS,LEADERS,AUTH,ESCALAS,AVISOS,AUDIT_LOG,PATRIMONIO,PESSOAS,FINANCEIRO,RECIBOS,CONTAS_PAGAR,CONTAS_RECEBER,FORNECEDORES_MANUAIS,ORCAMENTOS,CELULAS,KIDS_CRIANCAS,KIDS_CHECKINS,EBD_TURMAS,EVENTOS,DEPARTMENTS_MEMBROS:DEPARTMENTS.map(d=>({id:d.id,membros:d.membros}))})) }catch(e){}
     showToast('Não foi possível gravar o lançamento na nuvem. Tente novamente.');
     renderModule();
     return;
   }
-  await logAction('financeiro', 'Lançamento criado', `${tipo} de ${formatEuro(valor)} em ${entityDeptLabel(departamento)} — "${desc}" (${dataFmt})`);
+  await logAction('financeiro', 'Lançamento criado', `${tipo} · ${categoria} · ${formatEuro(valor)} em ${entityDeptLabel(departamento)} — "${desc}" (${dataFmt})`);
   if(lancamento.reciboId) await logAction('financeiro', 'Recibo gerado', `Recibo ${lancamento.reciboId} — ${formatEuro(valor)} para ${beneficiario} (${entityDeptLabel(departamento)})`);
   showToast(paraPessoa ? 'Lançamento e recibo guardados na nuvem.' : 'Lançamento guardado na nuvem.');
   renderModule();
@@ -3310,7 +3367,7 @@ function viewContasPagar(){
     <div class="section-title"><h2>Registar nova conta a pagar</h2></div>
     <div class="card">
       <div class="form-row">
-        <div><label>Fornecedor / Beneficiário</label><input id="cp-fornecedor" placeholder="Ex: EDP, Fornecedor de som, Nome da pessoa"></div>
+        <div><label>Fornecedor / Beneficiário</label><select id="cp-fornecedor"><option value="">Selecione o fornecedor</option>${opcoesFornecedores()}</select></div>
         <div><label>Departamento / Centro de custo</label>
           <select id="cp-dept"><option value="geral">Geral / Sede</option>${deptsFin.map(d=>`<option value="${d.id}">${d.nome}</option>`).join('')}</select>
         </div>
@@ -3322,6 +3379,7 @@ function viewContasPagar(){
       <div><label>Data de vencimento</label><input id="cp-vencimento" type="date"></div>
       <button class="btn btn-primary" style="width:auto; margin-top:14px;" onclick="addContaPagar()">Registar conta a pagar</button>
     </div>
+    ${blocoCadastroFornecedor()}
 
     <div class="section-title"><h2>Contas registadas</h2></div>
     <div class="card">
@@ -3382,7 +3440,7 @@ function renderContasPagarTable(){
       </tbody>
     </table>` : `<div class="empty-state"><p>Sem contas a pagar para este filtro.</p></div>`;
 }
-function addContaPagar(){
+async function addContaPagar(){
   if(!exigirPermissao('financeiro','inserir')) return;
   const fornecedor = document.getElementById('cp-fornecedor').value.trim();
   const departamento = document.getElementById('cp-dept').value;
@@ -3392,12 +3450,13 @@ function addContaPagar(){
   if(!fornecedor || !desc || !valor || !vencimento){ showToast('Preencha todos os campos.'); return; }
   const id = 'cp'+Date.now();
   CONTAS_PAGAR.push({id, fornecedor, departamento, desc, valor, vencimento, status:'Pendente', dataPagamento:null, lancamentoId:null, criadoPor:session.label});
-  logAction('financeiro', 'Conta a pagar registada', `${fornecedor} — ${formatEuro(valor)} (${entityDeptLabel(departamento)}), vencimento ${formatDate(vencimento)}`);
-  salvarEstado();
+  const guardado=await salvarEstado(['contas']);
+  if(!guardado?.ok){CONTAS_PAGAR=CONTAS_PAGAR.filter(c=>c.id!==id);showToast('Não foi possível guardar a conta a pagar.');return;}
+  await logAction('financeiro', 'Conta a pagar registada', `${fornecedor} — ${formatEuro(valor)} (${entityDeptLabel(departamento)}), vencimento ${formatDate(vencimento)}`);
   showToast('Conta a pagar registada.');
   renderModule();
 }
-function pagarConta(id){
+async function pagarConta(id){
   if(!exigirPermissao('financeiro','editar')) return;
   const c = CONTAS_PAGAR.find(x=>x.id===id);
   if(!c) return;
@@ -3407,9 +3466,10 @@ function pagarConta(id){
   c.dataPagamento = hoje.toISOString().split('T')[0];
   const lancId = 'fin'+Date.now();
   c.lancamentoId = lancId;
-  FINANCEIRO.lancamentos.unshift({id:lancId, data:dataFmt, desc:'Pagamento — ' + c.desc + ' (' + c.fornecedor + ')', tipo:'Saída', departamento:c.departamento, valor:formatEuro(c.valor), criadoPor:session.label, corrigido:false, paraPessoa:false, beneficiario:'', reciboId:null});
-  logAction('financeiro', 'Conta a pagar liquidada', `${c.fornecedor} — ${formatEuro(c.valor)} (${entityDeptLabel(c.departamento)}). Lançamento de saída gerado automaticamente.`);
-  salvarEstado();
+  FINANCEIRO.lancamentos.unshift({id:lancId, data:dataFmt, desc:'Pagamento — ' + c.desc + ' (' + c.fornecedor + ')', tipo:'Saída', categoria:'Outros', departamento:c.departamento, valor:formatEuro(c.valor), criadoPor:session.label, corrigido:false, paraPessoa:false, beneficiario:'', reciboId:null});
+  const guardado=await salvarEstado(['contas','financeiro']);
+  if(!guardado?.ok){c.status='Pendente';c.dataPagamento=null;c.lancamentoId=null;FINANCEIRO.lancamentos=FINANCEIRO.lancamentos.filter(l=>l.id!==lancId);showToast('Não foi possível guardar o pagamento.');return;}
+  await logAction('financeiro', 'Conta a pagar liquidada', `${c.fornecedor} — ${formatEuro(c.valor)} (${entityDeptLabel(c.departamento)}). Lançamento de saída gerado automaticamente.`);
   showToast('Conta marcada como paga. Lançamento de saída gerado automaticamente.');
   renderModule();
 }
@@ -3428,7 +3488,7 @@ function viewContasReceber(){
     <div class="section-title"><h2>Registar nova conta a receber</h2></div>
     <div class="card">
       <div class="form-row">
-        <div><label>Origem / Pagador</label><input id="cr-origem" placeholder="Ex: Aluguer do salão, Campanha, Nome da pessoa"></div>
+        <div><label>Origem / Pagador</label><select id="cr-origem"><option value="">Selecione o fornecedor ou pagador</option>${opcoesFornecedores()}</select></div>
         <div><label>Departamento / Centro de custo</label>
           <select id="cr-dept"><option value="geral">Geral / Sede</option>${deptsFin.map(d=>`<option value="${d.id}">${d.nome}</option>`).join('')}</select>
         </div>
@@ -3440,6 +3500,7 @@ function viewContasReceber(){
       <div><label>Data prevista de recebimento</label><input id="cr-vencimento" type="date"></div>
       <button class="btn btn-primary" style="width:auto; margin-top:14px;" onclick="addContaReceber()">Registar conta a receber</button>
     </div>
+    ${blocoCadastroFornecedor()}
 
     <div class="section-title"><h2>Contas registadas</h2></div>
     <div class="card">
@@ -3500,7 +3561,7 @@ function renderContasReceberTable(){
       </tbody>
     </table>` : `<div class="empty-state"><p>Sem contas a receber para este filtro.</p></div>`;
 }
-function addContaReceber(){
+async function addContaReceber(){
   if(!exigirPermissao('financeiro','inserir')) return;
   const origem = document.getElementById('cr-origem').value.trim();
   const departamento = document.getElementById('cr-dept').value;
@@ -3510,12 +3571,13 @@ function addContaReceber(){
   if(!origem || !desc || !valor || !vencimento){ showToast('Preencha todos os campos.'); return; }
   const id = 'cr'+Date.now();
   CONTAS_RECEBER.push({id, fornecedor:origem, departamento, desc, valor, vencimento, status:'Pendente', dataPagamento:null, lancamentoId:null, criadoPor:session.label});
-  logAction('financeiro', 'Conta a receber registada', `${origem} — ${formatEuro(valor)} (${entityDeptLabel(departamento)}), previsto para ${formatDate(vencimento)}`);
-  salvarEstado();
+  const guardado=await salvarEstado(['contas']);
+  if(!guardado?.ok){CONTAS_RECEBER=CONTAS_RECEBER.filter(c=>c.id!==id);showToast('Não foi possível guardar a conta a receber.');return;}
+  await logAction('financeiro', 'Conta a receber registada', `${origem} — ${formatEuro(valor)} (${entityDeptLabel(departamento)}), previsto para ${formatDate(vencimento)}`);
   showToast('Conta a receber registada.');
   renderModule();
 }
-function receberConta(id){
+async function receberConta(id){
   if(!exigirPermissao('financeiro','editar')) return;
   const c = CONTAS_RECEBER.find(x=>x.id===id);
   if(!c) return;
@@ -3525,9 +3587,10 @@ function receberConta(id){
   c.dataPagamento = hoje.toISOString().split('T')[0];
   const lancId = 'fin'+Date.now();
   c.lancamentoId = lancId;
-  FINANCEIRO.lancamentos.unshift({id:lancId, data:dataFmt, desc:'Recebimento — ' + c.desc + ' (' + c.fornecedor + ')', tipo:'Entrada', departamento:c.departamento, valor:formatEuro(c.valor), criadoPor:session.label, corrigido:false, paraPessoa:false, beneficiario:'', reciboId:null});
-  logAction('financeiro', 'Conta a receber confirmada', `${c.fornecedor} — ${formatEuro(c.valor)} (${entityDeptLabel(c.departamento)}). Lançamento de entrada gerado automaticamente.`);
-  salvarEstado();
+  FINANCEIRO.lancamentos.unshift({id:lancId, data:dataFmt, desc:'Recebimento — ' + c.desc + ' (' + c.fornecedor + ')', tipo:'Entrada', categoria:'Outros', departamento:c.departamento, valor:formatEuro(c.valor), criadoPor:session.label, corrigido:false, paraPessoa:false, beneficiario:'', reciboId:null});
+  const guardado=await salvarEstado(['contas','financeiro']);
+  if(!guardado?.ok){c.status='Pendente';c.dataPagamento=null;c.lancamentoId=null;FINANCEIRO.lancamentos=FINANCEIRO.lancamentos.filter(l=>l.id!==lancId);showToast('Não foi possível guardar o recebimento.');return;}
+  await logAction('financeiro', 'Conta a receber confirmada', `${c.fornecedor} — ${formatEuro(c.valor)} (${entityDeptLabel(c.departamento)}). Lançamento de entrada gerado automaticamente.`);
   showToast('Conta marcada como recebida. Lançamento de entrada gerado automaticamente.');
   renderModule();
 }
@@ -4791,6 +4854,29 @@ function viewAuditoria(){
 }
 
 /* ================= RELATÓRIOS (PDF / EXCEL) ================= */
+const RELATORIO_FILTROS={tipo:'',departamento:'',financeiroTipo:'Todos',inicio:'',fim:'',rhTipo:'todos',patCategoria:'Todas',contaStatus:'todos'};
+
+function guardarFiltrosRelatorio(){
+  const valor=id=>document.getElementById(id)?.value;
+  const tipo=valor('rel-tipo');
+  if(tipo!==undefined) RELATORIO_FILTROS.tipo=tipo;
+  const departamento=valor('rel-dept');
+  if(departamento!==undefined) RELATORIO_FILTROS.departamento=departamento;
+  const financeiroTipo=valor('rel-fin-tipo');
+  if(financeiroTipo!==undefined) RELATORIO_FILTROS.financeiroTipo=financeiroTipo;
+  const inicio=valor('rel-data-inicio');
+  if(inicio!==undefined) RELATORIO_FILTROS.inicio=inicio;
+  const fim=valor('rel-data-fim');
+  if(fim!==undefined) RELATORIO_FILTROS.fim=fim;
+  const rhTipo=valor('rel-rh-tipo');
+  if(rhTipo!==undefined) RELATORIO_FILTROS.rhTipo=rhTipo;
+  const patCategoria=valor('rel-pat-cat');
+  if(patCategoria!==undefined) RELATORIO_FILTROS.patCategoria=patCategoria;
+  const contaStatus=valor('rel-conta-status');
+  if(contaStatus!==undefined) RELATORIO_FILTROS.contaStatus=contaStatus;
+}
+function atualizarFiltrosRelatorio(){guardarFiltrosRelatorio();renderResumoFinanceiroRelatorio();}
+
 function tiposRelatorioDisponiveis(){
   const tipos = [];
   if(isMaster()){
@@ -4811,6 +4897,7 @@ function deptsParaRelatorio(){
 }
 function viewRelatorios(){
   const tipos = tiposRelatorioDisponiveis();
+  if(!tipos.some(t=>t.v===RELATORIO_FILTROS.tipo)) RELATORIO_FILTROS.tipo=tipos[0]?.v||'';
   return `
     <div class="topbar">
       <div><div class="breadcrumb">Gestão da Igreja</div><h1>Relatórios</h1></div>
@@ -4820,11 +4907,12 @@ function viewRelatorios(){
     <div class="card">
       <div class="form-row">
         <div><label>Tipo de relatório</label>
-          <select id="rel-tipo" onchange="renderRelFilters()">${tipos.map(t=>`<option value="${t.v}">${t.t}</option>`).join('')}</select>
+          <select id="rel-tipo" onchange="guardarFiltrosRelatorio();renderRelFilters()">${tipos.map(t=>`<option value="${t.v}" ${RELATORIO_FILTROS.tipo===t.v?'selected':''}>${t.t}</option>`).join('')}</select>
         </div>
         <div id="rel-filtro-dept-wrap"><label>Departamento</label><select id="rel-dept"></select></div>
       </div>
       <div id="rel-extra-filters"></div>
+      <div id="rel-resumo-financeiro"></div>
       <div style="display:flex; gap:12px; margin-top:16px; flex-wrap:wrap;">
         <button class="btn btn-red" onclick="verRelatorio()">${ICON.pdf} Visualizar / Imprimir</button>
         <button class="btn btn-primary" style="width:auto; margin-top:0;" onclick="exportRelatorio('excel')">${ICON.excel} Exportar Excel</button>
@@ -4938,7 +5026,9 @@ function buildDashboardRelatorios(){
   `;
 }
 function renderRelFilters(){
+  guardarFiltrosRelatorio();
   const tipo = document.getElementById('rel-tipo').value;
+  RELATORIO_FILTROS.tipo=tipo;
   const deptWrap = document.getElementById('rel-filtro-dept-wrap');
   const extra = document.getElementById('rel-extra-filters');
   const depts = tipo==='escalas' ? deptsParaRelatorio().filter(d=>ESCALA_DEPTS.includes(d.id)) : deptsParaRelatorio();
@@ -4948,29 +5038,51 @@ function renderRelFilters(){
   } else {
     deptWrap.style.display='block';
     const opts = (isMaster() ? `<option value="todos">Todos os departamentos</option><option value="geral">Geral / Sede</option>` : '') + depts.map(d=>`<option value="${d.id}">${d.nome}</option>`).join('');
-    document.getElementById('rel-dept').innerHTML = opts;
+    const deptSelect=document.getElementById('rel-dept');
+    deptSelect.innerHTML = opts;
+    const departamentosValidos=[...deptSelect.options].map(o=>o.value);
+    deptSelect.value=departamentosValidos.includes(RELATORIO_FILTROS.departamento)?RELATORIO_FILTROS.departamento:(departamentosValidos[0]||'');
+    RELATORIO_FILTROS.departamento=deptSelect.value;
+    deptSelect.onchange=atualizarFiltrosRelatorio;
   }
 
   if(tipo==='rh'){
-    extra.innerHTML = `<div class="form-row" style="margin-top:12px;"><div><label>Categoria</label><select id="rel-rh-tipo"><option value="todos">Todos</option><option value="membros">Membros</option><option value="congregados">Congregados</option><option value="visitantes">Visitantes</option></select></div></div>`;
+    extra.innerHTML = `<div class="form-row" style="margin-top:12px;"><div><label>Categoria</label><select id="rel-rh-tipo" onchange="guardarFiltrosRelatorio()"><option value="todos" ${RELATORIO_FILTROS.rhTipo==='todos'?'selected':''}>Todos</option><option value="membros" ${RELATORIO_FILTROS.rhTipo==='membros'?'selected':''}>Membros</option><option value="congregados" ${RELATORIO_FILTROS.rhTipo==='congregados'?'selected':''}>Congregados</option><option value="visitantes" ${RELATORIO_FILTROS.rhTipo==='visitantes'?'selected':''}>Visitantes</option></select></div></div>`;
   } else if(tipo==='patrimonio'){
     const cats = ['Todas', ...new Set(PATRIMONIO.map(p=>p.categoria))];
-    extra.innerHTML = `<div class="form-row" style="margin-top:12px;"><div><label>Categoria</label><select id="rel-pat-cat">${cats.map(c=>`<option>${c}</option>`).join('')}</select></div></div>`;
+    if(!cats.includes(RELATORIO_FILTROS.patCategoria)) RELATORIO_FILTROS.patCategoria='Todas';
+    extra.innerHTML = `<div class="form-row" style="margin-top:12px;"><div><label>Categoria</label><select id="rel-pat-cat" onchange="guardarFiltrosRelatorio()">${cats.map(c=>`<option ${RELATORIO_FILTROS.patCategoria===c?'selected':''}>${c}</option>`).join('')}</select></div></div>`;
   } else if(tipo==='financeiro'){
     extra.innerHTML = `<div class="form-row" style="margin-top:12px;">
-      <div><label>Tipo</label><select id="rel-fin-tipo"><option value="Todos">Todos</option><option>Entrada</option><option>Saída</option></select></div>
-      <div><label>Data início</label><input id="rel-data-inicio" type="date"></div>
-    </div><div class="form-row"><div><label>Data fim</label><input id="rel-data-fim" type="date"></div></div>`;
+      <div><label>Tipo</label><select id="rel-fin-tipo" onchange="atualizarFiltrosRelatorio()"><option value="Todos" ${RELATORIO_FILTROS.financeiroTipo==='Todos'?'selected':''}>Todos</option><option ${RELATORIO_FILTROS.financeiroTipo==='Entrada'?'selected':''}>Entrada</option><option ${RELATORIO_FILTROS.financeiroTipo==='Saída'?'selected':''}>Saída</option></select></div>
+      <div><label>Data início</label><input id="rel-data-inicio" type="date" value="${RELATORIO_FILTROS.inicio}" onchange="atualizarFiltrosRelatorio()"></div>
+    </div><div class="form-row"><div><label>Data fim</label><input id="rel-data-fim" type="date" value="${RELATORIO_FILTROS.fim}" onchange="atualizarFiltrosRelatorio()"></div></div>`;
   } else if(tipo==='escalas' || tipo==='avisos'){
     extra.innerHTML = `<div class="form-row" style="margin-top:12px;">
-      <div><label>Data início</label><input id="rel-data-inicio" type="date"></div>
-      <div><label>Data fim</label><input id="rel-data-fim" type="date"></div>
+      <div><label>Data início</label><input id="rel-data-inicio" type="date" value="${RELATORIO_FILTROS.inicio}" onchange="guardarFiltrosRelatorio()"></div>
+      <div><label>Data fim</label><input id="rel-data-fim" type="date" value="${RELATORIO_FILTROS.fim}" onchange="guardarFiltrosRelatorio()"></div>
     </div>`;
   } else if(tipo==='contas-pagar' || tipo==='contas-receber'){
-    extra.innerHTML = `<div class="form-row" style="margin-top:12px;"><div><label>Estado</label><select id="rel-conta-status"><option value="todos">Todos</option><option value="Pendente">Pendente</option><option value="Atrasado">Atrasado</option><option value="${tipo==='contas-pagar'?'Pago':'Recebido'}">${tipo==='contas-pagar'?'Pago':'Recebido'}</option></select></div></div>`;
+    const estadoFinal=tipo==='contas-pagar'?'Pago':'Recebido';
+    if(!['todos','Pendente','Atrasado',estadoFinal].includes(RELATORIO_FILTROS.contaStatus)) RELATORIO_FILTROS.contaStatus='todos';
+    extra.innerHTML = `<div class="form-row" style="margin-top:12px;"><div><label>Estado</label><select id="rel-conta-status" onchange="guardarFiltrosRelatorio()"><option value="todos" ${RELATORIO_FILTROS.contaStatus==='todos'?'selected':''}>Todos</option><option value="Pendente" ${RELATORIO_FILTROS.contaStatus==='Pendente'?'selected':''}>Pendente</option><option value="Atrasado" ${RELATORIO_FILTROS.contaStatus==='Atrasado'?'selected':''}>Atrasado</option><option value="${estadoFinal}" ${RELATORIO_FILTROS.contaStatus===estadoFinal?'selected':''}>${estadoFinal}</option></select></div></div>`;
   } else {
     extra.innerHTML = '';
   }
+  renderResumoFinanceiroRelatorio();
+}
+
+function renderResumoFinanceiroRelatorio(){
+  const el=document.getElementById('rel-resumo-financeiro');
+  if(!el)return;
+  if(document.getElementById('rel-tipo')?.value!=='financeiro'){el.innerHTML='';return;}
+  const dados=getReportData();
+  const resumo=dados.summary||{entradas:formatEuro(0),saidas:formatEuro(0),saldo:formatEuro(0)};
+  el.innerHTML=`<div class="grid grid-3" style="margin-top:18px;">
+    <div class="card stat-card" style="margin:0;background:#f7f9fd;"><div class="num" style="color:var(--royal-dark);">${resumo.entradas}</div><div class="label">Valor total de entradas</div></div>
+    <div class="card stat-card" style="margin:0;background:#fdf7f7;"><div class="num" style="color:var(--red-dark);">${resumo.saidas}</div><div class="label">Valor total de saídas</div></div>
+    <div class="card stat-card" style="margin:0;background:#fffaf0;border-color:#d7ba55;"><div class="num" style="color:var(--royal-deep);">${resumo.saldo}</div><div class="label">Valor a transportar</div></div>
+  </div>`;
 }
 function dentroIntervalo(dataISOouBR, inicio, fim){
   if(!inicio && !fim) return true;
@@ -5001,8 +5113,20 @@ function getReportData(){
     const ini = document.getElementById('rel-data-inicio').value;
     const fim = document.getElementById('rel-data-fim').value;
     const deptSelFin = document.getElementById('rel-dept').value;
-    const rows = FINANCEIRO.lancamentos.filter(l=>(ft==='Todos'||l.tipo===ft) && (deptSelFin==='todos'||l.departamento===deptSelFin) && dentroIntervalo(l.data, ini, fim)).map(l=>[l.data,entityDeptLabel(l.departamento),l.desc,l.tipo,l.valor,l.paraPessoa?l.beneficiario:'']);
-    return {title:'Relatório Financeiro', headers:['Data','Departamento','Descrição','Tipo','Valor','Beneficiário'], rows};
+    const lancamentos = FINANCEIRO.lancamentos.filter(l=>(ft==='Todos'||l.tipo===ft) && (deptSelFin==='todos'||l.departamento===deptSelFin) && dentroIntervalo(l.data, ini, fim));
+    const totalEntradas = lancamentos.filter(l=>l.tipo==='Entrada').reduce((s,l)=>s+parseValorEuro(l.valor),0);
+    const totalSaidas = lancamentos.filter(l=>l.tipo==='Saída').reduce((s,l)=>s+parseValorEuro(l.valor),0);
+    const rows = lancamentos.map(l=>[l.data,entityDeptLabel(l.departamento),categoriaLancamento(l),l.desc,l.tipo,l.valor,l.paraPessoa?l.beneficiario:'']);
+    return {
+      title:'Relatório Financeiro',
+      headers:['Data','Departamento','Categoria','Descrição','Tipo','Valor','Beneficiário'],
+      rows,
+      summary:{
+        entradas:formatEuro(totalEntradas),
+        saidas:formatEuro(totalSaidas),
+        saldo:formatEuro(totalEntradas-totalSaidas)
+      }
+    };
   }
   if(tipo==='departamentos'){
     const depts = deptSel==='todos' ? deptsParaRelatorio() : deptsParaRelatorio().filter(d=>d.id===deptSel);
@@ -5060,11 +5184,12 @@ function carregarXLSX(){
 }
 async function exportRelatorio(formato){
   if(!exigirPermissao('relatorios','exportar')) return;
-  const {title, headers, rows} = getReportData();
+  const {title, headers, rows, summary} = getReportData();
   if(!rows.length){ showToast('Sem dados para os filtros selecionados.'); return; }
   const subtitle = 'Igreja Evangélica Assembleia de Deus Ministério de Santos — Congregação Braga · Gerado em ' + new Date().toLocaleDateString('pt-PT');
   try{ await carregarXLSX(); }catch(error){ showToast(error.message); return; }
-  const ws = XLSX.utils.aoa_to_sheet([[title],[subtitle],[],headers, ...rows]);
+  const resumo = summary ? [[],['RESUMO FINANCEIRO'],['Valor total de entradas',summary.entradas],['Valor total de saídas',summary.saidas],['Valor a transportar',summary.saldo]] : [];
+  const ws = XLSX.utils.aoa_to_sheet([[title],[subtitle],[],headers, ...rows, ...resumo]);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Relatório');
   XLSX.writeFile(wb, title.replace(/\s+/g,'_') + '.xlsx');
@@ -5073,7 +5198,7 @@ async function exportRelatorio(formato){
 
 function verRelatorio(){
   const tipoRelatorio=document.getElementById('rel-tipo').value;
-  const {title, headers, rows} = getReportData();
+  const {title, headers, rows, summary} = getReportData();
   if(!rows.length){ showToast('Sem dados para os filtros selecionados. Verifique se os filtros escolhidos correspondem a lançamentos existentes.'); return; }
   const logoSrc = document.querySelector('.side-brand img') ? document.querySelector('.side-brand img').src : '';
   const hoje = new Date().toLocaleString('pt-PT');
@@ -5096,6 +5221,11 @@ function verRelatorio(){
         ${rows.map(r=>`<tr>${r.map(c=>`<td>${c===undefined||c===''?'—':c}</td>`).join('')}</tr>`).join('')}
       </tbody>
     </table>
+    ${summary?`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:20px 0 8px;page-break-inside:avoid;">
+      <div style="border:1px solid #ccd4e5;border-radius:8px;padding:12px;background:#f7f9fd;"><div style="font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:#4a5578;margin-bottom:5px;">Valor total de entradas</div><strong style="font-size:17px;color:#153b97;">${summary.entradas}</strong></div>
+      <div style="border:1px solid #ccd4e5;border-radius:8px;padding:12px;background:#fdf7f7;"><div style="font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:#4a5578;margin-bottom:5px;">Valor total de saídas</div><strong style="font-size:17px;color:#a7192e;">${summary.saidas}</strong></div>
+      <div style="border:1px solid #d7ba55;border-radius:8px;padding:12px;background:#fffaf0;"><div style="font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:#4a5578;margin-bottom:5px;">Valor a transportar</div><strong style="font-size:17px;color:#071b50;">${summary.saldo}</strong></div>
+    </div>`:''}
     ${admsRelatorioFinanceiro(tipoRelatorio)?admsAssinaturasFinanceiras(false,''):''}
     <div class="print-footer">Sistema de Gestão ADMS Braga · Documento gerado internamente, não substitui registos oficiais.</div>
   `;
