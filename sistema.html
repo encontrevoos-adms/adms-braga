@@ -2353,7 +2353,7 @@ function iniciaisAniversariante(nome){
 }
 function mensagemAniversario(nome){
   const primeiro=String(nome||'').trim().split(/\s+/)[0]||'irmão(ã)';
-  return `Querido(a) ${admsEsc(primeiro)}, hoje damos graças a Deus pela sua vida. Que este novo ciclo seja marcado pela presença do Senhor, por saúde, paz, sabedoria e pela alegria de continuar a servir no Reino. Receba o nosso carinho, as nossas orações e um abraço cheio de amor.`;
+  return `Querido(a) ${primeiro}, hoje damos graças a Deus pela sua vida. Que este novo ciclo seja marcado pela presença do Senhor, por saúde, paz, sabedoria e pela alegria de continuar a servir no Reino. Receba o nosso carinho, as nossas orações e um abraço cheio de amor.`;
 }
 async function renderAniversariantes(){
   const el=document.getElementById('main-content');if(!el)return;
@@ -2365,12 +2365,36 @@ async function renderAniversariantes(){
   const fotos=await Promise.all(destaques.map(p=>admsFotoDataUrl(p.fotoPath).catch(()=>null)));
   const banners=destaques.map((p,i)=>{
     const partes=aniversarioPartes(p),hojeMesmo=partes.mes===mesAtual&&partes.dia===diaAtual;
+    const indice=PESSOAS.membros.indexOf(p);
     const foto=fotos[i]?`<img class="birthday-photo" src="${fotos[i]}" alt="Fotografia de ${admsEsc(p.nome)}">`:`<div class="birthday-photo-fallback" aria-label="Sem fotografia cadastrada">${iniciaisAniversariante(p.nome)}</div>`;
-    return `<article class="birthday-banner"><div class="birthday-photo-wrap">${foto}</div><div class="birthday-copy"><div class="birthday-kicker">${hojeMesmo?'Hoje celebramos uma vida':'Próximo aniversário · '+String(partes.dia).padStart(2,'0')+' de '+mesLabelCompleto(partes.mes)}</div><h2>Feliz aniversário,<br>${admsEsc(nomeCurtoCartao(p.nome))}!</h2><p>${mensagemAniversario(p.nome)}</p><p class="birthday-verse">“O Senhor te abençoe e te guarde; o Senhor faça resplandecer o seu rosto sobre ti e tenha misericórdia de ti.”<br><strong>Números 6:24–25</strong></p><p class="birthday-signature">Com amor, toda a Congregação ADMS Braga.</p></div></article>`;
+    const publicar=hojeMesmo?`<button class="btn btn-primary" style="width:auto;margin-top:8px;background:linear-gradient(120deg,#e0b947,#bd8e1d);color:#07194f;" onclick="publicarAniversariante(${indice})">Publicar homenagem no site</button>`:'';
+    return `<article class="birthday-banner"><div class="birthday-photo-wrap">${foto}</div><div class="birthday-copy"><div class="birthday-kicker">${hojeMesmo?'Hoje celebramos uma vida':'Próximo aniversário · '+String(partes.dia).padStart(2,'0')+' de '+mesLabelCompleto(partes.mes)}</div><h2>Feliz aniversário,<br>${admsEsc(nomeCurtoCartao(p.nome))}!</h2><p>${admsEsc(mensagemAniversario(p.nome))}</p><p class="birthday-verse">“O Senhor te abençoe e te guarde; o Senhor faça resplandecer o seu rosto sobre ti e tenha misericórdia de ti.”<br><strong>Números 6:24–25</strong></p><p class="birthday-signature">Com amor, toda a Congregação ADMS Braga.</p>${publicar}</div></article>`;
   }).join('');
   const doMes=membros.filter(p=>aniversarioPartes(p).mes===mesAtual).sort((a,b)=>aniversarioPartes(a).dia-aniversarioPartes(b).dia||a.nome.localeCompare(b.nome,'pt'));
   const lista=doMes.map(p=>{const d=aniversarioPartes(p);return `<div class="birthday-person"><div class="birthday-day">${String(d.dia).padStart(2,'0')}</div><div><strong>${admsEsc(p.nome)}</strong><small>${d.dia===diaAtual?'Aniversariante de hoje':'Aniversário em '+d.dia+' de '+mesLabelCompleto(d.mes)}</small></div></div>`;}).join('');
   el.innerHTML=`<div class="topbar"><div><div class="breadcrumb">Comunhão e cuidado</div><h1>Aniversariantes</h1></div><span class="access-pill">${ICON.crown} Cadastro de membros</span></div>${ruleDivider()}${banners||'<div class="card"><h2>Nenhum aniversário disponível</h2><p>Cadastre a data de nascimento dos membros para gerar automaticamente as felicitações.</p></div>'}<div class="section-title"><h2>Aniversariantes de ${mesLabelCompleto(mesAtual)}</h2></div><div class="birthday-month-list">${lista||'<div class="card">Nenhum membro aniversaria neste mês.</div>'}</div>`;
+}
+async function publicarAniversariante(indice){
+  if(!exigirPermissao('site-publico','inserir'))return;
+  const membro=PESSOAS.membros[indice];if(!membro)return showToast('Membro não encontrado.');
+  const partes=aniversarioPartes(membro),hoje=new Date();
+  if(!partes||partes.mes!==hoje.getMonth()+1||partes.dia!==hoje.getDate())return showToast('A homenagem pública só pode ser publicada no dia do aniversário.');
+  if(!membro.fotoPath)return showToast('Adicione primeiro a fotografia no cadastro do membro.');
+  if(!confirm(`Publicar no site público a fotografia e a homenagem de ${membro.nome}? Confirme apenas se a publicação foi autorizada.`))return;
+  try{
+    const {data:foto,error:erroFoto}=await admsSupabase.storage.from('membros-fotos').download(membro.fotoPath);if(erroFoto||!foto)throw erroFoto||new Error('Fotografia indisponível');
+    const extensao=String(foto.type||'image/jpeg').includes('png')?'png':String(foto.type||'').includes('webp')?'webp':'jpg';
+    const idSeguro=String(membro.id||membro.nome).replace(/[^a-zA-Z0-9_-]/g,'').slice(0,60)||'membro';
+    const caminho=`aniversariantes/${idSeguro}-${Date.now()}.${extensao}`;
+    const {error:erroUpload}=await admsSupabase.storage.from('site-media').upload(caminho,foto,{contentType:foto.type||'image/jpeg',cacheControl:'86400',upsert:false});if(erroUpload)throw erroUpload;
+    const fotoPublica=admsSupabase.storage.from('site-media').getPublicUrl(caminho).data.publicUrl;
+    const dataHoje=`${hoje.getFullYear()}-${String(hoje.getMonth()+1).padStart(2,'0')}-${String(hoje.getDate()).padStart(2,'0')}`;
+    const {data:{user}}=await admsSupabase.auth.getUser();
+    const row={chave:`aniversariante_${dataHoje}_${idSeguro}`,titulo:membro.nome,subtitulo:'Números 6:24–25',conteudo:mensagemAniversario(membro.nome),url:fotoPublica,ativo:true,updated_by:user?.id||null,updated_at:new Date().toISOString()};
+    const {error}=await admsSupabase.from('site_conteudos').upsert(row,{onConflict:'chave'});if(error)throw error;
+    addLog('site','Publicou homenagem de aniversário no site',membro.nome);
+    showToast('Homenagem publicada no site público.');
+  }catch(error){console.error('[aniversariantes] publicação falhou',error);showToast('Não foi possível publicar a homenagem.');}
 }
 
 /* ================= CARTÃO DE MEMBRO ================= */
