@@ -1380,10 +1380,21 @@ function opcoesFornecedores(selecionado=''){
 }
 
 function blocoCadastroFornecedor(){
+  const baseChaves=new Set(FORNECEDORES_BASE.map(nome=>nome.toLocaleLowerCase('pt-PT')));
+  const manuaisChaves=new Set(FORNECEDORES_MANUAIS.map(nome=>nome.toLocaleLowerCase('pt-PT')));
+  const dizimistasChaves=new Set(PESSOAS.membros.filter(m=>m.dizimista&&m.nome).map(m=>m.nome.trim().toLocaleLowerCase('pt-PT')));
+  const linhas=fornecedoresDisponiveis().map(nome=>{
+    const chave=nome.toLocaleLowerCase('pt-PT');
+    const origem=dizimistasChaves.has(chave)?'Membro dizimista':manuaisChaves.has(chave)?'Cadastro manual':'Cadastro inicial';
+    const podeRemover=manuaisChaves.has(chave)&&!baseChaves.has(chave)&&!dizimistasChaves.has(chave);
+    const nomeCodificado=encodeURIComponent(nome).replace(/'/g,'%27');
+    return `<tr><td style="font-weight:650;">${admsEsc(nome)}</td><td><span class="tag ${origem==='Membro dizimista'?'tag-blue':origem==='Cadastro manual'?'tag-gold':'tag-green'}">${origem}</span></td><td>${podeRemover?`<button class="btn btn-ghost" style="width:auto;padding:6px 9px;font-size:11px;" onclick="removerFornecedorManual(decodeURIComponent('${nomeCodificado}'))">Remover</button>`:'—'}</td></tr>`;
+  }).join('');
   return `<div class="card" style="margin-top:16px;">
-    <div class="section-title" style="margin:0 0 12px;"><h2 style="font-size:20px;">Cadastro de fornecedores e pagadores</h2></div>
+    <div class="section-title" style="margin:0 0 12px;"><h2 style="font-size:20px;">Fornecedores e pagadores cadastrados</h2><span class="access-pill">${fornecedoresDisponiveis().length} cadastrados</span></div>
     <div class="form-row"><div><label>Novo fornecedor / pagador</label><input id="novo-fornecedor" maxlength="120" placeholder="Nome da empresa ou pessoa"></div><div style="display:flex;align-items:flex-end;"><button class="btn btn-outline" style="width:auto;" onclick="cadastrarFornecedor()">Cadastrar fornecedor</button></div></div>
-    <p style="font-size:12px;color:var(--ink-soft);margin:10px 0 0;">${fornecedoresDisponiveis().length} fornecedor(es) disponível(is). Os membros marcados como dizimistas são incluídos automaticamente.</p>
+    <p style="font-size:12px;color:var(--ink-soft);margin:10px 0 14px;">Os membros marcados como dizimistas são incluídos automaticamente e identificados na lista.</p>
+    <div style="max-height:340px;overflow:auto;border:1px solid var(--line);border-radius:12px;"><table><thead><tr><th>Fornecedor / Pagador</th><th>Origem</th><th></th></tr></thead><tbody>${linhas}</tbody></table></div>
   </div>`;
 }
 
@@ -1398,6 +1409,18 @@ async function cadastrarFornecedor(){
   if(!guardado?.ok){FORNECEDORES_MANUAIS=FORNECEDORES_MANUAIS.filter(item=>item!==nome);showToast('Não foi possível guardar o fornecedor.');return;}
   await logAction('financeiro','Fornecedor cadastrado',nome);
   showToast('Fornecedor cadastrado com sucesso.');
+  renderModule();
+}
+
+async function removerFornecedorManual(nome){
+  if(!exigirPermissao('financeiro','editar'))return;
+  if(!confirm(`Remover o fornecedor "${nome}" do cadastro manual?`))return;
+  const anterior=[...FORNECEDORES_MANUAIS];
+  FORNECEDORES_MANUAIS=FORNECEDORES_MANUAIS.filter(item=>item.localeCompare(nome,'pt-PT',{sensitivity:'base'})!==0);
+  const guardado=await salvarEstado(['fornecedores']);
+  if(!guardado?.ok){FORNECEDORES_MANUAIS=anterior;showToast('Não foi possível remover o fornecedor.');return;}
+  await logAction('financeiro','Fornecedor removido',nome);
+  showToast('Fornecedor removido do cadastro manual.');
   renderModule();
 }
 
@@ -3235,6 +3258,7 @@ function viewFinanceiro(){
         <span>🔵 Entradas ${inPct}%</span><span>🔴 Saídas ${100-inPct}%</span>
       </div>
     </div>
+    ${blocoCadastroFornecedor()}
     <div class="section-title"><h2>Registar lançamento</h2></div>
     <div class="card">
       <div class="form-row">
@@ -3367,7 +3391,7 @@ function viewContasPagar(){
     <div class="section-title"><h2>Registar nova conta a pagar</h2></div>
     <div class="card">
       <div class="form-row">
-        <div><label>Fornecedor / Beneficiário</label><select id="cp-fornecedor"><option value="">Selecione o fornecedor</option>${opcoesFornecedores()}</select></div>
+        <div><label>Fornecedor / Beneficiário (${fornecedoresDisponiveis().length} cadastrados)</label><select id="cp-fornecedor"><option value="">Selecione o fornecedor</option>${opcoesFornecedores()}</select></div>
         <div><label>Departamento / Centro de custo</label>
           <select id="cp-dept"><option value="geral">Geral / Sede</option>${deptsFin.map(d=>`<option value="${d.id}">${d.nome}</option>`).join('')}</select>
         </div>
@@ -3488,7 +3512,7 @@ function viewContasReceber(){
     <div class="section-title"><h2>Registar nova conta a receber</h2></div>
     <div class="card">
       <div class="form-row">
-        <div><label>Origem / Pagador</label><select id="cr-origem"><option value="">Selecione o fornecedor ou pagador</option>${opcoesFornecedores()}</select></div>
+        <div><label>Origem / Pagador (${fornecedoresDisponiveis().length} cadastrados)</label><select id="cr-origem"><option value="">Selecione o fornecedor ou pagador</option>${opcoesFornecedores()}</select></div>
         <div><label>Departamento / Centro de custo</label>
           <select id="cr-dept"><option value="geral">Geral / Sede</option>${deptsFin.map(d=>`<option value="${d.id}">${d.nome}</option>`).join('')}</select>
         </div>
