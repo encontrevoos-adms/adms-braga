@@ -1,0 +1,26 @@
+ADMS BRAGA — SEGURANÇA DE SERVIDOR v51
+
+Implementado no Supabase
+- Limitação atómica de pedidos no servidor, sem guardar IPs em texto simples.
+- Login: máximo de 10 tentativas por IP e 5 por combinação IP/utilizador em 15 minutos.
+- Pedidos de oração e novos contactos: máximo de 5 por IP/hora e 2 por identidade/10 minutos.
+- Validação de método HTTP, tamanho do pedido e limites de todos os campos.
+- Honeypot para robôs, respostas sem enumeração de utilizadores e cabeçalhos no-store.
+- CORS limitado ao domínio oficial adms-braga.vercel.app (e localhost para desenvolvimento).
+- Chave administrativa permanece somente nas Edge Functions; nunca é enviada ao navegador.
+
+Passos de publicação
+1. Carregar o conteúdo deste pacote na raiz do repositório GitHub.
+2. Aguardar o deployment da Vercel ficar verde.
+3. Abrir https://adms-braga.vercel.app/?v=51 e testar um pedido de oração.
+4. Informar “Feito” para desativarmos as políticas antigas de inserção direta.
+
+Nota de compatibilidade
+As políticas públicas antigas ficam temporariamente ativas para que a versão v50 continue
+a funcionar durante a publicação. Depois da confirmação da v51, serão removidas; a partir
+desse momento os formulários aceitarão dados somente pela função protegida public-submit.
+
+Próxima etapa de CSP
+O sistema atual possui muitos eventos e estilos embutidos no HTML. A remoção de
+unsafe-inline exige externalização progressiva para não quebrar o portal monolítico.
+Esta etapa foi separada da limitação de abuso para preservar a estabilidade do sistema.

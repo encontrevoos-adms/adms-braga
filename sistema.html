@@ -5810,7 +5810,7 @@ async function handleLogout(){
   await admsSupabase.auth.signOut();
   session=null; admsCloudProfile=null; pendingLoginKey=null; pendingLoginLeaderId=null; currentProfileRef=null;
   try{ localStorage.removeItem(SESSAO_KEY);localStorage.removeItem(ESTADO_KEY); }catch(e){}
-  location.replace('/sistema?v=50');
+  location.replace('/sistema?v=51');
 }
 
 admsSupabase?.auth.onAuthStateChange((event)=>{
