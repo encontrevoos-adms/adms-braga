@@ -1,0 +1,16 @@
+ADMS BRAGA — VERSÃO 53
+
+Esta versão acrescenta numeração sequencial automática aos cartões de membro:
+ADMSBRG0001, ADMSBRG0002, ADMSBRG0003 e assim sucessivamente.
+
+PUBLICAÇÃO MANUAL NO GITHUB
+1. Envie todos os ficheiros e a pasta supabase deste pacote, mantendo exatamente os mesmos nomes e caminhos.
+2. Conserve a pasta supabase/migrations no mesmo caminho apresentado no pacote.
+3. A migração já foi aplicada no projeto em produção. O ficheiro SQL acompanha o pacote para histórico e futuras instalações.
+4. Aguarde o deployment da Vercel ficar verde.
+5. Abra https://adms-braga.vercel.app/sistema?v=53 e atualize a página.
+
+Não altere manualmente os números de membro: a sequência é atribuída pelo banco de dados.
+
+CORREÇÃO DAS FOTOGRAFIAS
+Esta revisão inclui localmente as fotografias da liderança, galeria, logótipo e fundos. Não use apenas o index.html: carregue também todos os ficheiros JPG, PNG e WEBP incluídos no ZIP.
