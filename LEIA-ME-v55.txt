@@ -1,0 +1,36 @@
+ADMS BRAGA — VERSÃO 55
+=======================
+
+Esta versão apresenta uma renovação visual completa do site público, mantendo as
+integrações, formulários e conteúdos do Portal.
+
+PRINCIPAIS NOVIDADES
+--------------------
+- Página inicial cinematográfica, com vídeo em ecrã completo.
+- Próximo culto calculado automaticamente e contagem regressiva em tempo real.
+- Navegação mais simples e cabeçalho transparente com efeito de vidro.
+- Modo claro/escuro com preferência guardada no dispositivo.
+- Blocos rápidos em formato bento para agenda, mensagem, oração e localização.
+- Nova secção “Uma história que continua em Braga”, com liderança e identidade.
+- Agenda semanal em cartões modernos e responsivos.
+- Galeria, vídeo, estudos, oração, mapa e redes sociais redesenhados.
+- Bíblia local e plano anual preservados; o leitor completo agora abre quando necessário.
+- Homenagens de aniversário aparecem somente nos dias com publicação ativa.
+- Animações suaves com respeito pela preferência de movimento reduzido.
+- Navegação inferior renovada para telemóveis.
+
+PUBLICAÇÃO NO GITHUB
+--------------------
+1. Abra o repositório adms-braga.
+2. Envie TODOS os ficheiros e pastas desta versão para a raiz do repositório.
+3. Confirme a substituição dos ficheiros existentes.
+4. Aguarde o novo deployment automático da Vercel.
+5. Teste: https://adms-braga.vercel.app/?v=55
+
+IMPORTANTE
+----------
+- Não altere nem publique palavras-passe ou chaves privadas.
+- A pasta supabase/migrations deve permanecer no Git; ela contém apenas a estrutura
+  versionada da base de dados, não os dados privados.
+- O ficheiro biblia-local.json deve ser enviado, pois contém o texto bíblico local.
+- As fotografias e os vídeos devem permanecer na raiz com os mesmos nomes.
