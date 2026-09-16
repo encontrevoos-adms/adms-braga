@@ -1,0 +1,37 @@
+ADMS BRAGA — VERSÃO 57
+=======================
+
+GESTOR EDITORIAL DO SITE PÚBLICO
+--------------------------------
+- Conteúdos podem ser guardados como rascunho.
+- Publicação imediata ou programada por data e hora.
+- Pré-visualização antes de publicar.
+- Ordem de apresentação configurável.
+- Botões para subir ou descer conteúdos.
+- Indicadores de publicados, agendados e rascunhos.
+- Histórico das alterações.
+- Restauração de versões anteriores.
+- Fotografias e documentos continuam integrados ao Storage.
+- O site público respeita estado, agendamento e ordem editorial.
+
+PASSO OBRIGATÓRIO NO SUPABASE
+-----------------------------
+Antes de utilizar o novo Gestor do Site:
+
+1. Abra o painel do projeto no Supabase.
+2. Entre em SQL Editor.
+3. Abra o ficheiro:
+   supabase/migrations/202609160002_cms_editorial_v57.sql
+4. Copie todo o conteúdo, cole no SQL Editor e execute uma única vez.
+
+A migração adiciona os campos editoriais e cria o histórico automático. Ela não
+apaga os conteúdos existentes.
+
+PUBLICAÇÃO NO GITHUB
+--------------------
+Envie todos os ficheiros e pastas para a raiz do repositório, substituindo os
+existentes. Depois do deployment, aceda a:
+
+https://adms-braga.vercel.app/sistema?v=57
+
+No Portal: Conteúdo do Site → Gestor do Site Público.
