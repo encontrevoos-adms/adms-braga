@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /sistema
+
+Sitemap: https://adms-braga.vercel.app/sitemap.xml

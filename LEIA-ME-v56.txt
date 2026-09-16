@@ -1,0 +1,29 @@
+ADMS BRAGA — VERSÃO 56
+=======================
+
+EVOLUÇÃO DE EXPERIÊNCIA, DESEMPENHO E DESCOBERTA
+------------------------------------------------
+- Mantém toda a renovação visual da versão 55.
+- Nova área “Planeie a sua visita”, com quatro orientações para visitantes.
+- Cada encontro da agenda pode ser adicionado ao calendário em formato ICS.
+- Cada encontro pode ser partilhado pelo menu nativo ou pelo WhatsApp.
+- Galeria com navegação anterior/seguinte e suporte às setas do teclado.
+- Imagens dinâmicas carregadas de forma assíncrona.
+- Bíblia local carregada apenas quando o visitante se aproxima da secção.
+- Metadados Open Graph para partilhas em WhatsApp, Facebook e outras redes.
+- Dados estruturados da igreja para motores de pesquisa.
+- Ficheiros robots.txt e sitemap.xml incluídos.
+- Política de cache revista para atualizar o site e acelerar Bíblia e vídeo.
+- Correção definitiva do cartão “Desde 1924”.
+
+PUBLICAÇÃO
+----------
+Envie todos os ficheiros e pastas deste pacote para a raiz do repositório no
+GitHub, substituindo os ficheiros existentes. Aguarde o deployment da Vercel e
+teste em:
+
+https://adms-braga.vercel.app/?v=56
+
+O Portal continua disponível em:
+
+https://adms-braga.vercel.app/sistema?v=56
