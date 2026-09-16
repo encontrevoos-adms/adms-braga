@@ -1,0 +1,20 @@
+ADMS BRAGA — VERSÃO 54
+
+PRINCIPAIS ALTERAÇÕES
+- Abertura mais curta, moderna e orientada para visitantes.
+- Botões imediatos para horários, primeira visita e mensagem da semana.
+- Quatro atalhos: cultos, mensagem, oração e localização.
+- Área pastoral para novos visitantes, decisão por Cristo e acompanhamento.
+- Agenda semanal transformada em cartões responsivos.
+- Agenda posicionada antes da história e da liderança.
+- Galeria apresentada como “Viva a ADMS Braga”.
+- Nova navegação inferior para telemóveis.
+- Rodapé ampliado com links úteis.
+- Fotografias da liderança e da galeria incluídas localmente.
+- Mantida a numeração sequencial dos membros da versão 53.
+
+PUBLICAÇÃO
+Envie todos os ficheiros deste pacote para a raiz do repositório GitHub, mantendo a pasta supabase no respetivo caminho. Aguarde o deployment da Vercel e abra:
+https://adms-braga.vercel.app/?v=54
+
+No telemóvel, feche a aba antiga e abra novamente o endereço acima para evitar cache anterior.
