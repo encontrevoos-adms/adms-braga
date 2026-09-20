@@ -1,0 +1,45 @@
+ADMS BRAGA — VERSÃO 58
+========================
+
+PRINCIPAL MELHORIA
+------------------
+O Painel Administrativo passou a funcionar como uma central de comando moderna,
+responsiva e atualizada automaticamente.
+
+NOVO NO PAINEL
+---------------
+- Filtro por período: 30 dias, 90 dias, 1 ano ou todo o período.
+- Filtro por departamento permitido ao utilizador.
+- Ações rápidas adequadas às permissões do perfil.
+- Indicadores de saldo, entradas, saídas, pessoas, notificações e conteúdos.
+- Próximos eventos e aniversários dos próximos sete dias.
+- Central operacional para pedidos de oração, contactos, contas vencidas e
+  rascunhos editoriais.
+- Atualização automática a cada minuto e botão de atualização manual.
+- Falhas isoladas: se uma consulta não responder, os restantes indicadores
+  continuam disponíveis e o painel informa que a atualização foi parcial.
+- Estados de carregamento e adaptação para computador, tablet e telemóvel.
+
+SEGURANÇA E PERMISSÕES
+----------------------
+Os cartões e atalhos respeitam as permissões do utilizador. Áreas restritas não
+abrem dados financeiros, pessoais ou editoriais para perfis não autorizados.
+
+INSTALAÇÃO
+----------
+1. Extraia o conteúdo do ZIP.
+2. Envie os ficheiros e pastas para a raiz do repositório GitHub, substituindo
+   os ficheiros existentes quando solicitado.
+3. Confirme o commit no ramo main.
+4. Aguarde o novo deployment da Vercel ficar concluído.
+5. Abra o site numa janela anónima ou atualize a página ignorando a cache.
+
+SUPABASE
+--------
+Esta versão não adiciona tabelas nem exige a execução de um novo ficheiro SQL.
+A migração editorial da v57 deve permanecer no projeto e já deve ter sido
+executada conforme as etapas anteriores.
+
+VERSÃO
+------
+v58 — Painel Administrativo Inteligente

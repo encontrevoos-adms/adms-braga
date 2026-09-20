@@ -898,6 +898,16 @@ window.addEventListener('online',()=>{ admsCarregarMembrosCloud(); admsCarregarE
 #dept-editor-modal .dept-check{display:flex;align-items:flex-start;gap:10px;padding:13px;border:1px solid var(--line);border-radius:12px;background:var(--paper);font-size:13px;line-height:1.4;}
 #dept-editor-modal .dept-check input{width:18px;height:18px;min-height:18px;margin-top:1px;}
 @media(max-width:620px){#dept-editor-modal .dept-checks{grid-template-columns:1fr;}#dept-editor-modal .form-row{grid-template-columns:1fr;}}
+/* Painel Administrativo Inteligente v58 */
+#app-screen .command-bar{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:18px 20px;margin-bottom:16px;border:1px solid #e5dcc9;border-radius:18px;background:linear-gradient(135deg,#fffdf8,#f6f1e7);box-shadow:0 14px 35px -30px rgba(7,25,79,.8)}
+#app-screen .command-filters{display:flex;gap:10px;align-items:end;flex-wrap:wrap}#app-screen .command-filters label{display:grid;gap:5px;font-size:10px;font-weight:900;letter-spacing:.09em;text-transform:uppercase;color:#71798d}#app-screen .command-filters select{min-width:155px;padding:10px 34px 10px 12px;border:1px solid #d9d2c4;border-radius:11px;background:#fff;color:#07194f;font-weight:700}
+#app-screen .command-updated{font-size:11px;color:#778096;text-align:right}#app-screen .command-updated strong{display:block;color:#27835a;font-size:12px;margin-bottom:3px}
+#app-screen .command-actions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:18px}#app-screen .command-action{display:flex;align-items:center;gap:10px;padding:14px 15px;border:1px solid #e4ddcf;border-radius:15px;background:#fff;color:#07194f;font-weight:800;text-align:left;cursor:pointer;transition:.2s}#app-screen .command-action:hover{translate:0 -2px;border-color:#d6ad45;box-shadow:0 14px 28px -24px #07194f}#app-screen .command-action svg{width:19px;height:19px;color:#af831c;flex:none}
+#app-screen .smart-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:16px}#app-screen .smart-metric{position:relative;overflow:hidden;min-height:148px;padding:20px;border:1px solid #e5dfd3;border-radius:19px;background:#fff;box-shadow:0 15px 35px -30px rgba(7,25,79,.8);cursor:pointer}#app-screen .smart-metric::after{content:"";position:absolute;width:92px;height:92px;border-radius:50%;right:-35px;top:-35px;background:var(--metric-soft,#edf2ff)}#app-screen .smart-metric .metric-label{color:#6c758b;font-size:11px;font-weight:850;letter-spacing:.08em;text-transform:uppercase}#app-screen .smart-metric .metric-value{display:block;margin:14px 0 5px;color:#07194f;font-size:clamp(25px,3vw,36px);font-weight:900;letter-spacing:-.04em}#app-screen .smart-metric .metric-detail{color:#737c90;font-size:11px;line-height:1.4}#app-screen .smart-metric.loading .metric-value{width:65%;height:33px;border-radius:8px;background:linear-gradient(90deg,#edf0f5,#f8f9fb,#edf0f5);background-size:200% 100%;animation:dashload 1.2s infinite;color:transparent}@keyframes dashload{to{background-position:-200% 0}}
+#app-screen .smart-grid{display:grid;grid-template-columns:1.12fr .88fr;gap:14px;margin-bottom:18px}#app-screen .smart-panel{padding:22px;border:1px solid #e5dfd3;border-radius:20px;background:#fff;box-shadow:0 16px 38px -32px rgba(7,25,79,.85)}#app-screen .smart-panel-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}#app-screen .smart-panel-head h3{margin:0;color:#07194f;font-size:17px}#app-screen .smart-panel-link{border:0;background:none;color:#9b7419;font-size:12px;font-weight:850;cursor:pointer}#app-screen .smart-list{display:grid;gap:8px}#app-screen .smart-row{display:grid;grid-template-columns:9px minmax(0,1fr) auto;align-items:center;gap:11px;padding:11px 0;border-top:1px solid #f0ece4}#app-screen .smart-row:first-child{border-top:0}#app-screen .smart-row-dot{width:8px;height:8px;border-radius:50%;background:#2f66c9}#app-screen .smart-row-dot.gold{background:#d6ad45}#app-screen .smart-row-dot.red{background:#bd2632}#app-screen .smart-row-title{display:block;color:#17213d;font-size:13px;font-weight:800}#app-screen .smart-row-meta{display:block;margin-top:2px;color:#7a8293;font-size:11px}#app-screen .smart-row-time{color:#687086;font-size:11px;text-align:right}#app-screen .smart-empty,#app-screen .smart-error{padding:18px;border:1px dashed #ddd5c6;border-radius:13px;text-align:center;color:#737c90;font-size:12px}#app-screen .smart-error{border-color:#e8c7ca;color:#a12631;background:#fff8f8}
+@media(max-width:1080px){#app-screen .command-actions,#app-screen .smart-metrics{grid-template-columns:1fr 1fr}}
+@media(max-width:760px){#app-screen .command-bar{align-items:stretch;flex-direction:column}#app-screen .command-updated{text-align:left}#app-screen .command-filters{display:grid;grid-template-columns:1fr 1fr}#app-screen .command-filters select{min-width:0;width:100%}#app-screen .smart-grid{grid-template-columns:1fr}}
+@media(max-width:520px){#app-screen .command-actions,#app-screen .smart-metrics,#app-screen .command-filters{grid-template-columns:1fr}#app-screen .command-action{padding:12px}#app-screen .smart-metric{min-height:126px}}
 </style>
 </head>
 <body>
@@ -2171,7 +2181,10 @@ function renderModule(){
   if(currentModule==='eventos'){ el.innerHTML = permPode('eventos')?viewEventos():viewLocked('Eventos'); return; }
   if(currentModule==='dashboard'){
     el.innerHTML=((session.tipo==='membro'||session.tipo==='consulta')?viewMemberHome():viewDashboard());
-    if(session.tipo!=='membro'&&session.tipo!=='consulta')setTimeout(carregarCentralPendencias,0);
+    if(session.tipo!=='membro'&&session.tipo!=='consulta'){
+      setTimeout(carregarDashboardInteligente,0);
+      setTimeout(carregarCentralPendencias,0);
+    }
     return;
   }
   if(currentModule==='aniversariantes'){
@@ -2539,6 +2552,47 @@ function viewMemberHome(){
  return viewChurchHome();
 }
 
+let dashboardRefreshTimer=null;
+function dashboardV58Shell(){
+  const departamentos=DEPARTMENTS.filter(d=>!d.restrito||canAccessDept(d.id));
+  return `<section aria-label="Central de comando">
+    <div class="command-bar"><div class="command-filters"><label>Período<select id="dashboard-periodo" onchange="carregarDashboardInteligente()"><option value="30">Últimos 30 dias</option><option value="90">Últimos 90 dias</option><option value="365">Último ano</option><option value="todos">Todo o período</option></select></label><label>Departamento<select id="dashboard-departamento" onchange="carregarDashboardInteligente()"><option value="todos">Todos os departamentos</option>${departamentos.map(d=>`<option value="${admsEsc(d.id)}">${admsEsc(d.nome)}</option>`).join('')}</select></label></div><div class="command-updated" id="dashboard-updated"><strong>● Painel ativo</strong>A preparar os indicadores…</div></div>
+    <div class="command-actions">
+      ${canAccessFinanceiro()?`<button class="command-action" onclick="goTo('financeiro')">${ICON.financeiro}<span>Novo lançamento</span></button>`:''}
+      ${canAccessRH()?`<button class="command-action" onclick="goTo('rh')">${ICON.rh}<span>Cadastrar pessoa</span></button>`:''}
+      <button class="command-action" onclick="goTo('eventos')">${ICON.events}<span>Agendar evento</span></button>
+      ${permPode('site-publico')?`<button class="command-action" onclick="goTo('site-publico')">${ICON.megaphone}<span>Publicar conteúdo</span></button>`:''}
+    </div>
+    <div class="smart-metrics" id="dashboard-smart-metrics">${[1,2,3,4].map(()=>'<article class="smart-metric loading"><span class="metric-label">A carregar</span><strong class="metric-value">0000</strong><span class="metric-detail">A consultar dados seguros</span></article>').join('')}</div>
+    <div class="smart-grid"><article class="smart-panel"><div class="smart-panel-head"><h3>Próximos compromissos</h3><button class="smart-panel-link" onclick="goTo('eventos')">Abrir agenda →</button></div><div class="smart-list" id="dashboard-events-list"><div class="smart-empty">A carregar agenda…</div></div></article><article class="smart-panel"><div class="smart-panel-head"><h3>Aniversários nos próximos 7 dias</h3><button class="smart-panel-link" onclick="goTo('aniversariantes')">Ver aniversariantes →</button></div><div class="smart-list" id="dashboard-birthdays-list"><div class="smart-empty">A consultar cadastros…</div></div></article></div>
+    <article class="smart-panel" style="margin-bottom:18px"><div class="smart-panel-head"><h3>Situação operacional</h3><button class="smart-panel-link" onclick="carregarDashboardInteligente(true)">Atualizar agora ↻</button></div><div class="smart-list" id="dashboard-operational-list"><div class="smart-empty">A reunir informações…</div></div></article>
+  </section>`;
+}
+function dashboardDataLancamento(value){const s=String(value||'');if(/^\d{2}\/\d{2}\/\d{4}$/.test(s)){const[d,m,y]=s.split('/');return new Date(`${y}-${m}-${d}T12:00:00`)}const d=new Date(s);return Number.isNaN(d.getTime())?null:d}
+function dashboardAniversariosSemana(){const hoje=new Date();hoje.setHours(0,0,0,0);return PESSOAS.membros.map(p=>{const n=aniversarioPartes(p);if(!n)return null;let data=new Date(hoje.getFullYear(),n.mes-1,n.dia);if(data<hoje)data=new Date(hoje.getFullYear()+1,n.mes-1,n.dia);const dias=Math.round((data-hoje)/86400000);return dias<=7?{nome:p.nome,data,dias}:null}).filter(Boolean).sort((a,b)=>a.data-b.data)}
+function dashboardResultado(resultado,fallback=0){return resultado?.status==='fulfilled'&&!resultado.value?.error?(resultado.value.count??resultado.value.data?.length??fallback):fallback}
+async function carregarDashboardInteligente(manual=false){
+  const metrics=document.getElementById('dashboard-smart-metrics');if(!metrics||currentModule!=='dashboard')return;
+  clearTimeout(dashboardRefreshTimer);
+  const periodo=document.getElementById('dashboard-periodo')?.value||'30',dept=document.getElementById('dashboard-departamento')?.value||'todos',limite=periodo==='todos'?null:new Date(Date.now()-Number(periodo)*86400000);
+  const lancamentos=FINANCEIRO.lancamentos.filter(l=>(dept==='todos'||l.departamento===dept)&&(!limite||((dashboardDataLancamento(l.data)||new Date(0))>=limite))),saldo=lancamentos.reduce((s,l)=>s+(l.tipo==='Entrada'?1:-1)*parseValorEuro(l.valor),0),entradas=lancamentos.filter(l=>l.tipo==='Entrada').reduce((s,l)=>s+parseValorEuro(l.valor),0),saidas=lancamentos.filter(l=>l.tipo==='Saída').reduce((s,l)=>s+parseValorEuro(l.valor),0);
+  const tarefas=[
+    canAccessPrayerRequests()?admsSupabase.from('pedidos_oracao').select('id',{count:'exact',head:true}).eq('status','novo'):Promise.resolve({count:0}),
+    isMaster()?admsSupabase.from('novos_contactos').select('id',{count:'exact',head:true}).eq('status','novo'):Promise.resolve({count:0}),
+    permPode('site-publico')?admsSupabase.from('site_conteudos').select('id',{count:'exact',head:true}).eq('status','rascunho'):Promise.resolve({count:0}),
+    admsSupabase.from('notificacoes_internas').select('id',{count:'exact',head:true}).eq('lida',false)
+  ];
+  const resultados=await Promise.allSettled(tarefas),oracoes=dashboardResultado(resultados[0]),contactos=dashboardResultado(resultados[1]),rascunhos=dashboardResultado(resultados[2]),notificacoes=dashboardResultado(resultados[3]),falhas=resultados.filter(r=>r.status==='rejected'||r.value?.error).length,vencidas=canAccessFinanceiro()?CONTAS_PAGAR.filter(c=>statusConta(c)==='Atrasado').length+CONTAS_RECEBER.filter(c=>statusConta(c)==='Atrasado').length:0,pessoas=PESSOAS.membros.length+PESSOAS.congregados.length+PESSOAS.visitantes.length,atencao=oracoes+contactos+vencidas+notificacoes;
+  const pessoasCard=canAccessRH()?`<article class="smart-metric" style="--metric-soft:#e4f5ec" onclick="goTo('rh')"><span class="metric-label">Pessoas acompanhadas</span><strong class="metric-value">${pessoas}</strong><span class="metric-detail">${PESSOAS.membros.length} membros · ${PESSOAS.visitantes.length} visitantes</span></article>`:`<article class="smart-metric" style="--metric-soft:#f0edf5"><span class="metric-label">Pessoas</span><strong class="metric-value" style="font-size:23px">Restrito</strong><span class="metric-detail">Disponível aos perfis autorizados</span></article>`;
+  const conteudoCard=permPode('site-publico')?`<article class="smart-metric" style="--metric-soft:#fbf1dc" onclick="goTo('site-publico')"><span class="metric-label">Conteúdo editorial</span><strong class="metric-value">${rascunhos}</strong><span class="metric-detail">rascunho(s) à espera de publicação</span></article>`:`<article class="smart-metric" style="--metric-soft:#f0edf5"><span class="metric-label">Conteúdo editorial</span><strong class="metric-value" style="font-size:23px">Restrito</strong><span class="metric-detail">Disponível aos perfis autorizados</span></article>`;
+  metrics.innerHTML=`${canAccessFinanceiro()?`<article class="smart-metric" style="--metric-soft:#e7ecfb" onclick="goTo('financeiro')"><span class="metric-label">Saldo do período</span><strong class="metric-value">${formatEuro(saldo)}</strong><span class="metric-detail">${formatEuro(entradas)} entradas · ${formatEuro(saidas)} saídas</span></article>`:`<article class="smart-metric" style="--metric-soft:#f0edf5"><span class="metric-label">Financeiro</span><strong class="metric-value" style="font-size:23px">Restrito</strong><span class="metric-detail">Disponível aos perfis autorizados</span></article>`}${pessoasCard}<article class="smart-metric" style="--metric-soft:#fbe7e9" onclick="goTo('notificacoes')"><span class="metric-label">Requerem atenção</span><strong class="metric-value">${atencao}</strong><span class="metric-detail">${oracoes} orações · ${vencidas} contas vencidas · ${notificacoes} notificações</span></article>${conteudoCard}`;
+  const hoje=new Date();hoje.setHours(0,0,0,0);const eventos=EVENTOS.filter(e=>{const d=new Date(`${e.data}T12:00:00`);return d>=hoje&&(dept==='todos'||e.deptId===dept||e.departamento===dept)}).sort((a,b)=>a.data.localeCompare(b.data)).slice(0,6),eventHost=document.getElementById('dashboard-events-list');if(eventHost)eventHost.innerHTML=eventos.length?eventos.map(e=>`<div class="smart-row"><span class="smart-row-dot"></span><span><span class="smart-row-title">${admsEsc(e.titulo)}</span><span class="smart-row-meta">${admsEsc(e.local||deptNome(e.deptId||e.departamento)||'ADMS Braga')}</span></span><span class="smart-row-time">${formatDate(e.data)}${e.hora?' · '+admsEsc(e.hora):''}</span></div>`).join(''):'<div class="smart-empty">Nenhum evento futuro neste filtro.</div>';
+  const aniversarios=dashboardAniversariosSemana(),birthHost=document.getElementById('dashboard-birthdays-list');if(birthHost)birthHost.innerHTML=aniversarios.length?aniversarios.map(p=>`<div class="smart-row"><span class="smart-row-dot gold"></span><span><span class="smart-row-title">${admsEsc(p.nome)}</span><span class="smart-row-meta">${p.dias===0?'Aniversário hoje':p.dias===1?'Amanhã':`Dentro de ${p.dias} dias`}</span></span><span class="smart-row-time">${p.data.toLocaleDateString('pt-PT',{day:'2-digit',month:'short'})}</span></div>`).join(''):'<div class="smart-empty">Nenhum aniversário nos próximos sete dias.</div>';
+  const opHost=document.getElementById('dashboard-operational-list'),ops=[{n:oracoes,t:'Pedidos de oração novos',m:'pedidos-oracao',c:'red'},{n:contactos,t:'Novos contactos do site',m:'novos-contactos',c:'gold'},{n:vencidas,t:'Contas vencidas',m:'contas-pagar',c:'red'},{n:rascunhos,t:'Conteúdos em rascunho',m:'site-publico',c:'gold'}].filter(x=>x.n>0);if(opHost){const conteudo=ops.length?ops.map(x=>`<button class="pending-item" onclick="goTo('${x.m}')"><span class="pending-dot ${x.c==='red'?'high':'medium'}"></span><span><span class="pending-title">${admsEsc(x.t)}</span><span class="pending-detail">${x.n} item(ns) aguardando ação</span></span><span class="pending-time">Abrir →</span></button>`).join(''):'<div class="smart-empty">Tudo em ordem. Não existem alertas prioritários.</div>';opHost.innerHTML=conteudo+(falhas?`<div class="smart-error">${falhas} indicador(es) não puderam ser atualizados. Os restantes dados continuam disponíveis.</div>`:'')}
+  const updated=document.getElementById('dashboard-updated');if(updated)updated.innerHTML=`<strong>● ${falhas?'Atualização parcial':'Dados atualizados'}</strong>${new Date().toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'})}${manual?' · atualização manual':''}`;
+  dashboardRefreshTimer=setTimeout(()=>{if(currentModule==='dashboard')carregarDashboardInteligente()},60000);
+}
+
 function viewDashboard(){
   const saldoInfo = calcularSaldo();
   const financeCard = canAccessFinanceiro() ? `
@@ -2619,7 +2673,7 @@ function viewDashboard(){
       <span class="access-pill">${ICON.acesso} ${roleLabel()}</span>
     </div>
     ${ruleDivider()}
-    <div class="grid grid-4">${rhCard}${deptCard}${patrimonioCard}${financeCard}</div>
+    ${dashboardV58Shell()}
     ${securityCard}
     <div id="central-pendencias"><div class="card pending-center"><div class="pending-empty">A organizar as pendências...</div></div></div>
 
@@ -5846,7 +5900,7 @@ async function handleLogout(){
   await admsSupabase.auth.signOut();
   session=null; admsCloudProfile=null; pendingLoginKey=null; pendingLoginLeaderId=null; currentProfileRef=null;
   try{ localStorage.removeItem(SESSAO_KEY);localStorage.removeItem(ESTADO_KEY); }catch(e){}
-  location.replace('/sistema?v=57');
+  location.replace('/sistema?v=58');
 }
 
 admsSupabase?.auth.onAuthStateChange((event)=>{
