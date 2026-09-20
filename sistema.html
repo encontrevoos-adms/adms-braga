@@ -1973,6 +1973,10 @@ function handleLogout(){
    PERMISSÕES
 ========================================================= */
 function perfilPermissaoAtual(){
+  /* A Secretaria é uma conta administrativa Master. A normalização também
+     protege instalações antigas onde o perfil ainda esteja gravado como
+     "secretaria" no Supabase. */
+  if(session?.tipo==='secretaria' || session?.entityKey==='master_secretaria') return 'master';
   if(admsCloudProfile?.role) return admsCloudProfile.role;
   return ({pastor:'pastor',tesoureiro:'tesouraria',secretaria:'secretaria',lider:'lider',membro:'consulta',consulta:'consulta'})[session?.tipo]||'consulta';
 }
@@ -1992,6 +1996,7 @@ function permissaoFallback(perfil,modulo,acao){
   return acao==='visualizar' && ['departamentos','eventos','escalas','avisos'].includes(modulo);
 }
 function permPode(modulo,acao='visualizar',perfil=perfilPermissaoAtual()){
+  if(perfil==='master') return true;
   if(permissaoBloqueada(perfil,modulo)) return false;
   const regra=PERMISSOES_PERFIS.find(p=>p.perfil===perfil && p.modulo===modulo);
   return regra ? regra[acao]===true : permissaoFallback(perfil,modulo,acao);
@@ -5900,7 +5905,7 @@ async function handleLogout(){
   await admsSupabase.auth.signOut();
   session=null; admsCloudProfile=null; pendingLoginKey=null; pendingLoginLeaderId=null; currentProfileRef=null;
   try{ localStorage.removeItem(SESSAO_KEY);localStorage.removeItem(ESTADO_KEY); }catch(e){}
-  location.replace('/sistema?v=58');
+  location.replace('/sistema?v=59');
 }
 
 admsSupabase?.auth.onAuthStateChange((event)=>{

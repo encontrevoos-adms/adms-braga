@@ -1,0 +1,36 @@
+ADMS BRAGA — VERSÃO 59
+========================
+
+ALTERAÇÃO DE ACESSO
+-------------------
+A conta da Secretaria passa a ser reconhecida como Usuário Master.
+
+Isso garante acesso integral ao departamento Pastoral, incluindo:
+- visualização dos dados confidenciais;
+- inclusão de informações;
+- alteração de registos;
+- arquivo ou remoção, quando a rotina disponibilizar essa ação;
+- gestão de pedidos de oração e acompanhamento pastoral;
+- administração dos dados e da liderança do departamento.
+
+ATUALIZAÇÃO DO SUPABASE
+-----------------------
+Antes de testar a versão, abra o SQL Editor do Supabase e execute integralmente:
+
+supabase/migrations/202609200001_secretaria_master_v59.sql
+
+O comando atualiza perfis antigos da Secretaria para o papel Master. A interface
+também possui compatibilidade para reconhecer imediatamente a Secretaria como
+Master, mesmo durante a transição.
+
+PUBLICAÇÃO
+----------
+1. Execute o SQL acima no Supabase.
+2. Envie todos os ficheiros e pastas deste pacote para a raiz do GitHub.
+3. Confirme o commit no ramo main.
+4. Aguarde o deployment da Vercel.
+5. Termine a sessão e entre novamente como Secretaria.
+
+VERSÃO
+------
+v59 — Secretaria como Usuário Master
