@@ -1,0 +1,25 @@
+ADMS BRAGA — VERSÃO 61
+========================
+
+ESCALAS MINISTERIAIS — SEGUNDA FASE
+-----------------------------------
+- Painel com escalas ativas, confirmações, pendências e indisponibilidades.
+- Registo antecipado de indisponibilidade por participante e período.
+- Alerta automático ao tentar escalar uma pessoa indisponível.
+- Repertório por escala para Louvor e Dança.
+- Cada música pode conter título, tom e link de YouTube, Deezer ou Cifra Club.
+- Partilha nativa da escala no telemóvel ou cópia do texto no computador.
+- Versão própria para impressão.
+- Informações incluídas no histórico e na persistência partilhada do Supabase.
+
+ATUALIZAÇÃO
+-----------
+Esta etapa não exige um novo SQL. É necessário que o SQL da versão 60 já tenha
+sido executado.
+
+Envie todos os ficheiros deste pacote para a raiz do GitHub, aguarde o novo
+deployment da Vercel e atualize o navegador sem utilizar a cache.
+
+VERSÃO
+------
+v61 — Indisponibilidades, repertório e partilha de escalas

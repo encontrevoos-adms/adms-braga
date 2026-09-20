@@ -542,7 +542,7 @@ function admsEstadoCloudSnapshot(){
     contas:{pagar:CONTAS_PAGAR||[], receber:CONTAS_RECEBER||[]},
     recibos:{itens:RECIBOS||[]},
     fornecedores:{manuais:FORNECEDORES_MANUAIS||[]},
-    escalas:{itens:ESCALAS||{}},
+    escalas:{itens:ESCALAS||{},indisponibilidades:ESCALA_INDISPONIBILIDADES||[]},
     avisos:{itens:AVISOS||[]},
     patrimonio:{itens:PATRIMONIO||[]},
     orcamentos:{itens:ORCAMENTOS||[]},
@@ -561,7 +561,7 @@ function admsAplicarModuloCloud(key,p){
     case 'contas': CONTAS_PAGAR=p.pagar||[]; CONTAS_RECEBER=p.receber||[]; break;
     case 'recibos': RECIBOS=p.itens||[]; break;
     case 'fornecedores': FORNECEDORES_MANUAIS=p.manuais||[]; break;
-    case 'escalas': ESCALAS=p.itens||{}; break;
+    case 'escalas': ESCALAS=p.itens||{}; ESCALA_INDISPONIBILIDADES=p.indisponibilidades||[]; break;
     case 'avisos': AVISOS=p.itens||[]; break;
     case 'patrimonio': PATRIMONIO.length=0; PATRIMONIO.push(...(p.itens||[])); break;
     case 'orcamentos': ORCAMENTOS=p.itens||[]; break;
@@ -1347,6 +1347,7 @@ function entityLabel(key){
 
 // escalas de serviço por departamento — sem dados de demonstração
 let ESCALAS = {};
+let ESCALA_INDISPONIBILIDADES = [];
 ESCALA_DEPTS.forEach(id=>{ ESCALAS[id] = []; });
 
 // avisos e comunicados internos — sem dados de demonstração
@@ -1484,7 +1485,7 @@ function salvarEstado(modulosCloud=null){
   try{
     const estado = {
       v:1, guardadoEm: new Date().toISOString(),
-      MASTERS, LEADERS, AUTH, ESCALAS, AVISOS, AUDIT_LOG,
+      MASTERS, LEADERS, AUTH, ESCALAS, ESCALA_INDISPONIBILIDADES, AVISOS, AUDIT_LOG,
       PATRIMONIO, PESSOAS, FINANCEIRO, RECIBOS, CONTAS_PAGAR, CONTAS_RECEBER, FORNECEDORES_MANUAIS, ORCAMENTOS, CELULAS, KIDS_CRIANCAS, KIDS_CHECKINS, EBD_TURMAS, EVENTOS,
       DEPARTMENTS_MEMBROS: DEPARTMENTS.map(d=>({id:d.id, membros:d.membros}))
     };
@@ -1518,6 +1519,7 @@ function aplicarEstado(estado){
   }
   if(estado.AUTH) AUTH = estado.AUTH;
   if(estado.ESCALAS) ESCALAS = estado.ESCALAS;
+  if(estado.ESCALA_INDISPONIBILIDADES) ESCALA_INDISPONIBILIDADES = estado.ESCALA_INDISPONIBILIDADES;
   if(estado.AVISOS) AVISOS = estado.AVISOS;
   if(estado.AUDIT_LOG) AUDIT_LOG = estado.AUDIT_LOG;
   if(estado.RECIBOS) RECIBOS = estado.RECIBOS;
@@ -4885,6 +4887,8 @@ function viewEscalas(){
   const todas=(ESCALAS[currentEscalaDept]||[]),lista=todas.filter(e=>ESCALA_MOSTRAR_ARQUIVADAS?e.arquivada:!e.arquivada).slice().sort((a,b)=>(a.data||'').localeCompare(b.data||''));
   const editando=ESCALA_EDITANDO_ID?todas.find(e=>e.id===ESCALA_EDITANDO_ID):null;
   const podeEditar=permPode('escalas','editar')||permPode('escalas','inserir');
+  const ativas=todas.filter(e=>!e.arquivada),respostas=ativas.flatMap(e=>Object.values(e.confirmacoes||{})),confirmados=respostas.filter(x=>x==='confirmado').length,pendentes=respostas.filter(x=>x==='pendente').length,indisponiveis=respostas.filter(x=>x==='indisponivel').length;
+  const bloqueios=ESCALA_INDISPONIBILIDADES.filter(x=>x.departamento===currentEscalaDept);
   return `
     <div class="topbar">
       <div><div class="breadcrumb">Departamentos</div><h1>Escalas de Serviço</h1></div>
@@ -4894,12 +4898,13 @@ function viewEscalas(){
     <div class="tabs">
       ${depts.map(id=>`<div class="tab ${id===currentEscalaDept?'active':''}" onclick="setEscalaDept('${id}')">${deptNome(id)}</div>`).join('')}
     </div>
+    <div class="grid grid-4" style="margin-bottom:16px"><div class="card stat-card"><div class="num">${ativas.length}</div><div class="label">Escalas ativas</div></div><div class="card stat-card"><div class="num" style="color:var(--ok)">${confirmados}</div><div class="label">Confirmações</div></div><div class="card stat-card"><div class="num" style="color:#9b771c">${pendentes}</div><div class="label">Pendentes</div></div><div class="card stat-card"><div class="num" style="color:var(--red-dark)">${indisponiveis}</div><div class="label">Indisponíveis</div></div></div>
     <div class="card">
       <h3 style="margin-top:0; color:var(--royal-deep); font-size:16px;">${d.nome}</h3>
       ${lista.length? lista.map(e=>`
         <div class="event-card" style="margin-bottom:16px;align-items:flex-start;${e.arquivada?'opacity:.72':''}">
           <div class="event-date"><div class="d">${e.data.split('-')[2]}</div><div class="m">${mesAbrev(e.data)}</div></div>
-          <div class="event-info" style="flex:1"><h3>${admsEsc(e.evento)} ${e.status&&e.status!=='publicada'?`<span class="tag tag-gold">${admsEsc(e.status)}</span>`:''}</h3><div class="meta-row"><span>🕒 ${admsEsc(e.hora||'Horário não definido')}</span><span>👥 ${(e.pessoas||[]).length} pessoa(s)</span></div>${e.roteiro?`<p style="margin:8px 0;color:var(--ink-soft)">${admsEsc(e.roteiro)}</p>`:''}<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:9px">${(e.pessoas||[]).map(nome=>{const c=e.confirmacoes?.[nome]||'pendente',nomeSeguro=encodeURIComponent(nome).replace(/'/g,'%27');return `<button class="tag ${c==='confirmado'?'tag-green':c==='indisponivel'?'tag-red':'tag-gold'}" style="border:0;cursor:${podeEditar?'pointer':'default'}" ${podeEditar?`onclick="ciclarConfirmacaoEscala('${e.id}',decodeURIComponent('${nomeSeguro}'))"`:''}>${admsEsc(nome)} · ${c}</button>`}).join('')}</div>${(e.funcoes||[]).length?`<div class="meta-row" style="margin-top:10px"><span>Funções: ${e.funcoes.map(f=>`${admsEsc(f.nome)} — ${admsEsc(f.funcao)}`).join(' · ')}</span></div>`:''}<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">${podeEditar&&!e.arquivada?`<button class="btn btn-outline" style="width:auto" onclick="editarEscala('${e.id}')">Editar</button><button class="btn btn-ghost" style="width:auto" onclick="duplicarEscala('${e.id}')">Duplicar</button><button class="btn btn-ghost" style="width:auto" onclick="arquivarEscala('${e.id}')">Arquivar</button>`:''}${podeEditar&&e.arquivada?`<button class="btn btn-outline" style="width:auto" onclick="restaurarEscala('${e.id}')">Restaurar</button>`:''}${(e.historico||[]).length?`<button class="btn btn-ghost" style="width:auto" onclick="verHistoricoEscala('${e.id}')">Histórico (${e.historico.length})</button>`:''}</div></div>
+          <div class="event-info" style="flex:1"><h3>${admsEsc(e.evento)} ${e.status&&e.status!=='publicada'?`<span class="tag tag-gold">${admsEsc(e.status)}</span>`:''}</h3><div class="meta-row"><span>🕒 ${admsEsc(e.hora||'Horário não definido')}</span><span>👥 ${(e.pessoas||[]).length} pessoa(s)</span></div>${e.roteiro?`<p style="margin:8px 0;color:var(--ink-soft)">${admsEsc(e.roteiro)}</p>`:''}<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:9px">${(e.pessoas||[]).map(nome=>{const c=e.confirmacoes?.[nome]||'pendente',nomeSeguro=encodeURIComponent(nome).replace(/'/g,'%27');return `<button class="tag ${c==='confirmado'?'tag-green':c==='indisponivel'?'tag-red':'tag-gold'}" style="border:0;cursor:${podeEditar?'pointer':'default'}" ${podeEditar?`onclick="ciclarConfirmacaoEscala('${e.id}',decodeURIComponent('${nomeSeguro}'))"`:''}>${admsEsc(nome)} · ${c}</button>`}).join('')}</div>${(e.funcoes||[]).length?`<div class="meta-row" style="margin-top:10px"><span>Funções: ${e.funcoes.map(f=>`${admsEsc(f.nome)} — ${admsEsc(f.funcao)}`).join(' · ')}</span></div>`:''}${(e.repertorio||[]).length?`<div style="margin-top:10px"><strong style="font-size:12px">Repertório</strong>${e.repertorio.map(m=>`<div class="meta-row"><span>♫ ${admsEsc(m.titulo)}${m.tom?' · Tom '+admsEsc(m.tom):''}</span>${admsUrlSegura(m.url)?`<a href="${admsEsc(admsUrlSegura(m.url))}" target="_blank" rel="noopener">Abrir referência ↗</a>`:''}</div>`).join('')}</div>`:''}<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><button class="btn btn-ghost" style="width:auto" onclick="partilharEscala('${e.id}')">Partilhar</button><button class="btn btn-ghost" style="width:auto" onclick="imprimirEscala('${e.id}')">Imprimir</button>${podeEditar&&!e.arquivada?`<button class="btn btn-outline" style="width:auto" onclick="editarEscala('${e.id}')">Editar</button><button class="btn btn-ghost" style="width:auto" onclick="duplicarEscala('${e.id}')">Duplicar</button><button class="btn btn-ghost" style="width:auto" onclick="arquivarEscala('${e.id}')">Arquivar</button>`:''}${podeEditar&&e.arquivada?`<button class="btn btn-outline" style="width:auto" onclick="restaurarEscala('${e.id}')">Restaurar</button>`:''}${(e.historico||[]).length?`<button class="btn btn-ghost" style="width:auto" onclick="verHistoricoEscala('${e.id}')">Histórico (${e.historico.length})</button>`:''}</div></div>
         </div>`).join('') : `<p style="color:var(--ink-soft); font-size:13px;">Ainda sem escalas registadas para este departamento.</p>`}
     </div>
     ${podeEditar?`<div class="section-title"><h2>${editando?'Corrigir escala':'Criar escala'}</h2></div>
@@ -4911,15 +4916,16 @@ function viewEscalas(){
       <div class="form-row"><div><label>Evento / Turno</label><input id="esc-evento" value="${admsEsc(editando?.evento||'')}" placeholder="Ex: Culto de Domingo — Manhã"></div><div><label>Estado</label><select id="esc-status"><option value="rascunho" ${editando?.status==='rascunho'?'selected':''}>Rascunho</option><option value="publicada" ${!editando||editando?.status==='publicada'?'selected':''}>Publicada</option><option value="cancelada" ${editando?.status==='cancelada'?'selected':''}>Cancelada</option></select></div></div>
       <div><label>Pessoas escaladas (separadas por vírgula)</label><input id="esc-pessoas" value="${admsEsc((editando?.pessoas||[]).join(', '))}" placeholder="Ex: Nome A, Nome B"></div>
       <div class="form-row"><div><label>Funções (uma por linha: Nome | Função)</label><textarea id="esc-funcoes" rows="4" placeholder="Ana | Vocal&#10;João | Teclado">${admsEsc((editando?.funcoes||[]).map(f=>`${f.nome} | ${f.funcao}`).join('\n'))}</textarea></div><div><label>Roteiro / observações</label><textarea id="esc-roteiro" rows="4" placeholder="Ordem do culto, vestuário, ponto de encontro…">${admsEsc(editando?.roteiro||'')}</textarea></div></div>
+      ${['louvor','danca'].includes(currentEscalaDept)?`<div><label>Repertório (uma música por linha: Título | Tom | Link)</label><textarea id="esc-repertorio" rows="5" placeholder="Bondade de Deus | G | https://youtube.com/…">${admsEsc((editando?.repertorio||[]).map(m=>`${m.titulo} | ${m.tom||''} | ${m.url||''}`).join('\n'))}</textarea></div>`:'<textarea id="esc-repertorio" hidden></textarea>'}
       ${!editando?`<div class="form-row"><div><label>Repetição</label><select id="esc-repeticao"><option value="nenhuma">Não repetir</option><option value="semanal">Semanal</option><option value="quinzenal">Quinzenal</option><option value="mensal">Mensal</option></select></div><div><label>Quantidade de escalas</label><input id="esc-quantidade" type="number" min="1" max="24" value="1"></div></div>`:''}
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px"><button class="btn btn-primary" style="width:auto" onclick="salvarEscalaCompleta()">${editando?'Guardar correção':'Criar escala'}</button>${editando?'<button class="btn btn-outline" style="width:auto" onclick="cancelarEdicaoEscala()">Cancelar edição</button>':''}</div>
-    </div>`:''}
+    </div><div class="section-title"><h2>Indisponibilidades</h2></div><div class="card"><div class="form-row"><div><label>Nome</label><input id="ind-nome" placeholder="Nome do participante"></div><div><label>Motivo</label><input id="ind-motivo" placeholder="Férias, trabalho, saúde…"></div></div><div class="form-row"><div><label>De</label><input id="ind-inicio" type="date"></div><div><label>Até</label><input id="ind-fim" type="date"></div></div><button class="btn btn-primary" style="width:auto" onclick="adicionarIndisponibilidade()">Registar indisponibilidade</button><div style="margin-top:15px">${bloqueios.map(x=>`<div class="feed-item"><div class="feed-dot" style="background:var(--red)"></div><div style="flex:1"><div class="txt"><strong>${admsEsc(x.nome)}</strong> · ${formatDate(x.inicio)} a ${formatDate(x.fim)}</div><div class="time">${admsEsc(x.motivo||'Sem motivo informado')}</div></div><button class="btn btn-ghost" style="width:auto" onclick="removerIndisponibilidade('${x.id}')">Remover</button></div>`).join('')||'<p style="color:var(--ink-soft);font-size:13px">Nenhuma indisponibilidade registada.</p>'}</div></div>`:''}
   `;
 }
 function setEscalaDept(id){currentEscalaDept=id;ESCALA_EDITANDO_ID=null;ESCALA_MOSTRAR_ARQUIVADAS=false;renderModule()}
 function alternarEscalasArquivadas(){ESCALA_MOSTRAR_ARQUIVADAS=!ESCALA_MOSTRAR_ARQUIVADAS;ESCALA_EDITANDO_ID=null;renderModule()}
 function escalaAtualPorId(id){return (ESCALAS[currentEscalaDept]||[]).find(e=>e.id===id)}
-function snapshotEscala(e){return {data:e.data,hora:e.hora||'',evento:e.evento,pessoas:[...(e.pessoas||[])],funcoes:(e.funcoes||[]).map(x=>({...x})),roteiro:e.roteiro||'',status:e.status||'publicada',arquivada:!!e.arquivada}}
+function snapshotEscala(e){return {data:e.data,hora:e.hora||'',evento:e.evento,pessoas:[...(e.pessoas||[])],funcoes:(e.funcoes||[]).map(x=>({...x})),repertorio:(e.repertorio||[]).map(x=>({...x})),roteiro:e.roteiro||'',status:e.status||'publicada',arquivada:!!e.arquivada}}
 function registarHistoricoEscala(e,acao,antes=null){e.historico=e.historico||[];e.historico.unshift({id:'h'+Date.now(),acao,quando:new Date().toISOString(),por:session?.label||'Sistema',antes,depois:snapshotEscala(e)});e.atualizadoEm=new Date().toISOString();e.atualizadoPor=session?.label||'Sistema'}
 function editarEscala(id){if(!exigirPermissao('escalas','editar'))return;ESCALA_EDITANDO_ID=id;ESCALA_MOSTRAR_ARQUIVADAS=false;renderModule();setTimeout(()=>document.getElementById('esc-data')?.scrollIntoView({behavior:'smooth',block:'center'}),50)}
 function cancelarEdicaoEscala(){ESCALA_EDITANDO_ID=null;renderModule()}
@@ -4929,9 +4935,15 @@ function restaurarEscala(id){if(!exigirPermissao('escalas','editar'))return;cons
 function ciclarConfirmacaoEscala(id,nome){if(!exigirPermissao('escalas','editar'))return;const e=escalaAtualPorId(id);if(!e)return;e.confirmacoes=e.confirmacoes||{};const ciclo={pendente:'confirmado',confirmado:'indisponivel',indisponivel:'pendente'};e.confirmacoes[nome]=ciclo[e.confirmacoes[nome]||'pendente'];registarHistoricoEscala(e,`Confirmação de ${nome}: ${e.confirmacoes[nome]}`);salvarEstado(['escalas']);renderModule()}
 function verHistoricoEscala(id){const e=escalaAtualPorId(id);if(!e)return;const texto=(e.historico||[]).map(h=>`${new Date(h.quando).toLocaleString('pt-PT')} — ${h.acao} — ${h.por}`).join('\n');alert(texto||'Esta escala ainda não possui alterações registadas.')}
 function somarDataEscala(data,tipo,passos){const d=new Date(`${data}T12:00:00`);if(tipo==='semanal')d.setDate(d.getDate()+7*passos);if(tipo==='quinzenal')d.setDate(d.getDate()+14*passos);if(tipo==='mensal')d.setMonth(d.getMonth()+passos);return d.toISOString().slice(0,10)}
+function textoEscala(e){return `${deptNome(currentEscalaDept)}\n${e.evento}\n${formatDate(e.data)}${e.hora?' · '+e.hora:''}\n\nEquipe:\n${(e.pessoas||[]).map(n=>`• ${n} — ${e.confirmacoes?.[n]||'pendente'}`).join('\n')}${(e.funcoes||[]).length?'\n\nFunções:\n'+e.funcoes.map(f=>`• ${f.nome}: ${f.funcao}`).join('\n'):''}${(e.repertorio||[]).length?'\n\nRepertório:\n'+e.repertorio.map(m=>`• ${m.titulo}${m.tom?' — Tom '+m.tom:''}${m.url?' — '+m.url:''}`).join('\n'):''}${e.roteiro?'\n\nObservações:\n'+e.roteiro:''}\n\nADMS Braga`}
+async function partilharEscala(id){const e=escalaAtualPorId(id);if(!e)return;const text=textoEscala(e);try{if(navigator.share)await navigator.share({title:`Escala — ${e.evento}`,text});else{await navigator.clipboard.writeText(text);showToast('Escala copiada para partilhar.')}}catch(err){if(err.name!=='AbortError')showToast('Não foi possível partilhar agora.')}}
+function imprimirEscala(id){const e=escalaAtualPorId(id);if(!e)return;const w=window.open('','_blank','width=860,height=720');if(!w)return showToast('Permita janelas pop-up para imprimir.');w.document.write(`<title>Escala — ${admsEsc(e.evento)}</title><style>body{font:15px Arial;color:#111b38;padding:36px;line-height:1.55}h1,h2{font-family:Georgia;color:#07194f}.cab{border-bottom:4px solid #d9b23d;padding-bottom:14px}li{margin:7px 0}.estado{color:#6b7280}</style><div class="cab"><h1>${admsEsc(e.evento)}</h1><p><b>${admsEsc(deptNome(currentEscalaDept))}</b> · ${admsEsc(formatDate(e.data))}${e.hora?' · '+admsEsc(e.hora):''}</p></div><h2>Equipe</h2><ul>${(e.pessoas||[]).map(n=>`<li>${admsEsc(n)} <span class="estado">— ${admsEsc(e.confirmacoes?.[n]||'pendente')}</span></li>`).join('')}</ul>${(e.funcoes||[]).length?`<h2>Funções</h2><ul>${e.funcoes.map(f=>`<li>${admsEsc(f.nome)} — ${admsEsc(f.funcao)}</li>`).join('')}</ul>`:''}${(e.repertorio||[]).length?`<h2>Repertório</h2><ol>${e.repertorio.map(m=>`<li>${admsEsc(m.titulo)}${m.tom?' — Tom '+admsEsc(m.tom):''}</li>`).join('')}</ol>`:''}${e.roteiro?`<h2>Roteiro / observações</h2><p>${admsEsc(e.roteiro)}</p>`:''}`);w.document.close();setTimeout(()=>w.print(),250)}
+function adicionarIndisponibilidade(){if(!exigirPermissao('escalas','editar'))return;const nome=document.getElementById('ind-nome').value.trim(),motivo=document.getElementById('ind-motivo').value.trim(),inicio=document.getElementById('ind-inicio').value,fim=document.getElementById('ind-fim').value;if(!nome||!inicio||!fim||fim<inicio)return showToast('Preencha corretamente o nome e o período.');ESCALA_INDISPONIBILIDADES.push({id:'ind'+Date.now(),departamento:currentEscalaDept,nome,motivo,inicio,fim,criadoPor:session?.label||''});logAction('sistema','Indisponibilidade registada',`${deptNome(currentEscalaDept)} — ${nome} · ${formatDate(inicio)} a ${formatDate(fim)}`);salvarEstado(['escalas']);showToast('Indisponibilidade registada.');renderModule()}
+function removerIndisponibilidade(id){if(!exigirPermissao('escalas','editar'))return;if(!confirm('Remover esta indisponibilidade?'))return;ESCALA_INDISPONIBILIDADES=ESCALA_INDISPONIBILIDADES.filter(x=>x.id!==id);salvarEstado(['escalas']);showToast('Indisponibilidade removida.');renderModule()}
 
 function detectarConflitosEscala(data, pessoasLista, deptAtual){
   const avisos = [];
+  ESCALA_INDISPONIBILIDADES.filter(x=>x.departamento===deptAtual&&data>=x.inicio&&data<=x.fim&&pessoasLista.includes(x.nome)).forEach(x=>avisos.push(`⛔ ${x.nome} registou indisponibilidade nesta data${x.motivo?' ('+x.motivo+')':''}.`));
   // conflito: a mesma pessoa já está escalada noutro departamento na mesma data
   ESCALA_DEPTS.forEach(deptId=>{
     if(deptId===deptAtual) return;
@@ -4977,19 +4989,19 @@ function salvarEscalaCompleta(){
   }
 
   const funcoes=document.getElementById('esc-funcoes').value.split('\n').map(l=>l.split('|').map(x=>x.trim())).filter(x=>x[0]&&x[1]).map(([nome,funcao])=>({nome,funcao}));
-  const roteiro=document.getElementById('esc-roteiro').value.trim(),status=document.getElementById('esc-status').value;
+  const roteiro=document.getElementById('esc-roteiro').value.trim(),status=document.getElementById('esc-status').value,repertorio=(document.getElementById('esc-repertorio')?.value||'').split('\n').map(l=>l.split('|').map(x=>x.trim())).filter(x=>x[0]).map(([titulo,tom,url])=>({titulo,tom:tom||'',url:admsUrlSegura(url||'')}));
   if(!ESCALAS[currentEscalaDept]) ESCALAS[currentEscalaDept] = [];
   if(ESCALA_EDITANDO_ID){
     const e=escalaAtualPorId(ESCALA_EDITANDO_ID);if(!e)return;
     const antes=snapshotEscala(e),confirmacoes={};pessoasLista.forEach(n=>confirmacoes[n]=e.confirmacoes?.[n]||'pendente');
-    Object.assign(e,{data,hora,evento,pessoas:pessoasLista,funcoes,roteiro,status,confirmacoes});
+    Object.assign(e,{data,hora,evento,pessoas:pessoasLista,funcoes,repertorio,roteiro,status,confirmacoes});
     registarHistoricoEscala(e,'Escala corrigida',antes);
     logAction('sistema','Escala corrigida',`${deptNome(currentEscalaDept)} — ${formatDate(data)} · ${evento}`);
     ESCALA_EDITANDO_ID=null;
   }else{
     const repeticao=document.getElementById('esc-repeticao')?.value||'nenhuma',quantidade=Math.max(1,Math.min(24,Number(document.getElementById('esc-quantidade')?.value)||1));
     for(let i=0;i<quantidade;i++){
-      const item={id:'e'+Date.now()+i,data:somarDataEscala(data,repeticao,i),hora,evento,pessoas:[...pessoasLista],funcoes:funcoes.map(x=>({...x})),roteiro,status,confirmacoes:Object.fromEntries(pessoasLista.map(n=>[n,'pendente'])),arquivada:false,historico:[]};
+      const item={id:'e'+Date.now()+i,data:somarDataEscala(data,repeticao,i),hora,evento,pessoas:[...pessoasLista],funcoes:funcoes.map(x=>({...x})),repertorio:repertorio.map(x=>({...x})),roteiro,status,confirmacoes:Object.fromEntries(pessoasLista.map(n=>[n,'pendente'])),arquivada:false,historico:[]};
       registarHistoricoEscala(item,i?'Escala recorrente criada':'Escala criada');ESCALAS[currentEscalaDept].push(item);
     }
     logAction('sistema','Escala adicionada',`${deptNome(currentEscalaDept)} — ${formatDate(data)} · ${evento} · ${pessoasLista.join(', ')}`);
@@ -5941,7 +5953,7 @@ async function handleLogout(){
   await admsSupabase.auth.signOut();
   session=null; admsCloudProfile=null; pendingLoginKey=null; pendingLoginLeaderId=null; currentProfileRef=null;
   try{ localStorage.removeItem(SESSAO_KEY);localStorage.removeItem(ESTADO_KEY); }catch(e){}
-  location.replace('/sistema?v=60');
+  location.replace('/sistema?v=61');
 }
 
 admsSupabase?.auth.onAuthStateChange((event)=>{
