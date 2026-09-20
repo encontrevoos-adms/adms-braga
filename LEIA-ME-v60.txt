@@ -1,0 +1,49 @@
+ADMS BRAGA — VERSÃO 60
+========================
+
+ESCALAS MINISTERIAIS
+--------------------
+O módulo foi ampliado com base nas práticas observadas no Louve App, mantendo
+a identidade e a estrutura própria do portal ADMS Braga.
+
+Departamentos abrangidos:
+- Louvor
+- Dança
+- Jovens
+- Kids
+- Homens F
+- Mulheres V
+
+FUNCIONALIDADES DESTA ETAPA
+---------------------------
+- Criação e correção de escalas, inclusive depois da data do evento.
+- Horário, evento, participantes, funções, roteiro e estado da escala.
+- Estados: rascunho, publicada e cancelada.
+- Confirmação individual: pendente, confirmado ou indisponível.
+- Escalas recorrentes semanais, quinzenais ou mensais.
+- Duplicação de escala como rascunho.
+- Deteção de conflitos e repetição consecutiva de participantes.
+- Histórico de cada alteração, com data e responsável.
+- Arquivo recuperável: a escala não é apagada definitivamente.
+- Persistência no estado partilhado do Supabase.
+
+ATUALIZAÇÃO DO SUPABASE
+-----------------------
+Execute no SQL Editor:
+
+supabase/migrations/202609200002_escalas_ministeriais_v60.sql
+
+Depois envie todos os ficheiros deste pacote para a raiz do GitHub e aguarde o
+deployment da Vercel.
+
+PRÓXIMAS FASES PREVISTAS
+------------------------
+- Repertório inteligente para Louvor e Dança.
+- Indisponibilidade antecipada dos membros.
+- Partilha visual da escala e notificações.
+- Relatórios de participação, confirmações e faltas.
+- Integrações opcionais com calendário e WhatsApp.
+
+VERSÃO
+------
+v60 — Escalas Ministeriais

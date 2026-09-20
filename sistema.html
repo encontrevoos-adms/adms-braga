@@ -1246,9 +1246,9 @@ const ICON = {
 ========================================================= */
 const DEPARTMENTS = [
   {id:'kids', nome:'Ministério Infantil (Kids)', icon:'kids', descricao:'Ensino e cuidado das crianças durante os cultos e atividades especiais.', membros:0, restrito:false, escala:true},
-  {id:'homens', nome:'Homens Fortes', icon:'men', descricao:'Comunhão, discipulado e ação social entre os homens da igreja.', membros:0, restrito:false, escala:false},
-  {id:'mulheres', nome:'Mulheres Virtuosas', icon:'women', descricao:'Encontros, oração e apoio às mulheres da congregação.', membros:0, restrito:false, escala:false},
-  {id:'jovens', nome:'Jovens', icon:'youth', descricao:'Discipulado, eventos e integração dos adolescentes e jovens.', membros:0, restrito:false, escala:false},
+  {id:'homens', nome:'Homens Fortes', icon:'men', descricao:'Comunhão, discipulado e ação social entre os homens da igreja.', membros:0, restrito:false, escala:true},
+  {id:'mulheres', nome:'Mulheres Virtuosas', icon:'women', descricao:'Encontros, oração e apoio às mulheres da congregação.', membros:0, restrito:false, escala:true},
+  {id:'jovens', nome:'Jovens', icon:'youth', descricao:'Discipulado, eventos e integração dos adolescentes e jovens.', membros:0, restrito:false, escala:true},
   {id:'diaconato', nome:'Diaconato', icon:'deacon', descricao:'Apoio prático aos cultos, ceia, visitas e ordem da casa de Deus.', membros:0, restrito:false, escala:false},
   {id:'pastoral', nome:'Pastoral', icon:'pastoral', descricao:'Aconselhamento, cuidado pastoral e acompanhamento espiritual.', membros:0, restrito:true, escala:false},
   {id:'louvor', nome:'Louvor e Adoração', icon:'praise', descricao:'Ministração musical nos cultos e ensaios semanais.', membros:0, restrito:false, escala:true},
@@ -4872,6 +4872,8 @@ function rejectPassword(key){
 }
 
 /* ================= ESCALAS DE SERVIÇO ================= */
+let ESCALA_EDITANDO_ID=null;
+let ESCALA_MOSTRAR_ARQUIVADAS=false;
 function mesAbrev(iso){
   const meses = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
   return meses[parseInt(iso.split('-')[1],10)-1];
@@ -4880,11 +4882,13 @@ function viewEscalas(){
   const depts = myEscalaDepts();
   if(!currentEscalaDept || !depts.includes(currentEscalaDept)) currentEscalaDept = depts[0];
   const d = DEPARTMENTS.find(x=>x.id===currentEscalaDept);
-  const lista = (ESCALAS[currentEscalaDept]||[]).slice().sort((a,b)=>a.data.localeCompare(b.data));
+  const todas=(ESCALAS[currentEscalaDept]||[]),lista=todas.filter(e=>ESCALA_MOSTRAR_ARQUIVADAS?e.arquivada:!e.arquivada).slice().sort((a,b)=>(a.data||'').localeCompare(b.data||''));
+  const editando=ESCALA_EDITANDO_ID?todas.find(e=>e.id===ESCALA_EDITANDO_ID):null;
+  const podeEditar=permPode('escalas','editar')||permPode('escalas','inserir');
   return `
     <div class="topbar">
       <div><div class="breadcrumb">Departamentos</div><h1>Escalas de Serviço</h1></div>
-      <span class="access-pill">${ICON.shift} ${depts.length} departamento(s) com escala</span>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-outline" style="width:auto" onclick="alternarEscalasArquivadas()">${ESCALA_MOSTRAR_ARQUIVADAS?'Ver escalas ativas':'Ver arquivo'} (${todas.filter(e=>!!e.arquivada).length})</button><span class="access-pill">${ICON.shift} ${depts.length} departamento(s)</span></div>
     </div>
     ${ruleDivider()}
     <div class="tabs">
@@ -4893,26 +4897,38 @@ function viewEscalas(){
     <div class="card">
       <h3 style="margin-top:0; color:var(--royal-deep); font-size:16px;">${d.nome}</h3>
       ${lista.length? lista.map(e=>`
-        <div class="event-card" style="margin-bottom:16px;">
+        <div class="event-card" style="margin-bottom:16px;align-items:flex-start;${e.arquivada?'opacity:.72':''}">
           <div class="event-date"><div class="d">${e.data.split('-')[2]}</div><div class="m">${mesAbrev(e.data)}</div></div>
-          <div class="event-info">
-            <h3>${e.evento}</h3>
-            <div class="meta-row"><span>👥 ${e.pessoas.join(', ')}</span></div>
-          </div>
+          <div class="event-info" style="flex:1"><h3>${admsEsc(e.evento)} ${e.status&&e.status!=='publicada'?`<span class="tag tag-gold">${admsEsc(e.status)}</span>`:''}</h3><div class="meta-row"><span>🕒 ${admsEsc(e.hora||'Horário não definido')}</span><span>👥 ${(e.pessoas||[]).length} pessoa(s)</span></div>${e.roteiro?`<p style="margin:8px 0;color:var(--ink-soft)">${admsEsc(e.roteiro)}</p>`:''}<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:9px">${(e.pessoas||[]).map(nome=>{const c=e.confirmacoes?.[nome]||'pendente',nomeSeguro=encodeURIComponent(nome).replace(/'/g,'%27');return `<button class="tag ${c==='confirmado'?'tag-green':c==='indisponivel'?'tag-red':'tag-gold'}" style="border:0;cursor:${podeEditar?'pointer':'default'}" ${podeEditar?`onclick="ciclarConfirmacaoEscala('${e.id}',decodeURIComponent('${nomeSeguro}'))"`:''}>${admsEsc(nome)} · ${c}</button>`}).join('')}</div>${(e.funcoes||[]).length?`<div class="meta-row" style="margin-top:10px"><span>Funções: ${e.funcoes.map(f=>`${admsEsc(f.nome)} — ${admsEsc(f.funcao)}`).join(' · ')}</span></div>`:''}<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px">${podeEditar&&!e.arquivada?`<button class="btn btn-outline" style="width:auto" onclick="editarEscala('${e.id}')">Editar</button><button class="btn btn-ghost" style="width:auto" onclick="duplicarEscala('${e.id}')">Duplicar</button><button class="btn btn-ghost" style="width:auto" onclick="arquivarEscala('${e.id}')">Arquivar</button>`:''}${podeEditar&&e.arquivada?`<button class="btn btn-outline" style="width:auto" onclick="restaurarEscala('${e.id}')">Restaurar</button>`:''}${(e.historico||[]).length?`<button class="btn btn-ghost" style="width:auto" onclick="verHistoricoEscala('${e.id}')">Histórico (${e.historico.length})</button>`:''}</div></div>
         </div>`).join('') : `<p style="color:var(--ink-soft); font-size:13px;">Ainda sem escalas registadas para este departamento.</p>`}
     </div>
-    <div class="section-title"><h2>Adicionar escala</h2></div>
+    ${podeEditar?`<div class="section-title"><h2>${editando?'Corrigir escala':'Criar escala'}</h2></div>
     <div class="card">
       <div class="form-row">
-        <div><label>Data</label><input id="esc-data" type="date"></div>
-        <div><label>Evento / Turno</label><input id="esc-evento" placeholder="Ex: Culto de Domingo — Manhã"></div>
+        <div><label>Data</label><input id="esc-data" type="date" value="${editando?.data||''}"></div>
+        <div><label>Horário</label><input id="esc-hora" type="time" value="${editando?.hora||''}"></div>
       </div>
-      <div><label>Pessoas escaladas (separadas por vírgula)</label><input id="esc-pessoas" placeholder="Ex: Nome A, Nome B"></div>
-      <button class="btn btn-primary" style="width:auto; margin-top:14px;" onclick="addEscala()">Adicionar à escala</button>
-    </div>
+      <div class="form-row"><div><label>Evento / Turno</label><input id="esc-evento" value="${admsEsc(editando?.evento||'')}" placeholder="Ex: Culto de Domingo — Manhã"></div><div><label>Estado</label><select id="esc-status"><option value="rascunho" ${editando?.status==='rascunho'?'selected':''}>Rascunho</option><option value="publicada" ${!editando||editando?.status==='publicada'?'selected':''}>Publicada</option><option value="cancelada" ${editando?.status==='cancelada'?'selected':''}>Cancelada</option></select></div></div>
+      <div><label>Pessoas escaladas (separadas por vírgula)</label><input id="esc-pessoas" value="${admsEsc((editando?.pessoas||[]).join(', '))}" placeholder="Ex: Nome A, Nome B"></div>
+      <div class="form-row"><div><label>Funções (uma por linha: Nome | Função)</label><textarea id="esc-funcoes" rows="4" placeholder="Ana | Vocal&#10;João | Teclado">${admsEsc((editando?.funcoes||[]).map(f=>`${f.nome} | ${f.funcao}`).join('\n'))}</textarea></div><div><label>Roteiro / observações</label><textarea id="esc-roteiro" rows="4" placeholder="Ordem do culto, vestuário, ponto de encontro…">${admsEsc(editando?.roteiro||'')}</textarea></div></div>
+      ${!editando?`<div class="form-row"><div><label>Repetição</label><select id="esc-repeticao"><option value="nenhuma">Não repetir</option><option value="semanal">Semanal</option><option value="quinzenal">Quinzenal</option><option value="mensal">Mensal</option></select></div><div><label>Quantidade de escalas</label><input id="esc-quantidade" type="number" min="1" max="24" value="1"></div></div>`:''}
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px"><button class="btn btn-primary" style="width:auto" onclick="salvarEscalaCompleta()">${editando?'Guardar correção':'Criar escala'}</button>${editando?'<button class="btn btn-outline" style="width:auto" onclick="cancelarEdicaoEscala()">Cancelar edição</button>':''}</div>
+    </div>`:''}
   `;
 }
-function setEscalaDept(id){ currentEscalaDept = id; renderModule(); }
+function setEscalaDept(id){currentEscalaDept=id;ESCALA_EDITANDO_ID=null;ESCALA_MOSTRAR_ARQUIVADAS=false;renderModule()}
+function alternarEscalasArquivadas(){ESCALA_MOSTRAR_ARQUIVADAS=!ESCALA_MOSTRAR_ARQUIVADAS;ESCALA_EDITANDO_ID=null;renderModule()}
+function escalaAtualPorId(id){return (ESCALAS[currentEscalaDept]||[]).find(e=>e.id===id)}
+function snapshotEscala(e){return {data:e.data,hora:e.hora||'',evento:e.evento,pessoas:[...(e.pessoas||[])],funcoes:(e.funcoes||[]).map(x=>({...x})),roteiro:e.roteiro||'',status:e.status||'publicada',arquivada:!!e.arquivada}}
+function registarHistoricoEscala(e,acao,antes=null){e.historico=e.historico||[];e.historico.unshift({id:'h'+Date.now(),acao,quando:new Date().toISOString(),por:session?.label||'Sistema',antes,depois:snapshotEscala(e)});e.atualizadoEm=new Date().toISOString();e.atualizadoPor=session?.label||'Sistema'}
+function editarEscala(id){if(!exigirPermissao('escalas','editar'))return;ESCALA_EDITANDO_ID=id;ESCALA_MOSTRAR_ARQUIVADAS=false;renderModule();setTimeout(()=>document.getElementById('esc-data')?.scrollIntoView({behavior:'smooth',block:'center'}),50)}
+function cancelarEdicaoEscala(){ESCALA_EDITANDO_ID=null;renderModule()}
+function duplicarEscala(id){if(!exigirPermissao('escalas','inserir'))return;const origem=escalaAtualPorId(id);if(!origem)return;const copia={...origem,id:'e'+Date.now(),evento:`${origem.evento} — cópia`,status:'rascunho',arquivada:false,historico:[],confirmacoes:{}};registarHistoricoEscala(copia,'Escala duplicada');ESCALAS[currentEscalaDept].push(copia);salvarEstado(['escalas']);showToast('Cópia criada como rascunho.');editarEscala(copia.id)}
+function arquivarEscala(id){if(!exigirPermissao('escalas','editar'))return;const e=escalaAtualPorId(id);if(!e||!confirm('Arquivar esta escala? Ela poderá ser restaurada a qualquer tempo.'))return;const antes=snapshotEscala(e);e.arquivada=true;registarHistoricoEscala(e,'Escala arquivada',antes);salvarEstado(['escalas']);showToast('Escala arquivada.');renderModule()}
+function restaurarEscala(id){if(!exigirPermissao('escalas','editar'))return;const e=escalaAtualPorId(id);if(!e)return;const antes=snapshotEscala(e);e.arquivada=false;registarHistoricoEscala(e,'Escala restaurada',antes);salvarEstado(['escalas']);showToast('Escala restaurada.');renderModule()}
+function ciclarConfirmacaoEscala(id,nome){if(!exigirPermissao('escalas','editar'))return;const e=escalaAtualPorId(id);if(!e)return;e.confirmacoes=e.confirmacoes||{};const ciclo={pendente:'confirmado',confirmado:'indisponivel',indisponivel:'pendente'};e.confirmacoes[nome]=ciclo[e.confirmacoes[nome]||'pendente'];registarHistoricoEscala(e,`Confirmação de ${nome}: ${e.confirmacoes[nome]}`);salvarEstado(['escalas']);renderModule()}
+function verHistoricoEscala(id){const e=escalaAtualPorId(id);if(!e)return;const texto=(e.historico||[]).map(h=>`${new Date(h.quando).toLocaleString('pt-PT')} — ${h.acao} — ${h.por}`).join('\n');alert(texto||'Esta escala ainda não possui alterações registadas.')}
+function somarDataEscala(data,tipo,passos){const d=new Date(`${data}T12:00:00`);if(tipo==='semanal')d.setDate(d.getDate()+7*passos);if(tipo==='quinzenal')d.setDate(d.getDate()+14*passos);if(tipo==='mensal')d.setMonth(d.getMonth()+passos);return d.toISOString().slice(0,10)}
 
 function detectarConflitosEscala(data, pessoasLista, deptAtual){
   const avisos = [];
@@ -4942,8 +4958,13 @@ function detectarConflitosEscala(data, pessoasLista, deptAtual){
 }
 
 function addEscala(){
-  if(!exigirPermissao('escalas','inserir')) return;
+  return salvarEscalaCompleta();
+}
+function salvarEscalaCompleta(){
+  const acao=ESCALA_EDITANDO_ID?'editar':'inserir';
+  if(!exigirPermissao('escalas',acao)) return;
   const data = document.getElementById('esc-data').value;
+  const hora = document.getElementById('esc-hora').value;
   const evento = document.getElementById('esc-evento').value.trim();
   const pessoas = document.getElementById('esc-pessoas').value.trim();
   if(!data || !evento || !pessoas){ showToast('Preencha data, evento e pessoas escaladas.'); return; }
@@ -4955,11 +4976,26 @@ function addEscala(){
     if(!confirmar) return;
   }
 
+  const funcoes=document.getElementById('esc-funcoes').value.split('\n').map(l=>l.split('|').map(x=>x.trim())).filter(x=>x[0]&&x[1]).map(([nome,funcao])=>({nome,funcao}));
+  const roteiro=document.getElementById('esc-roteiro').value.trim(),status=document.getElementById('esc-status').value;
   if(!ESCALAS[currentEscalaDept]) ESCALAS[currentEscalaDept] = [];
-  ESCALAS[currentEscalaDept].push({id:'e'+Date.now(), data, evento, pessoas: pessoasLista});
-  logAction('sistema', 'Escala adicionada', `${deptNome(currentEscalaDept)} — ${formatDate(data)} · ${evento} · ${pessoasLista.join(', ')}`);
-  salvarEstado();
-  showToast(avisos.length ? 'Escala adicionada (com alerta de conflito registado).' : 'Escala adicionada.');
+  if(ESCALA_EDITANDO_ID){
+    const e=escalaAtualPorId(ESCALA_EDITANDO_ID);if(!e)return;
+    const antes=snapshotEscala(e),confirmacoes={};pessoasLista.forEach(n=>confirmacoes[n]=e.confirmacoes?.[n]||'pendente');
+    Object.assign(e,{data,hora,evento,pessoas:pessoasLista,funcoes,roteiro,status,confirmacoes});
+    registarHistoricoEscala(e,'Escala corrigida',antes);
+    logAction('sistema','Escala corrigida',`${deptNome(currentEscalaDept)} — ${formatDate(data)} · ${evento}`);
+    ESCALA_EDITANDO_ID=null;
+  }else{
+    const repeticao=document.getElementById('esc-repeticao')?.value||'nenhuma',quantidade=Math.max(1,Math.min(24,Number(document.getElementById('esc-quantidade')?.value)||1));
+    for(let i=0;i<quantidade;i++){
+      const item={id:'e'+Date.now()+i,data:somarDataEscala(data,repeticao,i),hora,evento,pessoas:[...pessoasLista],funcoes:funcoes.map(x=>({...x})),roteiro,status,confirmacoes:Object.fromEntries(pessoasLista.map(n=>[n,'pendente'])),arquivada:false,historico:[]};
+      registarHistoricoEscala(item,i?'Escala recorrente criada':'Escala criada');ESCALAS[currentEscalaDept].push(item);
+    }
+    logAction('sistema','Escala adicionada',`${deptNome(currentEscalaDept)} — ${formatDate(data)} · ${evento} · ${pessoasLista.join(', ')}`);
+  }
+  salvarEstado(['escalas']);
+  showToast(avisos.length ? 'Escala guardada com alerta de conflito.' : 'Escala guardada com sucesso.');
   renderModule();
 }
 
@@ -5905,7 +5941,7 @@ async function handleLogout(){
   await admsSupabase.auth.signOut();
   session=null; admsCloudProfile=null; pendingLoginKey=null; pendingLoginLeaderId=null; currentProfileRef=null;
   try{ localStorage.removeItem(SESSAO_KEY);localStorage.removeItem(ESTADO_KEY); }catch(e){}
-  location.replace('/sistema?v=59');
+  location.replace('/sistema?v=60');
 }
 
 admsSupabase?.auth.onAuthStateChange((event)=>{
