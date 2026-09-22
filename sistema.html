@@ -2895,7 +2895,11 @@ let PLANEAMENTO_EDITANDO=null;
 function podeEditarPlaneamento(departamento){return isMaster()||(session?.deptIds||[]).includes(departamento)}
 function planoDataPt(data){if(!data)return'—';return new Date(`${data}T12:00:00`).toLocaleDateString('pt-PT',{weekday:'short',day:'2-digit',month:'short',year:'numeric'})}
 function planoMusicaVazia(){return{titulo:'',tom:'',youtube:'',deezer:'',cifra:'',observacao:''}}
-function planoUrlSegura(url){if(!url)return'';try{const u=new URL(url);return['http:','https:'].includes(u.protocol)?u.href:''}catch{return''}}
+function planoUrlSegura(url){if(!url)return'';try{const u=new URL(String(url).trim());return['http:','https:'].includes(u.protocol)?u.href:''}catch{return''}}
+function urlOficialMusica(url,plataforma){
+  const segura=planoUrlSegura(url);if(!segura)return'';
+  try{const host=new URL(segura).hostname.toLowerCase().replace(/^www\./,'');const permitidos={youtube:['youtube.com','youtu.be','music.youtube.com'],deezer:['deezer.com'],cifra:['cifraclub.com.br']};return (permitidos[plataforma]||[]).some(d=>host===d||host.endsWith(`.${d}`))?segura:''}catch{return''}
+}
 function pesquisaMusicaUrl(m,plataforma){const termo=encodeURIComponent([m.titulo,m.tom?`tom ${m.tom}`:''].filter(Boolean).join(' '));const bases={youtube:`https://www.youtube.com/results?search_query=${termo}`,deezer:`https://www.deezer.com/search/${termo}`,cifra:`https://www.cifraclub.com.br/?q=${termo}`};return bases[plataforma]||''}
 function musicaEditorHTML(m=planoMusicaVazia()){
   return `<div class="song-editor"><div><label>Música</label><input data-song="titulo" value="${admsEsc(m.titulo)}" placeholder="Título da música"></div><div><label>Tom</label><input data-song="tom" value="${admsEsc(m.tom)}" placeholder="Ex.: G"></div><div><label>YouTube</label><input data-song="youtube" value="${admsEsc(m.youtube)}" placeholder="https://..."></div><div><label>Deezer</label><input data-song="deezer" value="${admsEsc(m.deezer)}" placeholder="https://..."></div><div><label>Cifra Club</label><input data-song="cifra" value="${admsEsc(m.cifra)}" placeholder="https://..."></div><div><label>Orientação</label><input data-song="observacao" value="${admsEsc(m.observacao)}" placeholder="Entrada, transição, coreografia..."></div><button class="btn btn-outline song-remove" type="button" style="width:auto;color:var(--red)" onclick="this.closest('.song-editor').remove()" aria-label="Remover música">×</button></div>`;
@@ -2914,7 +2918,7 @@ function planeamentoFormHTML(departamento,plano=null){
   </article>`;
 }
 function linksMusicaHTML(m){
-  return [['youtube','YouTube'],['cifra','Cifra Club'],['deezer','Deezer']].map(([k,l])=>{const direto=planoUrlSegura(m[k]||(k==='youtube'?m.url:'')),u=direto||pesquisaMusicaUrl(m,k);return `<a class="music-link ${k}" href="${admsEsc(u)}" target="_blank" rel="noopener noreferrer" title="${direto?'Abrir referência guardada':'Pesquisar '+l}">${l}${direto?' ↗':' 🔎'}</a>`}).join('');
+  return [['youtube','YouTube'],['cifra','Cifra Club'],['deezer','Deezer']].map(([k,l])=>{const direto=urlOficialMusica(m[k]||(k==='youtube'?m.url:''),k),u=direto||pesquisaMusicaUrl(m,k);return `<a class="music-link ${k}" href="${admsEsc(u)}" target="_blank" rel="noopener noreferrer" title="${direto?'Abrir referência guardada':'Pesquisar '+l}">${l}${direto?' ↗':' 🔎'}</a>`}).join('');
 }
 function planeamentoCardHTML(p){
   const repertorio=Array.isArray(p.repertorio)?p.repertorio:[];
@@ -4092,7 +4096,8 @@ const SITE_CONTENT_DEFS=[
 ];
 function admsEsc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function admsUrlSegura(v){
-  try{const u=new URL(String(v||''),location.origin);return ['http:','https:'].includes(u.protocol)?u.href:'';}catch(e){return '';}
+  const valor=String(v||'').trim();if(!valor)return'';
+  try{const u=new URL(valor,location.origin);return ['http:','https:'].includes(u.protocol)?u.href:'';}catch(e){return '';}
 }
 async function renderSitePublico(){
   const el=document.getElementById('main-content');
@@ -6008,7 +6013,7 @@ async function handleLogout(){
   await admsSupabase.auth.signOut();
   session=null; admsCloudProfile=null; pendingLoginKey=null; pendingLoginLeaderId=null; currentProfileRef=null;
   try{ localStorage.removeItem(SESSAO_KEY);localStorage.removeItem(ESTADO_KEY); }catch(e){}
-  location.replace('/sistema?v=64');
+  location.replace('/sistema?v=65');
 }
 
 admsSupabase?.auth.onAuthStateChange((event)=>{

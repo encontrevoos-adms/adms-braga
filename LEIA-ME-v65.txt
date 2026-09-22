@@ -1,0 +1,16 @@
+ADMS BRAGA — VERSÃO 65
+======================
+
+CORREÇÃO
+- Corrigido o redirecionamento dos botões YouTube, Cifra Club e Deezer.
+- Links vazios deixaram de ser convertidos no endereço do site ADMS Braga.
+- Cada botão aceita somente o domínio oficial da respetiva plataforma.
+- Ligações antigas incorretas são ignoradas automaticamente.
+- Quando não existe um link oficial válido, é aberta a pesquisa da música na
+  plataforma selecionada.
+
+PUBLICAÇÃO
+- Envie todos os ficheiros para o GitHub.
+- Aguarde o deploy da Vercel.
+- Atualize a página e entre novamente no Portal.
+- Não é necessário executar novo SQL no Supabase.
