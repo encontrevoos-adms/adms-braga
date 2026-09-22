@@ -1,0 +1,29 @@
+ADMS BRAGA — VERSÃO 62
+========================
+
+GESTÃO E RELATÓRIOS DE ESCALAS
+------------------------------
+- Novo estado "Concluída" para escalas realizadas.
+- Registo individual de presença, falta e falta justificada.
+- Alteração do registo de presença a qualquer momento, com histórico.
+- Relatório por participante: vezes escalado, confirmações, presenças, faltas
+  e justificações.
+- Exportação do relatório ministerial em CSV.
+- Publicação direta da escala no mural do respetivo departamento.
+- Indicadores de escalas ativas, confirmações, pendências e indisponibilidades.
+
+COMO REGISTAR A PRESENÇA
+-----------------------
+1. Altere o estado da escala para "Concluída".
+2. Na escala, clique no marcador de presença ao lado de cada participante.
+3. Cada clique avança entre: presente, falta, justificada e não registada.
+4. Todas as alterações ficam guardadas no histórico da escala.
+
+ATUALIZAÇÃO
+-----------
+Esta versão não exige novo SQL. Envie os ficheiros para o GitHub, aguarde o
+deployment da Vercel e atualize o navegador sem cache.
+
+VERSÃO
+------
+v62 — Presenças, relatórios e comunicação ministerial

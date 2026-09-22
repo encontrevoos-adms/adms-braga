@@ -1,0 +1,29 @@
+ADMS BRAGA — VERSÃO 63
+======================
+
+NOVIDADES
+- Área “Minhas Escalas” para membros.
+- Confirmação de presença ou indisponibilidade pelo próprio membro.
+- Filtros por mês e estado da resposta.
+- Lembretes visuais para escalas de hoje, amanhã e próximos cinco dias.
+- Função, roteiro e repertório reunidos em cada escala.
+- Respostas sincronizadas no Supabase e visíveis à liderança autorizada.
+- Proteção RLS: o membro só pode inserir e alterar a própria resposta.
+
+PASSO OBRIGATÓRIO NO SUPABASE
+1. Abra o SQL Editor.
+2. Abra no GitHub o ficheiro:
+   supabase/migrations/202609220001_escala_respostas_v63.sql
+3. Copie TODO o conteúdo do ficheiro (não copie apenas o caminho).
+4. Cole no SQL Editor e clique em Run.
+5. Aguarde “Success”.
+
+DEPOIS
+- Publique todos os ficheiros desta versão no GitHub.
+- Aguarde o deploy da Vercel.
+- Termine a sessão e entre novamente.
+- Um membro escalado verá “Minhas Escalas” no menu.
+
+OBSERVAÇÃO
+O nome usado na escala deve corresponder ao nome do perfil do membro. O sistema
+tolera diferenças de maiúsculas, acentos, espaços e pequenas extensões do nome.
