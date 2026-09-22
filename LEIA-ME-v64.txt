@@ -1,0 +1,27 @@
+ADMS BRAGA — VERSÃO 64
+======================
+
+ALTERAÇÕES
+- Barra de rolagem horizontal visível na seleção de departamentos.
+- Navegação por departamentos otimizada para rato, toque e ecrãs pequenos.
+- Formulário de escalas reorganizado em blocos numerados.
+- Campos e áreas de texto responsivos em PC, tablet e telemóvel.
+- Repertório com YouTube, Cifra Club e Deezer.
+- Quando não existe um link guardado, a plataforma abre a pesquisa da música.
+- Rodapé público com direitos reservados e ano atualizado automaticamente.
+
+FORMATO DO REPERTÓRIO NAS ESCALAS
+Uma música por linha:
+Título | Tom | YouTube | Cifra Club | Deezer
+
+Exemplo:
+Bondade de Deus | G | https://youtube.com/... | https://cifraclub.com.br/... | https://deezer.com/...
+
+Os links são opcionais. Basta informar o título para disponibilizar a pesquisa
+direta nas três plataformas.
+
+PUBLICAÇÃO
+- Envie todos os ficheiros para o GitHub.
+- Aguarde o deploy da Vercel.
+- Atualize a página e entre novamente no Portal.
+- Esta versão não exige novo SQL no Supabase.
