@@ -1,0 +1,34 @@
+ADMS BRAGA — SITE E PORTAL v66
+================================
+
+PRINCIPAL NOVIDADE
+------------------
+O Portal recebeu a nova linguagem visual "ADMS Nexus", mantendo a identidade
+azul-marinho, dourado, branco e vermelho da congregação.
+
+ALTERAÇÕES DESTA VERSÃO
+----------------------
+- Navegação lateral tecnológica, com melhor hierarquia e estado ativo luminoso.
+- Botão para recolher/expandir o menu em computador e tablet.
+- Modo claro/escuro com preferência guardada no próprio dispositivo.
+- Dashboard, cartões, tabelas, formulários e botões com acabamento moderno.
+- Fundo visual mais dinâmico e painéis translúcidos com contraste controlado.
+- Melhor comportamento em computador, tablet e telemóvel.
+- Barra de navegação móvel preservada e otimizada para toque.
+- Página de acesso mantida sem alterações visuais.
+- Atualização de cache para v66 no site e no Portal.
+
+PUBLICAÇÃO MANUAL NO GITHUB
+---------------------------
+1. Extraia o ficheiro adms-braga-site-portal-v66.zip.
+2. No repositório GitHub da ADMS Braga, escolha Add file > Upload files.
+3. Envie todos os ficheiros e pastas extraídos, preservando a estrutura.
+4. Confirme a substituição dos ficheiros existentes.
+5. Faça Commit changes na branch main.
+6. Aguarde o deployment da Vercel ficar com estado Ready.
+7. Abra https://adms-braga.vercel.app/sistema?v=66 e atualize a página.
+
+NOTA
+----
+Esta versão não exige um novo SQL. As migrações Supabase das versões anteriores
+devem continuar na pasta supabase/migrations como histórico do projeto.
