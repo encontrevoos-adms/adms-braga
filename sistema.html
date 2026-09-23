@@ -971,7 +971,7 @@ window.addEventListener('online',()=>{ admsCarregarMembrosCloud(); admsCarregarE
 @media(max-width:1080px){#app-screen .command-actions,#app-screen .smart-metrics{grid-template-columns:1fr 1fr}}
 @media(max-width:760px){#app-screen .command-bar{align-items:stretch;flex-direction:column}#app-screen .command-updated{text-align:left}#app-screen .command-filters{display:grid;grid-template-columns:1fr 1fr}#app-screen .command-filters select{min-width:0;width:100%}#app-screen .smart-grid{grid-template-columns:1fr}}
 @media(max-width:520px){#app-screen .command-actions,#app-screen .smart-metrics,#app-screen .command-filters{grid-template-columns:1fr}#app-screen .command-action{padding:12px}#app-screen .smart-metric{min-height:126px}}
-/* Portal ADMS Nexus v69 — isolado do ecrã de acesso */
+/* Portal ADMS Nexus v70 — isolado do ecrã de acesso */
 #app-screen{--nx-navy:#06143c;--nx-blue:#123a97;--nx-gold:#ddb845;--nx-bg:#edf2f8;--nx-panel:rgba(255,255,255,.9);--nx-line:rgba(17,42,102,.11);--nx-text:#101d3d;--nx-muted:#64708a;--nx-shadow:0 22px 55px -38px rgba(6,20,60,.55);font-family:'Inter',sans-serif;color:var(--nx-text);background:var(--nx-bg)}
 #app-screen .shell{grid-template-columns:282px minmax(0,1fr);background:radial-gradient(circle at 88% 4%,rgba(47,102,210,.12),transparent 27%),radial-gradient(circle at 50% 105%,rgba(221,184,69,.1),transparent 30%),var(--nx-bg);transition:grid-template-columns .28s ease}
 #app-screen .sidebar{width:auto;padding:20px 14px 18px;background:radial-gradient(circle at 20% 0,rgba(47,102,210,.36),transparent 28%),linear-gradient(180deg,#081d58 0%,#05143d 56%,#030e2c 100%);border-right:1px solid rgba(255,255,255,.08);box-shadow:18px 0 50px -38px #02091e}
@@ -2732,7 +2732,7 @@ async function carregarDashboardInteligente(manual=false){
     {nome:'Novos contactos',promise:isMaster()?admsSupabase.from('novos_contactos').select('id',{count:'exact',head:true}).eq('status','novo'):Promise.resolve({count:0})},
     // `ativo = false` identifica rascunhos nas estruturas antiga e atual do CMS.
     // Evita depender da coluna `status` no dashboard enquanto mantém o editor v57.
-    {nome:'Conteúdo editorial',promise:permPode('site-publico')?admsSupabase.from('site_conteudos').select('id').eq('ativo',false):Promise.resolve({data:[]})},
+    {nome:'Conteúdo editorial',promise:permPode('site-publico')?admsSupabase.from('site_conteudos').select('chave').eq('ativo',false):Promise.resolve({data:[]})},
     {nome:'Notificações',promise:admsSupabase.from('notificacoes_internas').select('id',{count:'exact',head:true}).eq('lida',false)}
   ];
   const resultados=await Promise.allSettled(consultas.map(x=>admsComTimeout(x.promise,8000,`A consulta ${x.nome}`))),oracoes=dashboardResultado(resultados[0]),contactos=dashboardResultado(resultados[1]),rascunhos=dashboardResultado(resultados[2]),notificacoes=dashboardResultado(resultados[3]),falhasDetalhadas=resultados.map((r,i)=>{const erro=r.status==='rejected'?r.reason:r.value?.error;return erro?{nome:consultas[i].nome,mensagem:dashboardMensagemErro(erro)}:null}).filter(Boolean),falhas=falhasDetalhadas.length,vencidas=canAccessFinanceiro()?CONTAS_PAGAR.filter(c=>statusConta(c)==='Atrasado').length+CONTAS_RECEBER.filter(c=>statusConta(c)==='Atrasado').length:0,pessoas=PESSOAS.membros.length+PESSOAS.congregados.length+PESSOAS.visitantes.length,atencao=oracoes+contactos+vencidas+notificacoes;
@@ -6178,7 +6178,7 @@ async function handleLogout(){
   await admsSupabase.auth.signOut();
   session=null; admsCloudProfile=null; pendingLoginKey=null; pendingLoginLeaderId=null; currentProfileRef=null;
   try{ localStorage.removeItem(SESSAO_KEY);localStorage.removeItem(ESTADO_KEY); }catch(e){}
-  location.replace('/sistema?v=69');
+  location.replace('/sistema?v=70');
 }
 
 admsSupabase?.auth.onAuthStateChange((event)=>{

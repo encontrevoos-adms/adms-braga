@@ -1,0 +1,28 @@
+ADMS BRAGA — SITE E PORTAL v70
+================================
+
+CORREÇÃO FINAL DO CONTEÚDO EDITORIAL
+------------------------------------
+- Corrigida a consulta do dashboard que solicitava a coluna inexistente `id`.
+- A tabela `site_conteudos` utiliza `chave` como identificador; o painel agora
+  consulta a coluna correta.
+- Mantida a contagem de rascunhos pelo campo `ativo`, compatível com a base.
+- Mantidos os diagnósticos detalhados, os 13 módulos persistentes e todas as
+  correções anteriores.
+
+PUBLICAÇÃO
+----------
+1. Extraia adms-braga-site-portal-v70.zip.
+2. Envie todos os ficheiros e pastas para o GitHub.
+3. Faça o commit na branch main e aguarde a Vercel concluir o deployment.
+4. Abra https://adms-braga.vercel.app/sistema?v=70.
+
+VALIDAÇÃO
+---------
+- O cabeçalho do Painel Administrativo deverá mostrar `Dados atualizados`.
+- A área `Situação operacional` não deverá exibir falha de conteúdo editorial.
+- A persistência deverá continuar a indicar 13 módulos acessíveis.
+
+SUPABASE
+--------
+Esta versão não altera tabelas nem políticas RLS. Não exige execução de SQL.
