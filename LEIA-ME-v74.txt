@@ -1,0 +1,23 @@
+ADMS BRAGA — SITE E PORTAL v74
+================================
+
+MELHORIA VISUAL
+---------------
+- A área clara de conteúdo do portal passa a possuir a sua própria barra de
+  rolagem vertical no lado direito.
+- Em computador e tablet, o menu lateral permanece fixo enquanto o conteúdo
+  se desloca.
+- A barra utiliza as cores dourada e azul-claro da identidade ADMS Braga.
+- Em telemóvel, mantém-se a rolagem natural para preservar a área útil.
+- Mantidas as permissões da Secretaria e as correções da versão 73.
+
+PUBLICAÇÃO
+----------
+1. Extraia adms-braga-site-portal-v74.zip.
+2. Envie todos os ficheiros e pastas para o GitHub.
+3. Faça o commit na branch main e aguarde a Vercel concluir o deployment.
+4. Abra https://adms-braga.vercel.app/sistema?v=74.
+
+SUPABASE
+--------
+Se o SQL da versão 73 já foi executado, não é necessário executar outro SQL.

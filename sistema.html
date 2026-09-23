@@ -760,7 +760,16 @@ window.addEventListener('online',()=>{ admsCarregarMembrosCloud(); admsCarregarE
 #app-screen .side-user .role{margin-top:4px;color:#e4c36f;line-height:1.4;}
 #app-screen .logout-link{color:#ccd5ed;text-decoration:none;border-top:1px solid rgba(255,255,255,.1);padding-top:11px;margin-top:12px;}
 
-#app-screen .main{width:100%;max-width:1440px;padding:42px 48px 72px;}
+#app-screen .main{width:100%;max-width:1440px;padding:42px 48px 72px;scrollbar-width:auto;scrollbar-color:#D6AD45 #E8EDF6;}
+#app-screen .main::-webkit-scrollbar{width:14px;}
+#app-screen .main::-webkit-scrollbar-track{background:#E8EDF6;border-left:1px solid #D8DFEC;}
+#app-screen .main::-webkit-scrollbar-thumb{min-height:64px;border:3px solid #E8EDF6;border-radius:999px;background:linear-gradient(180deg,#D9B552 0%,#A77C16 100%);}
+#app-screen .main::-webkit-scrollbar-thumb:hover{background:linear-gradient(180deg,#E5C66F 0%,#805D0A 100%);}
+@media (min-width:761px){
+  body.portal-active{overflow:hidden;}
+  #app-screen,#app-screen .shell{height:100vh;min-height:0;overflow:hidden;}
+  #app-screen .main{height:100vh;overflow-y:scroll;overflow-x:hidden;scrollbar-gutter:stable;}
+}
 #app-screen .topbar{align-items:center;margin:0 0 10px;padding:0 0 6px;}
 #app-screen .topbar h1{font-family:'Cormorant Garamond',Georgia,serif;font-size:clamp(32px,3.5vw,48px);line-height:1.02;color:var(--portal-navy);letter-spacing:-.5px;}
 #app-screen .topbar .breadcrumb{color:#9b771c;font-size:11px;font-weight:800;letter-spacing:1.8px;margin-bottom:8px;}
@@ -984,7 +993,7 @@ window.addEventListener('online',()=>{ admsCarregarMembrosCloud(); admsCarregarE
 @media(max-width:1080px){#app-screen .command-actions,#app-screen .smart-metrics{grid-template-columns:1fr 1fr}}
 @media(max-width:760px){#app-screen .command-bar{align-items:stretch;flex-direction:column}#app-screen .command-updated{text-align:left}#app-screen .command-filters{display:grid;grid-template-columns:1fr 1fr}#app-screen .command-filters select{min-width:0;width:100%}#app-screen .smart-grid{grid-template-columns:1fr}}
 @media(max-width:520px){#app-screen .command-actions,#app-screen .smart-metrics,#app-screen .command-filters{grid-template-columns:1fr}#app-screen .command-action{padding:12px}#app-screen .smart-metric{min-height:126px}}
-/* Portal ADMS Nexus v73 — isolado do ecrã de acesso */
+/* Portal ADMS Nexus v74 — isolado do ecrã de acesso */
 #app-screen{--nx-navy:#06143c;--nx-blue:#123a97;--nx-gold:#ddb845;--nx-bg:#edf2f8;--nx-panel:rgba(255,255,255,.9);--nx-line:rgba(17,42,102,.11);--nx-text:#101d3d;--nx-muted:#64708a;--nx-shadow:0 22px 55px -38px rgba(6,20,60,.55);font-family:'Inter',sans-serif;color:var(--nx-text);background:var(--nx-bg)}
 #app-screen .shell{grid-template-columns:282px minmax(0,1fr);background:radial-gradient(circle at 88% 4%,rgba(47,102,210,.12),transparent 27%),radial-gradient(circle at 50% 105%,rgba(221,184,69,.1),transparent 30%),var(--nx-bg);transition:grid-template-columns .28s ease}
 #app-screen .sidebar{width:auto;padding:20px 14px 18px;background:radial-gradient(circle at 20% 0,rgba(47,102,210,.36),transparent 28%),linear-gradient(180deg,#081d58 0%,#05143d 56%,#030e2c 100%);border-right:1px solid rgba(255,255,255,.08);box-shadow:18px 0 50px -38px #02091e}
@@ -6207,7 +6216,7 @@ async function handleLogout(){
   document.body.classList.remove('portal-active');
   session=null; admsCloudProfile=null; pendingLoginKey=null; pendingLoginLeaderId=null; currentProfileRef=null;
   try{ localStorage.removeItem(SESSAO_KEY);localStorage.removeItem(ESTADO_KEY); }catch(e){}
-  location.replace('/sistema?v=73');
+  location.replace('/sistema?v=74');
 }
 
 admsSupabase?.auth.onAuthStateChange((event)=>{
