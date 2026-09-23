@@ -1,0 +1,22 @@
+ADMS BRAGA — SITE E PORTAL v75
+================================
+
+GESTÃO DE DEPARTAMENTOS
+-----------------------
+- Os campos Líder, Vice-líder e Secretário(a) sugerem agora os membros ativos
+  já cadastrados no portal.
+- Continua possível escrever manualmente um nome ainda não cadastrado.
+- A criação e a alteração de departamentos passam a ficar registadas no
+  histórico de atividade, incluindo os campos modificados.
+- Mantidas a barra de rolagem da área central e as permissões da Secretaria.
+
+PUBLICAÇÃO
+----------
+1. Extraia adms-braga-site-portal-v75.zip.
+2. Envie todos os ficheiros e pastas para o GitHub.
+3. Faça o commit na branch main e aguarde a Vercel concluir o deployment.
+4. Abra https://adms-braga.vercel.app/sistema?v=75.
+
+SUPABASE
+--------
+Não existe SQL novo nesta versão. A atualização v73 deve permanecer aplicada.

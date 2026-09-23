@@ -993,7 +993,7 @@ window.addEventListener('online',()=>{ admsCarregarMembrosCloud(); admsCarregarE
 @media(max-width:1080px){#app-screen .command-actions,#app-screen .smart-metrics{grid-template-columns:1fr 1fr}}
 @media(max-width:760px){#app-screen .command-bar{align-items:stretch;flex-direction:column}#app-screen .command-updated{text-align:left}#app-screen .command-filters{display:grid;grid-template-columns:1fr 1fr}#app-screen .command-filters select{min-width:0;width:100%}#app-screen .smart-grid{grid-template-columns:1fr}}
 @media(max-width:520px){#app-screen .command-actions,#app-screen .smart-metrics,#app-screen .command-filters{grid-template-columns:1fr}#app-screen .command-action{padding:12px}#app-screen .smart-metric{min-height:126px}}
-/* Portal ADMS Nexus v74 — isolado do ecrã de acesso */
+/* Portal ADMS Nexus v75 — isolado do ecrã de acesso */
 #app-screen{--nx-navy:#06143c;--nx-blue:#123a97;--nx-gold:#ddb845;--nx-bg:#edf2f8;--nx-panel:rgba(255,255,255,.9);--nx-line:rgba(17,42,102,.11);--nx-text:#101d3d;--nx-muted:#64708a;--nx-shadow:0 22px 55px -38px rgba(6,20,60,.55);font-family:'Inter',sans-serif;color:var(--nx-text);background:var(--nx-bg)}
 #app-screen .shell{grid-template-columns:282px minmax(0,1fr);background:radial-gradient(circle at 88% 4%,rgba(47,102,210,.12),transparent 27%),radial-gradient(circle at 50% 105%,rgba(221,184,69,.1),transparent 30%),var(--nx-bg);transition:grid-template-columns .28s ease}
 #app-screen .sidebar{width:auto;padding:20px 14px 18px;background:radial-gradient(circle at 20% 0,rgba(47,102,210,.36),transparent 28%),linear-gradient(180deg,#081d58 0%,#05143d 56%,#030e2c 100%);border-right:1px solid rgba(255,255,255,.08);box-shadow:18px 0 50px -38px #02091e}
@@ -1227,10 +1227,11 @@ window.addEventListener('online',()=>{ admsCarregarMembrosCloud(); admsCarregarE
         <div><label>Confidencialidade</label><select id="dept-edit-conf"><option value="normal">Normal</option><option value="restrito">Restrito à administração</option><option value="pastoral">Confidencial — Pastoral</option></select></div>
       </div>
       <div class="form-row">
-        <div><label>Líder</label><input id="dept-edit-lider" maxlength="120" placeholder="Nome completo"></div>
-        <div><label>Vice-líder</label><input id="dept-edit-vice" maxlength="120" placeholder="Nome completo"></div>
+        <div><label>Líder</label><input id="dept-edit-lider" list="dept-members-list" maxlength="120" placeholder="Selecione ou escreva o nome"></div>
+        <div><label>Vice-líder</label><input id="dept-edit-vice" list="dept-members-list" maxlength="120" placeholder="Selecione ou escreva o nome"></div>
       </div>
-      <label>Secretário(a)</label><input id="dept-edit-secretario" maxlength="120" placeholder="Nome completo">
+      <label>Secretário(a)</label><input id="dept-edit-secretario" list="dept-members-list" maxlength="120" placeholder="Selecione ou escreva o nome">
+      <datalist id="dept-members-list"></datalist>
       <div class="dept-checks">
         <label class="dept-check"><input type="checkbox" id="dept-edit-ativo"><span><strong>Departamento ativo</strong><br>Visível nas áreas operacionais.</span></label>
         <label class="dept-check"><input type="checkbox" id="dept-edit-escala"><span><strong>Permitir escalas</strong><br>Habilita a gestão de serviço.</span></label>
@@ -2965,6 +2966,11 @@ function abrirEditorDepartamento(id=''){
   const icons=[['dept','Institucional'],['pastoral','Pastoral'],['kids','Infantil'],['men','Homens'],['women','Mulheres'],['youth','Jovens'],['deacon','Diaconato'],['praise','Louvor'],['secret','Secretaria'],['evang','Evangelismo'],['couples','Casais'],['teach','Ensino'],['media','Comunicação'],['worker','Obreiros'],['dance','Dança'],['clean','Património']];
   iconEl.innerHTML=icons.map(([v,l])=>`<option value="${v}" ${v===(d?.icon||'dept')?'selected':''}>${l}</option>`).join('');
   document.getElementById('dept-edit-conf').value=d?.confidencialidade||'normal';
+  const membrosLista=document.getElementById('dept-members-list');
+  if(membrosLista){
+    const nomes=[...(PESSOAS.membros||[])].filter(m=>m?.nome&&m.estadoMembresia!=='Inativo').map(m=>m.nome.trim()).filter(Boolean).sort((a,b)=>a.localeCompare(b,'pt-PT'));
+    membrosLista.innerHTML=[...new Set(nomes)].map(nome=>`<option value="${admsEsc(nome)}"></option>`).join('');
+  }
   document.getElementById('dept-edit-lider').value=d?.liderNome||'';
   document.getElementById('dept-edit-vice').value=d?.viceLiderNome||'';
   document.getElementById('dept-edit-secretario').value=d?.secretarioNome||'';
@@ -2994,6 +3000,13 @@ async function guardarDepartamento(){
   const {error}=resultado;
   btn.disabled=false;btn.textContent='Guardar departamento';
   if(error){err.textContent=`Não foi possível guardar. ${error.code?`Código ${error.code}. `:''}Verifique se a atualização de permissões v73 foi executada.`;err.style.display='block';console.error('ADMS Departamentos:',error);return}
+  const alteracoes=[];
+  if(existente){
+    const campos=[['nome','Nome'],['descricao','Descrição'],['icone','Ícone'],['confidencialidade','Confidencialidade'],['liderNome','Líder'],['viceLiderNome','Vice-líder'],['secretarioNome','Secretário(a)'],['ativo','Estado'],['escala','Escalas']];
+    const novo={...row,liderNome:row.lider_nome||'',viceLiderNome:row.vice_lider_nome||'',secretarioNome:row.secretario_nome||'',escala:row.permite_escala};
+    campos.forEach(([chave,rotulo])=>{if(String(existente[chave]??'')!==String(novo[chave]??''))alteracoes.push(rotulo)});
+  }
+  await logAction('departamentos',existente?'Departamento atualizado':'Departamento criado',`${nome}${alteracoes.length?` — campos alterados: ${alteracoes.join(', ')}`:''}`);
   await admsCarregarDepartamentosCloud();fecharEditorDepartamento();showToast('Departamento guardado com sucesso.');renderShell();
 }
 async function arquivarDepartamento(id){
@@ -6216,7 +6229,7 @@ async function handleLogout(){
   document.body.classList.remove('portal-active');
   session=null; admsCloudProfile=null; pendingLoginKey=null; pendingLoginLeaderId=null; currentProfileRef=null;
   try{ localStorage.removeItem(SESSAO_KEY);localStorage.removeItem(ESTADO_KEY); }catch(e){}
-  location.replace('/sistema?v=74');
+  location.replace('/sistema?v=75');
 }
 
 admsSupabase?.auth.onAuthStateChange((event)=>{
