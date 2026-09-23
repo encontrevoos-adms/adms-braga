@@ -1,0 +1,22 @@
+ADMS BRAGA — SITE E PORTAL v82
+================================
+
+PESQUISA GERAL
+--------------
+- Aba Pesquisar visível na secção Visão Geral do Portal.
+- Pesquisa das funções disponíveis conforme o perfil do utilizador.
+- Campo de pesquisa rápida mantido no topo do menu lateral.
+- Botão Pesquisar no cabeçalho do site público.
+- Pesquisa também disponível no menu inferior do telemóvel e no rodapé.
+- Resultados levam diretamente à área encontrada.
+
+PUBLICAÇÃO
+----------
+1. Extraia adms-braga-site-portal-v82.zip.
+2. Envie todos os ficheiros e pastas para o GitHub.
+3. Faça o commit na branch main e aguarde a Vercel concluir o deployment.
+4. Abra https://adms-braga-site.vercel.app/sistema?v=82.
+
+SUPABASE
+--------
+Não existe SQL novo nesta versão.

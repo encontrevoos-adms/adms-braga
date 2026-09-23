@@ -162,6 +162,15 @@
   .nav-group-items{display:block;}
   .nav-group-items.collapsed{display:none;}
   .nav-empty-search{display:none;padding:14px 10px;color:#b9c4e8;font-size:12px;text-align:center;}
+  .portal-search-box{display:flex;align-items:center;gap:12px;padding:14px 16px;border:1px solid #d8dfed;border-radius:15px;background:#fff;box-shadow:0 12px 30px rgba(7,25,79,.07)}
+  .portal-search-box svg{width:24px;height:24px;fill:none;stroke:var(--royal);stroke-width:2;flex:0 0 auto}
+  .portal-search-box input{width:100%;border:0;outline:0;background:transparent;color:var(--ink);font-size:16px;font-weight:650}
+  .portal-search-results{display:grid;gap:10px;margin-top:18px}
+  .portal-search-result{display:grid;grid-template-columns:42px minmax(0,1fr) auto;align-items:center;gap:13px;width:100%;padding:14px 16px;border:1px solid #dde3ee;border-radius:15px;background:#fff;color:var(--ink);text-align:left;transition:.16s}
+  .portal-search-result:hover,.portal-search-result:focus-visible{border-color:var(--gold);transform:translateY(-1px);box-shadow:0 10px 28px rgba(7,25,79,.08);outline:none}
+  .portal-search-result .result-icon{display:grid;place-items:center;width:42px;height:42px;border-radius:12px;background:#eef2fb;color:var(--royal-deep)}
+  .portal-search-result .result-icon svg{width:21px;height:21px}
+  .portal-search-result strong{display:block;color:var(--royal-deep);font-size:14px}.portal-search-result small{display:block;margin-top:3px;color:var(--ink-soft);font-size:12px}.portal-search-result .result-arrow{color:var(--gold-dark);font-weight:900}
   .nav-item{
     display:flex; align-items:center; gap:11px; padding:10px 12px; border-radius:10px;
     color:#DCE3F7; text-decoration:none; font-size:13.5px; font-weight:600; cursor:pointer;
@@ -1021,7 +1030,7 @@ window.addEventListener('online',()=>{ admsCarregarMembrosCloud(); admsCarregarE
 @media(max-width:1080px){#app-screen .command-actions,#app-screen .smart-metrics{grid-template-columns:1fr 1fr}}
 @media(max-width:760px){#app-screen .command-bar{align-items:stretch;flex-direction:column}#app-screen .command-updated{text-align:left}#app-screen .command-filters{display:grid;grid-template-columns:1fr 1fr}#app-screen .command-filters select{min-width:0;width:100%}#app-screen .smart-grid{grid-template-columns:1fr}}
 @media(max-width:520px){#app-screen .command-actions,#app-screen .smart-metrics,#app-screen .command-filters{grid-template-columns:1fr}#app-screen .command-action{padding:12px}#app-screen .smart-metric{min-height:126px}}
-/* Portal ADMS Nexus v81 — navegação pesquisável e grupos recolhíveis */
+/* Portal ADMS Nexus v82 — pesquisa geral visível no site e portal */
 #app-screen{--nx-navy:#06143c;--nx-blue:#123a97;--nx-gold:#ddb845;--nx-bg:#edf2f8;--nx-panel:rgba(255,255,255,.9);--nx-line:rgba(17,42,102,.11);--nx-text:#101d3d;--nx-muted:#64708a;--nx-shadow:0 22px 55px -38px rgba(6,20,60,.55);font-family:'Inter',sans-serif;color:var(--nx-text);background:var(--nx-bg)}
 #app-screen .shell{grid-template-columns:282px minmax(0,1fr);background:radial-gradient(circle at 88% 4%,rgba(47,102,210,.12),transparent 27%),radial-gradient(circle at 50% 105%,rgba(221,184,69,.1),transparent 30%),var(--nx-bg);transition:grid-template-columns .28s ease}
 #app-screen .sidebar{width:auto;padding:20px 14px 18px;background:radial-gradient(circle at 20% 0,rgba(47,102,210,.36),transparent 28%),linear-gradient(180deg,#081d58 0%,#05143d 56%,#030e2c 100%);border-right:1px solid rgba(255,255,255,.08);box-shadow:18px 0 50px -38px #02091e}
@@ -1354,6 +1363,7 @@ window.addEventListener('online',()=>{ admsCarregarMembrosCloud(); admsCarregarE
    ÍCONES (inline SVG, stroke currentColor)
 ========================================================= */
 const ICON = {
+  search: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>',
   dashboard: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>',
   patrimonio: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M4 21V9l8-6 8 6v12M9 21v-6h6v6"/></svg>',
   rh: '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3.2"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><circle cx="18" cy="8" r="2.6"/><path d="M16 14.2c2.7.3 4.5 2.4 4.5 5.8"/></svg>',
@@ -2239,7 +2249,7 @@ function navDeptItem(id, icon, label, enabled){
   return `<div class="nav-item ${active?'active':''} ${enabled?'':'locked'}" role="button" tabindex="${enabled?'0':'-1'}" data-department="${id}" data-enabled="${enabled?'true':'false'}" onclick="${acao}" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();${acao}}" aria-current="${active?'page':'false'}" aria-disabled="${enabled?'false':'true'}">${ICON[icon]||ICON.dept||''}<span>${label}</span></div>`;
 }
 
-const NAV_COLLAPSE_KEY='adms_nav_collapsed_v81';
+const NAV_COLLAPSE_KEY='adms_nav_collapsed_v82';
 function navGroupId(label){
   return String(label||'grupo').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
 }
@@ -2336,6 +2346,7 @@ function renderShell(){
   const lider=session.tipo==='lider';
   let nav='<div class="nav-search"><label class="nav-search-field" aria-label="Pesquisar no menu"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg><input type="search" placeholder="Pesquisar função…" autocomplete="off" oninput="filtrarMenuPortal(this.value)"></label></div><div id="nav-empty-search" class="nav-empty-search">Nenhuma função encontrada.</div><div class="nav-group-label">Visão Geral</div>';
   nav+=navItem('home','dashboard','Página Inicial',true);
+  nav+=navItem('pesquisa','search','Pesquisar',true);
   nav+=navItem('notificacoes','bell','Notificações',true);
 
   if(membro){
@@ -2449,6 +2460,11 @@ function ruleDivider(){
 ========================================================= */
 function renderModule(){
   const el = document.getElementById('main-content');
+  if(currentModule==='pesquisa'){
+    el.innerHTML=viewPesquisaPortal();
+    setTimeout(()=>document.getElementById('portal-search-input')?.focus(),40);
+    return;
+  }
   if(currentModule==='home'){
     el.innerHTML=viewChurchHome();
     atualizarVideoPortal();
@@ -2540,6 +2556,26 @@ function renderModule(){
 /* =========================================================
    VIEWS
 ========================================================= */
+function itensPesquisaPortal(){
+  return [...document.querySelectorAll('#nav-container .nav-item[data-enabled="true"]')].map(item=>({
+    label:item.querySelector('span')?.textContent?.trim()||'',
+    module:item.dataset.module||'',
+    department:item.dataset.department||'',
+    group:item.parentElement?.previousElementSibling?.classList?.contains('nav-group-label')?item.parentElement.previousElementSibling.textContent.trim():'Portal',
+    icon:item.querySelector('svg')?.outerHTML||ICON.search
+  })).filter(item=>item.label&&item.module!=='pesquisa');
+}
+function resultadosPesquisaPortal(term=''){
+  const query=String(term).trim().toLocaleLowerCase('pt');
+  const items=itensPesquisaPortal().filter(item=>!query||`${item.label} ${item.group}`.toLocaleLowerCase('pt').includes(query));
+  const host=document.getElementById('portal-search-results');
+  if(!host)return;
+  host.innerHTML=items.length?items.map(item=>`<button class="portal-search-result" type="button" onclick="${item.department?`openDept('${item.department}')`:`goTo('${item.module}')`}"><span class="result-icon">${item.icon}</span><span><strong>${admsEsc(item.label)}</strong><small>${admsEsc(item.group)}</small></span><span class="result-arrow">→</span></button>`).join(''):'<div class="card empty-state"><p>Nenhuma função encontrada. Experimente outra palavra.</p></div>';
+}
+function viewPesquisaPortal(){
+  setTimeout(()=>resultadosPesquisaPortal(''),0);
+  return `<div class="topbar"><div><div class="breadcrumb">Navegação inteligente</div><h1>Pesquisar no Portal</h1></div><span class="access-pill">Acesso conforme o seu perfil</span></div>${ruleDivider()}<div class="portal-search-box"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg><input id="portal-search-input" type="search" placeholder="Procure financeiro, membros, escalas, avisos…" autocomplete="off" oninput="resultadosPesquisaPortal(this.value)" aria-label="Pesquisar funções do Portal"></div><div class="portal-search-results" id="portal-search-results" aria-live="polite"></div>`;
+}
 function viewLocked(nome){
   return `
   <div class="lock-panel">
@@ -6416,7 +6452,7 @@ async function handleLogout(){
   document.body.classList.remove('portal-active');
   session=null; admsCloudProfile=null; pendingLoginKey=null; pendingLoginLeaderId=null; currentProfileRef=null;
   try{ localStorage.removeItem(SESSAO_KEY);localStorage.removeItem(ESTADO_KEY); }catch(e){}
-  location.replace('/sistema?v=81');
+  location.replace('/sistema?v=82');
 }
 
 admsSupabase?.auth.onAuthStateChange((event)=>{
