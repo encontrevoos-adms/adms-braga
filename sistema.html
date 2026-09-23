@@ -672,8 +672,10 @@ async function admsCarregarEstadoCloud({bootstrap=true}={}){
   admsAplicandoEstadoCloud=true;
   try{ (data||[]).forEach(r=>admsAplicarModuloCloud(r.module_key,r.payload)); }
   finally{ admsAplicandoEstadoCloud=false; }
+  const ultimaGravacao=(data||[]).map(r=>r.updated_at).filter(Boolean).sort().pop()||null;
+  if(ultimaGravacao)admsAtualizarSync('synced',{lastSuccess:ultimaGravacao,lastError:null,lastModules:(data||[]).map(r=>r.module_key)});
   try{ localStorage.setItem(ESTADO_KEY, JSON.stringify({...admsEstadoCloudSnapshot(),guardadoEm:new Date().toISOString()})); }catch(e){}
-  return {ok:true,count:(data||[]).length};
+  return {ok:true,count:(data||[]).length,lastSuccess:ultimaGravacao};
 }
 
 async function admsIniciarEstadoRealtime(){
@@ -971,7 +973,7 @@ window.addEventListener('online',()=>{ admsCarregarMembrosCloud(); admsCarregarE
 @media(max-width:1080px){#app-screen .command-actions,#app-screen .smart-metrics{grid-template-columns:1fr 1fr}}
 @media(max-width:760px){#app-screen .command-bar{align-items:stretch;flex-direction:column}#app-screen .command-updated{text-align:left}#app-screen .command-filters{display:grid;grid-template-columns:1fr 1fr}#app-screen .command-filters select{min-width:0;width:100%}#app-screen .smart-grid{grid-template-columns:1fr}}
 @media(max-width:520px){#app-screen .command-actions,#app-screen .smart-metrics,#app-screen .command-filters{grid-template-columns:1fr}#app-screen .command-action{padding:12px}#app-screen .smart-metric{min-height:126px}}
-/* Portal ADMS Nexus v70 — isolado do ecrã de acesso */
+/* Portal ADMS Nexus v71 — isolado do ecrã de acesso */
 #app-screen{--nx-navy:#06143c;--nx-blue:#123a97;--nx-gold:#ddb845;--nx-bg:#edf2f8;--nx-panel:rgba(255,255,255,.9);--nx-line:rgba(17,42,102,.11);--nx-text:#101d3d;--nx-muted:#64708a;--nx-shadow:0 22px 55px -38px rgba(6,20,60,.55);font-family:'Inter',sans-serif;color:var(--nx-text);background:var(--nx-bg)}
 #app-screen .shell{grid-template-columns:282px minmax(0,1fr);background:radial-gradient(circle at 88% 4%,rgba(47,102,210,.12),transparent 27%),radial-gradient(circle at 50% 105%,rgba(221,184,69,.1),transparent 30%),var(--nx-bg);transition:grid-template-columns .28s ease}
 #app-screen .sidebar{width:auto;padding:20px 14px 18px;background:radial-gradient(circle at 20% 0,rgba(47,102,210,.36),transparent 28%),linear-gradient(180deg,#081d58 0%,#05143d 56%,#030e2c 100%);border-right:1px solid rgba(255,255,255,.08);box-shadow:18px 0 50px -38px #02091e}
@@ -2750,7 +2752,7 @@ async function carregarSaudeSistema(){
   const host=document.getElementById('system-health');if(!host||currentModule!=='dashboard')return;
   const item=(titulo,detalhe,estado='ok')=>`<div class="health-item"><span class="health-dot ${estado}"></span><span class="health-copy"><strong>${admsEsc(titulo)}</strong><span title="${admsEsc(detalhe)}">${admsEsc(detalhe)}</span></span></div>`;
   const online=navigator.onLine;
-  let sessao=false,persistencia=false,detalhePersistencia='Não confirmada';
+  let sessao=false,persistencia=false,detalhePersistencia='Não confirmada',ultimaGravacaoNuvem=null;
   try{
     const sess=await admsComTimeout(admsCloudSession(),8000,'A verificação da sessão');sessao=!!sess;
     if(sessao){
@@ -2758,11 +2760,12 @@ async function carregarSaudeSistema(){
       if(error)throw error;
       persistencia=Array.isArray(data);
       const modulos=(data||[]).length,maisRecente=(data||[]).map(x=>x.updated_at).filter(Boolean).sort().pop();
+      ultimaGravacaoNuvem=maisRecente||null;
       detalhePersistencia=`${modulos} módulo(s) acessíveis${maisRecente?' · atualizado '+new Date(maisRecente).toLocaleString('pt-PT'):''}`;
     }
   }catch(error){detalhePersistencia=error?.message||'Falha na verificação';}
-  const sync=ADMS_SYNC_STATUS,last=sync.lastSuccess?new Date(sync.lastSuccess).toLocaleString('pt-PT'):'Ainda sem gravação nesta sessão';
-  const syncState=sync.state==='error'?'error':sync.state==='saving'?'warn':sync.lastSuccess?'ok':'warn';
+  const sync=ADMS_SYNC_STATUS,ultimaConfirmada=sync.lastSuccess||ultimaGravacaoNuvem,last=ultimaConfirmada?new Date(ultimaConfirmada).toLocaleString('pt-PT'):'Ainda sem gravação confirmada';
+  const syncState=sync.state==='error'?'error':sync.state==='saving'?'warn':ultimaConfirmada?'ok':'warn';
   host.innerHTML=[
     item('Ligação',online?'Dispositivo online':'Sem ligação à internet',online?'ok':'error'),
     item('Sessão segura',sessao?'Autenticação Supabase ativa':'Sessão não confirmada',sessao?'ok':'error'),
@@ -6178,7 +6181,7 @@ async function handleLogout(){
   await admsSupabase.auth.signOut();
   session=null; admsCloudProfile=null; pendingLoginKey=null; pendingLoginLeaderId=null; currentProfileRef=null;
   try{ localStorage.removeItem(SESSAO_KEY);localStorage.removeItem(ESTADO_KEY); }catch(e){}
-  location.replace('/sistema?v=70');
+  location.replace('/sistema?v=71');
 }
 
 admsSupabase?.auth.onAuthStateChange((event)=>{

@@ -1,0 +1,29 @@
+ADMS BRAGA — SITE E PORTAL v71
+================================
+
+ESTADO REAL DA SINCRONIZAÇÃO
+----------------------------
+- Confirmado que os lançamentos financeiros permanecem após logout e novo
+  login: a persistência no Supabase está operacional.
+- O cartão "Última sincronização" passa a recuperar a data real da última
+  gravação diretamente da tabela `adms_module_state`.
+- Após novo login, o estado já não volta indevidamente para amarelo.
+- Uma gravação confirmada em sessão anterior passa a ser apresentada em verde.
+- Mantidas todas as correções do dashboard e conteúdo editorial da versão 70.
+
+PUBLICAÇÃO
+----------
+1. Extraia adms-braga-site-portal-v71.zip.
+2. Envie todos os ficheiros e pastas para o GitHub.
+3. Faça o commit na branch main e aguarde a Vercel concluir o deployment.
+4. Abra https://adms-braga.vercel.app/sistema?v=71.
+
+VALIDAÇÃO
+---------
+- O cartão "Última sincronização" deverá ficar verde e mostrar a data/hora da
+  última gravação confirmada, mesmo depois de terminar e reiniciar a sessão.
+- O lançamento financeiro deverá continuar disponível após novo login.
+
+SUPABASE
+--------
+Esta versão não altera tabelas nem políticas RLS. Não exige execução de SQL.
