@@ -993,7 +993,7 @@ window.addEventListener('online',()=>{ admsCarregarMembrosCloud(); admsCarregarE
 @media(max-width:1080px){#app-screen .command-actions,#app-screen .smart-metrics{grid-template-columns:1fr 1fr}}
 @media(max-width:760px){#app-screen .command-bar{align-items:stretch;flex-direction:column}#app-screen .command-updated{text-align:left}#app-screen .command-filters{display:grid;grid-template-columns:1fr 1fr}#app-screen .command-filters select{min-width:0;width:100%}#app-screen .smart-grid{grid-template-columns:1fr}}
 @media(max-width:520px){#app-screen .command-actions,#app-screen .smart-metrics,#app-screen .command-filters{grid-template-columns:1fr}#app-screen .command-action{padding:12px}#app-screen .smart-metric{min-height:126px}}
-/* Portal ADMS Nexus v75 — isolado do ecrã de acesso */
+/* Portal ADMS Nexus v76 — isolado do ecrã de acesso */
 #app-screen{--nx-navy:#06143c;--nx-blue:#123a97;--nx-gold:#ddb845;--nx-bg:#edf2f8;--nx-panel:rgba(255,255,255,.9);--nx-line:rgba(17,42,102,.11);--nx-text:#101d3d;--nx-muted:#64708a;--nx-shadow:0 22px 55px -38px rgba(6,20,60,.55);font-family:'Inter',sans-serif;color:var(--nx-text);background:var(--nx-bg)}
 #app-screen .shell{grid-template-columns:282px minmax(0,1fr);background:radial-gradient(circle at 88% 4%,rgba(47,102,210,.12),transparent 27%),radial-gradient(circle at 50% 105%,rgba(221,184,69,.1),transparent 30%),var(--nx-bg);transition:grid-template-columns .28s ease}
 #app-screen .sidebar{width:auto;padding:20px 14px 18px;background:radial-gradient(circle at 20% 0,rgba(47,102,210,.36),transparent 28%),linear-gradient(180deg,#081d58 0%,#05143d 56%,#030e2c 100%);border-right:1px solid rgba(255,255,255,.08);box-shadow:18px 0 50px -38px #02091e}
@@ -3473,10 +3473,19 @@ async function addPessoa(){
   if(!exigirPermissao('membros',RH_EDIT_STATE?'editar':'inserir')) return;
   const nome=document.getElementById('rh-nome').value.trim(), contacto=document.getElementById('rh-contacto').value.trim();
   const tipo=document.getElementById('rh-tipo').value, dept=document.getElementById('rh-dept').value;
+  const edit=RH_EDIT_STATE;
   if(!nome||!contacto){showToast('Preencha nome e telemóvel.');return;}
   if(!telemovelValido(contacto)){showToast('O telemóvel introduzido não parece válido.');return;}
-  if(tipo==='membros'&&!emailValido(document.getElementById('rh-email').value.trim())){showToast('O email introduzido não parece válido.');return;}
-  const hoje=new Date(), edit=RH_EDIT_STATE;
+  const emailNovo=tipo==='membros'?document.getElementById('rh-email').value.trim().toLowerCase():'';
+  if(tipo==='membros'&&!emailValido(emailNovo)){showToast('O email introduzido não parece válido.');return;}
+  const normalizarTelefone=v=>String(v||'').replace(/\D/g,'').replace(/^00/,'');
+  const todosCadastros=Object.entries(PESSOAS).flatMap(([categoria,itens])=>(itens||[]).map((p,index)=>({categoria,index,p})));
+  const outros=todosCadastros.filter(x=>!(edit&&x.categoria===edit.tipo&&x.index===edit.index));
+  const emailDuplicado=emailNovo&&outros.find(x=>String(x.p.email||'').trim().toLowerCase()===emailNovo);
+  if(emailDuplicado){showToast(`Este email já pertence a ${emailDuplicado.p.nome}.`);return;}
+  const telefoneDuplicado=outros.find(x=>normalizarTelefone(x.p.contacto||x.p.telemovel)===normalizarTelefone(contacto));
+  if(telefoneDuplicado&&!confirm(`O telemóvel já consta no cadastro de ${telefoneDuplicado.p.nome}. Deseja continuar mesmo assim?`))return;
+  const hoje=new Date();
   let pessoa;
   if(tipo==='membros'){
     const batizado=document.getElementById('rh-batizado').value==='sim', temFilhos=document.getElementById('rh-tem-filhos').value==='sim', dataMembresia=document.getElementById('rh-data-membresia').value;
@@ -3488,6 +3497,7 @@ async function addPessoa(){
     const fotoFile=document.getElementById('rh-foto')?.files?.[0]||null;
     if(fotoFile){const up=await admsUploadFotoMembro(fotoFile,pessoa.id);if(!up.ok){showToast('Não foi possível guardar a fotografia.');return;}pessoa.fotoPath=up.path;}
     const cloud=await admsSalvarMembroCloud(pessoa); if(!cloud.ok){showToast('Não foi possível guardar no servidor. Nenhuma alteração foi concluída.');console.error(cloud.error||cloud.reason);return;}
+    pessoa.numeroMembro=cloud.data?.numero_membro||pessoa.numeroMembro||'';
     await admsSincronizarLiderancaCloud(cloud.data?.id,pessoa);
     if(edit?.modo==='converter')PESSOAS[edit.tipo].splice(edit.index,1);
     else if(edit?.modo==='editar')PESSOAS.membros[edit.index]=pessoa;
@@ -3520,10 +3530,10 @@ function renderRHTable(tab){
       <div id="rh-lista-pessoas">
       ${data.length ? `
       <table>
-        <thead><tr><th>Nome</th><th>Contacto</th><th>${tab==='visitantes'?'Primeira visita':'Desde'}</th><th>Departamento</th><th>Estado</th><th>Ações</th></tr></thead>
+        <thead><tr><th>${tab==='membros'?'Membro':'Nome'}</th><th>Contacto</th><th>${tab==='visitantes'?'Primeira visita':'Desde'}</th><th>Departamento</th><th>Estado</th><th>Ações</th></tr></thead>
         <tbody>
           ${data.map((p,i)=>`<tr data-rh-index="${i}">
-            <td style="font-weight:600;">${p.nome}</td><td>${p.contacto||'—'}</td><td>${p.desde||'—'}</td><td>${p.dept||'—'}</td>
+            <td style="font-weight:600;">${p.nome}${tab==='membros'?`<small style="display:block;margin-top:3px;color:var(--ink-soft);font-weight:700;letter-spacing:.45px">${p.numeroMembro||p.numero_membro||'Numeração pendente'}</small>`:''}</td><td>${p.contacto||'—'}</td><td>${p.desde||'—'}</td><td>${p.dept||'—'}</td>
             <td>${tab==='membros'?`<span class="tag ${p.estadoMembresia==='Ativo'?'tag-green':p.estadoMembresia==='Inativo'?'tag-gold':'tag-red'}">${p.estadoMembresia||'Ativo'}</span>`:`<span class="tag tag-blue">${tab==='congregados'?'Congregado':'Visitante'}</span>`}</td>
             <td style="display:flex;gap:10px;flex-wrap:wrap;">
               <span style="color:var(--royal-dark);font-weight:700;cursor:pointer;font-size:12px;" onclick="openPessoaModal('${tab}',${i})">Ver perfil</span>
@@ -3541,7 +3551,7 @@ function filtrarRHTable(){
   const termo=(document.getElementById('rh-pesquisa')?.value||'').trim().toLocaleLowerCase('pt-PT');
   const linhas=Array.from(document.querySelectorAll('#rh-lista-pessoas tbody tr'));
   let visiveis=0;
-  linhas.forEach(tr=>{const i=Number(tr.dataset.rhIndex),p=PESSOAS[RH_ACTIVE_TAB]?.[i]||{};const texto=[p.nome,p.contacto,p.email,p.dept,p.estadoMembresia].join(' ').toLocaleLowerCase('pt-PT');const ok=!termo||texto.includes(termo);tr.style.display=ok?'':'none';if(ok)visiveis++;});
+  linhas.forEach(tr=>{const i=Number(tr.dataset.rhIndex),p=PESSOAS[RH_ACTIVE_TAB]?.[i]||{};const texto=[p.nome,p.numeroMembro,p.numero_membro,p.contacto,p.email,p.dept,p.estadoMembresia].join(' ').toLocaleLowerCase('pt-PT');const ok=!termo||texto.includes(termo);tr.style.display=ok?'':'none';if(ok)visiveis++;});
   let vazio=document.getElementById('rh-pesquisa-vazia');
   if(!vazio){vazio=document.createElement('div');vazio.id='rh-pesquisa-vazia';vazio.className='empty-state';vazio.innerHTML='<p>Nenhuma pessoa corresponde à pesquisa.</p>';document.getElementById('rh-lista-pessoas')?.appendChild(vazio);}
   vazio.style.display=linhas.length&&visiveis===0?'block':'none';
@@ -6229,7 +6239,7 @@ async function handleLogout(){
   document.body.classList.remove('portal-active');
   session=null; admsCloudProfile=null; pendingLoginKey=null; pendingLoginLeaderId=null; currentProfileRef=null;
   try{ localStorage.removeItem(SESSAO_KEY);localStorage.removeItem(ESTADO_KEY); }catch(e){}
-  location.replace('/sistema?v=75');
+  location.replace('/sistema?v=76');
 }
 
 admsSupabase?.auth.onAuthStateChange((event)=>{

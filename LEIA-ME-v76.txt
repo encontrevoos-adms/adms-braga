@@ -1,0 +1,24 @@
+ADMS BRAGA — SITE E PORTAL v76
+================================
+
+HOMOLOGAÇÃO DE CADASTROS
+------------------------
+- O portal impede a gravação de dois membros com o mesmo email.
+- Quando o mesmo telemóvel já existe, a Secretaria recebe um aviso e decide
+  conscientemente se pretende continuar, permitindo contactos familiares.
+- O número de membro devolvido pelo Supabase é associado imediatamente ao
+  cadastro e apresentado na listagem de Recursos Humanos.
+- A pesquisa de pessoas também encontra pelo número ADMSBRG.
+- Cartão, perfil e listagem passam a utilizar o mesmo identificador central.
+
+PUBLICAÇÃO
+----------
+1. Extraia adms-braga-site-portal-v76.zip.
+2. Envie todos os ficheiros e pastas para o GitHub.
+3. Faça o commit na branch main e aguarde a Vercel concluir o deployment.
+4. Abra https://adms-braga.vercel.app/sistema?v=76.
+
+SUPABASE
+--------
+Não existe SQL novo nesta versão. A numeração automática configurada na versão
+53 e as permissões da versão 73 devem permanecer aplicadas.
