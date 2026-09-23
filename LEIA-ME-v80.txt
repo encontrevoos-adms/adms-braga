@@ -1,0 +1,33 @@
+ADMS BRAGA — SITE E PORTAL v80
+================================
+
+ESCALAS — TRAJE E PALETA
+------------------------
+- Campo próprio para orientação de traje em todas as escalas de serviço.
+- Seleção visual de até quatro cores para cada culto ou evento.
+- Traje e cores permanecem editáveis após a criação da escala.
+- Informações incluídas na consulta do participante, partilha, aviso e impressão.
+- Alterações passam a integrar o histórico da escala e a persistência já existente.
+
+MENUS ORGANIZADOS
+-----------------
+- Visão Geral.
+- Pessoas e Recursos.
+- Finanças.
+- Ministérios e Cultos.
+- Comunicação e Acolhimento.
+- Administração.
+- Lideranças e membros recebem grupos adaptados às respetivas funções.
+- No telemóvel, os títulos dos grupos continuam visíveis para facilitar a navegação.
+
+PUBLICAÇÃO
+----------
+1. Extraia adms-braga-site-portal-v80.zip.
+2. Envie todos os ficheiros e pastas para o GitHub.
+3. Faça o commit na branch main e aguarde a Vercel concluir o deployment.
+4. Abra https://adms-braga.vercel.app/sistema?v=80.
+
+SUPABASE
+--------
+Não existe SQL novo nesta versão. Os novos campos são guardados dentro do módulo
+de escalas já sincronizado com o Supabase.
