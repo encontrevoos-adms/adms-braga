@@ -1,0 +1,30 @@
+ADMS BRAGA — SITE E PORTAL v72
+================================
+
+NOVIDADES
+---------
+- Barra de rolagem vertical visível no lado direito do portal, com a paleta
+  azul e dourada da ADMS Braga.
+- A barra é ativada apenas no ambiente autenticado; a página de acesso mantém
+  o desenho anterior.
+- A área "Permissões por Perfil" apresenta agora uma validação rápida da
+  sessão, da matriz carregada e da numeração de membros no padrão ADMSBRG.
+- Mantidas a persistência financeira e as correções do painel da versão 71.
+
+PUBLICAÇÃO
+----------
+1. Extraia adms-braga-site-portal-v72.zip.
+2. Envie todos os ficheiros e pastas para o GitHub.
+3. Faça o commit na branch main e aguarde a Vercel concluir o deployment.
+4. Abra https://adms-braga.vercel.app/sistema?v=72.
+
+VALIDAÇÃO
+---------
+- Confirme a barra dourada no lado direito após entrar no portal.
+- Em "Permissões por Perfil", confirme os três indicadores de validação.
+- Em telemóvel e tablet, confirme que a página continua a deslocar-se
+  verticalmente sem bloquear o menu.
+
+SUPABASE
+--------
+Esta versão não altera tabelas nem políticas RLS. Não exige execução de SQL.

@@ -37,6 +37,12 @@
     color:var(--ink);
     min-height:100vh;
   }
+  /* A barra principal fica visível apenas no ambiente autenticado. */
+  body.portal-active{overflow-y:scroll;scrollbar-gutter:stable;scrollbar-width:auto;scrollbar-color:#D6AD45 #E8EDF6;}
+  body.portal-active::-webkit-scrollbar{width:14px;}
+  body.portal-active::-webkit-scrollbar-track{background:#E8EDF6;border-left:1px solid #D8DFEC;}
+  body.portal-active::-webkit-scrollbar-thumb{min-height:64px;border:3px solid #E8EDF6;border-radius:999px;background:linear-gradient(180deg,#D9B552 0%,#A77C16 100%);}
+  body.portal-active::-webkit-scrollbar-thumb:hover{background:linear-gradient(180deg,#E5C66F 0%,#805D0A 100%);}
   h1,h2,h3,.display{
     font-family:'Cormorant Garamond', serif;
     letter-spacing:.2px;
@@ -437,8 +443,13 @@
   .permission-toggle:disabled{opacity:.42;cursor:not-allowed;}
   .permission-legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:14px;color:var(--ink-soft);font-size:11px;}
   .permission-status{padding:7px 11px;border-radius:999px;background:#EEF3FF;color:var(--royal);font-size:11px;font-weight:700;white-space:nowrap;}
+  .permission-checks{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:0 0 18px;}
+  .permission-check{display:flex;align-items:center;gap:10px;padding:12px 13px;border:1px solid #E2E7F1;border-radius:13px;background:#F8FAFE;color:var(--ink-soft);font-size:12px;line-height:1.35;}
+  .permission-check strong{display:block;color:var(--royal-deep);font-size:13px;}
+  .permission-check-dot{width:10px;height:10px;flex:0 0 auto;border-radius:50%;background:var(--ok);box-shadow:0 0 0 5px rgba(30,142,90,.1);}
+  .permission-check.warn .permission-check-dot{background:#C28B13;box-shadow:0 0 0 5px rgba(194,139,19,.11);}
   #app-screen .permission-action-blocked{opacity:.42!important;filter:grayscale(.35);cursor:not-allowed!important;box-shadow:none!important;}
-  @media(max-width:700px){.permission-intro{display:block}.permission-status{display:inline-flex;margin-top:12px}.permission-role-tab{padding:8px 11px}.permission-matrix th,.permission-matrix td{padding:11px 9px}}
+  @media(max-width:700px){.permission-intro{display:block}.permission-status{display:inline-flex;margin-top:12px}.permission-checks{grid-template-columns:1fr}.permission-role-tab{padding:8px 11px}.permission-matrix th,.permission-matrix td{padding:11px 9px}}
 </style>
 <!-- Supabase Cloud — Fase 1: infraestrutura sem alterar a identidade visual -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -973,7 +984,7 @@ window.addEventListener('online',()=>{ admsCarregarMembrosCloud(); admsCarregarE
 @media(max-width:1080px){#app-screen .command-actions,#app-screen .smart-metrics{grid-template-columns:1fr 1fr}}
 @media(max-width:760px){#app-screen .command-bar{align-items:stretch;flex-direction:column}#app-screen .command-updated{text-align:left}#app-screen .command-filters{display:grid;grid-template-columns:1fr 1fr}#app-screen .command-filters select{min-width:0;width:100%}#app-screen .smart-grid{grid-template-columns:1fr}}
 @media(max-width:520px){#app-screen .command-actions,#app-screen .smart-metrics,#app-screen .command-filters{grid-template-columns:1fr}#app-screen .command-action{padding:12px}#app-screen .smart-metric{min-height:126px}}
-/* Portal ADMS Nexus v71 — isolado do ecrã de acesso */
+/* Portal ADMS Nexus v72 — isolado do ecrã de acesso */
 #app-screen{--nx-navy:#06143c;--nx-blue:#123a97;--nx-gold:#ddb845;--nx-bg:#edf2f8;--nx-panel:rgba(255,255,255,.9);--nx-line:rgba(17,42,102,.11);--nx-text:#101d3d;--nx-muted:#64708a;--nx-shadow:0 22px 55px -38px rgba(6,20,60,.55);font-family:'Inter',sans-serif;color:var(--nx-text);background:var(--nx-bg)}
 #app-screen .shell{grid-template-columns:282px minmax(0,1fr);background:radial-gradient(circle at 88% 4%,rgba(47,102,210,.12),transparent 27%),radial-gradient(circle at 50% 105%,rgba(221,184,69,.1),transparent 30%),var(--nx-bg);transition:grid-template-columns .28s ease}
 #app-screen .sidebar{width:auto;padding:20px 14px 18px;background:radial-gradient(circle at 20% 0,rgba(47,102,210,.36),transparent 28%),linear-gradient(180deg,#081d58 0%,#05143d 56%,#030e2c 100%);border-right:1px solid rgba(255,255,255,.08);box-shadow:18px 0 50px -38px #02091e}
@@ -4881,6 +4892,9 @@ function verRecibo(reciboId){
 
 function viewPermissoes(){
   const perfil=PERMISSAO_PERFIS.find(p=>p.id===permissaoPerfilSelecionado)||PERMISSAO_PERFIS[0];
+  const membrosTotal=(PESSOAS.membros||[]).length;
+  const membrosNumerados=(PESSOAS.membros||[]).filter(m=>/^ADMSBRG\d{4,}$/.test(String(m.numeroMembro||m.numero_membro||''))).length;
+  const matrizCompleta=PERMISSOES_PERFIS.length>0;
   const tabs=PERMISSAO_PERFIS.map(p=>`<button class="permission-role-tab ${p.id===perfil.id?'active':''}" onclick="selecionarPerfilPermissao('${p.id}')">${p.nome}</button>`).join('');
   const rows=PERMISSAO_MODULOS.map(m=>{
     const bloqueado=permissaoBloqueada(perfil.id,m.id) || perfil.id==='master';
@@ -4895,6 +4909,11 @@ function viewPermissoes(){
   ${ruleDivider()}
   <div class="card">
     <div class="permission-intro"><div><h3 style="margin:0;color:var(--royal-deep)">Matriz de autorização</h3><p>Defina o que cada perfil pode visualizar e realizar. As áreas Financeira, Pastoral e Gestão de Acessos conservam proteções fixas para evitar exposições acidentais.</p></div><span class="permission-status">Alterações guardadas na nuvem</span></div>
+    <div class="permission-checks" aria-label="Validação de cadastros e acessos">
+      <div class="permission-check"><span class="permission-check-dot"></span><span><strong>Sessão autenticada</strong>${admsEsc(roleLabel())}</span></div>
+      <div class="permission-check ${matrizCompleta?'':'warn'}"><span class="permission-check-dot"></span><span><strong>Matriz de permissões</strong>${matrizCompleta?`${PERMISSOES_PERFIS.length} regra(s) carregada(s)`:'A usar proteção incorporada'}</span></div>
+      <div class="permission-check ${membrosTotal===membrosNumerados?'':'warn'}"><span class="permission-check-dot"></span><span><strong>Numeração de membros</strong>${membrosNumerados}/${membrosTotal} no padrão ADMSBRG</span></div>
+    </div>
     <div class="permission-role-tabs">${tabs}</div>
     <div class="permission-table-wrap"><table class="permission-matrix"><thead><tr><th>Módulo</th><th>Visualizar</th><th>Inserir</th><th>Editar</th><th>Arquivar</th><th>Exportar</th></tr></thead><tbody>${rows}</tbody></table></div>
     <div class="permission-legend"><span>Azul: permitido</span><span>Cinzento: bloqueado</span><span>Controlos desativados: proteção fixa</span></div>
@@ -6142,6 +6161,7 @@ async function finalizeLogin(){
   currentModule='home';
   document.getElementById('login-screen').style.display='none';
   document.getElementById('app-screen').style.display='block';
+  document.body.classList.add('portal-active');
   await admsCarregarMembrosCloud();
   await admsCarregarDepartamentosCloud();
   await admsCarregarPermissoesCloud();
@@ -6179,9 +6199,10 @@ async function handleLogout(){
   if(admsStateRealtimeChannel){ try{ await admsSupabase.removeChannel(admsStateRealtimeChannel); }catch(e){} admsStateRealtimeChannel=null; }
   if(admsAuditRealtimeChannel){ try{ await admsSupabase.removeChannel(admsAuditRealtimeChannel); }catch(e){} admsAuditRealtimeChannel=null; }
   await admsSupabase.auth.signOut();
+  document.body.classList.remove('portal-active');
   session=null; admsCloudProfile=null; pendingLoginKey=null; pendingLoginLeaderId=null; currentProfileRef=null;
   try{ localStorage.removeItem(SESSAO_KEY);localStorage.removeItem(ESTADO_KEY); }catch(e){}
-  location.replace('/sistema?v=71');
+  location.replace('/sistema?v=72');
 }
 
 admsSupabase?.auth.onAuthStateChange((event)=>{
@@ -6222,6 +6243,7 @@ if(paramsUrl.get('form') === 'cadastro'){
     }catch(e){ console.warn('Não foi possível restaurar a sessão.',e); }
     if(!restaurada){
       session=null; admsCloudProfile=null;
+      document.body.classList.remove('portal-active');
       document.getElementById('app-screen').style.display='none';
       document.getElementById('login-screen').style.display='flex';
       document.getElementById('step-credentials').style.display='block';
@@ -6353,6 +6375,7 @@ document.getElementById('login-pass')?.addEventListener('keydown',e=>{if(e.key==
 setTimeout(admsPrepararLoginV4,50);
 admsSupabase?.auth.onAuthStateChange((event)=>{
  if(event==='PASSWORD_RECOVERY'){
+  document.body.classList.remove('portal-active');
   document.getElementById('login-screen').style.display='flex';
   document.getElementById('app-screen').style.display='none';
   hideAllLoginSteps();
