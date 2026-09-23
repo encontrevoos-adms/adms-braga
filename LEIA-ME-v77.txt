@@ -1,0 +1,23 @@
+ADMS BRAGA — SITE E PORTAL v77
+================================
+
+CARTÃO DE MEMBRO INSTITUCIONAL
+------------------------------
+- Novo cartão frente e verso, preparado para impressão no formato CR80.
+- Frente: fotografia, nome completo, número ADMSBRG, função, departamento,
+  congregação e estado da membresia.
+- Verso: identificação institucional, data de membresia, departamento, função,
+  data de emissão e aviso de documento pessoal e intransmissível.
+- A emissão é bloqueada enquanto o Supabase não atribuir o número ADMSBRG.
+- Por segurança, telefone, morada, emergência e observações não são impressos.
+
+PUBLICAÇÃO
+----------
+1. Extraia adms-braga-site-portal-v77.zip.
+2. Envie todos os ficheiros e pastas para o GitHub.
+3. Faça o commit na branch main e aguarde a Vercel concluir o deployment.
+4. Abra https://adms-braga.vercel.app/sistema?v=77.
+
+SUPABASE
+--------
+Não existe SQL novo nesta versão.
