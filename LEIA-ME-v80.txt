@@ -25,7 +25,7 @@ PUBLICAÇÃO
 1. Extraia adms-braga-site-portal-v80.zip.
 2. Envie todos os ficheiros e pastas para o GitHub.
 3. Faça o commit na branch main e aguarde a Vercel concluir o deployment.
-4. Abra https://adms-braga.vercel.app/sistema?v=80.
+4. Abra https://adms-braga-site.vercel.app/sistema?v=80.
 
 SUPABASE
 --------

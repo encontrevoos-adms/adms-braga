@@ -1,0 +1,28 @@
+ADMS BRAGA — SITE E PORTAL v81
+================================
+
+NAVEGAÇÃO MAIS EFICIENTE
+------------------------
+- Pesquisa rápida de funções no menu lateral.
+- Grupos do menu podem ser abertos ou recolhidos.
+- A preferência de grupos recolhidos permanece guardada no dispositivo.
+- O grupo da página atual abre automaticamente.
+- Pesquisa e grupos adaptados a computador, tablet e telemóvel.
+- Identificação da Secretaria atualizada para Secretaria Master.
+
+DOMÍNIO OFICIAL
+---------------
+- Metadados, sitemap, robots.txt e acessos ao portal apontam para:
+  https://adms-braga-site.vercel.app/
+- Links internos e ficheiros locais utilizam a versão 81 para evitar cache antigo.
+
+PUBLICAÇÃO
+----------
+1. Extraia adms-braga-site-portal-v81.zip.
+2. Envie todos os ficheiros e pastas para o GitHub.
+3. Faça o commit na branch main e aguarde a Vercel concluir o deployment.
+4. Abra https://adms-braga-site.vercel.app/sistema?v=81.
+
+SUPABASE
+--------
+Não existe SQL novo nesta versão.

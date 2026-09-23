@@ -149,6 +149,19 @@
   .side-brand .name{font-family:'Cormorant Garamond'; font-weight:700; font-size:15px; line-height:1.2;}
   .side-brand .sub{font-size:10px; letter-spacing:.6px; color:#B9C4E8; text-transform:uppercase; margin-top:2px;}
   .nav-group-label{font-size:10.5px; text-transform:uppercase; letter-spacing:1px; color:#8E9BCB; margin:18px 8px 8px 8px; font-weight:700;}
+  .nav-search{position:sticky;top:0;z-index:3;padding:4px 2px 10px;background:linear-gradient(180deg,var(--royal-deep) 72%,transparent);}
+  .nav-search-field{display:flex;align-items:center;gap:8px;min-height:40px;padding:0 11px;border:1px solid rgba(255,255,255,.14);border-radius:12px;background:rgba(255,255,255,.07);color:#fff;transition:border-color .18s,background .18s;}
+  .nav-search-field:focus-within{border-color:rgba(221,184,69,.75);background:rgba(255,255,255,.11);}
+  .nav-search-field svg{width:17px;height:17px;flex:0 0 auto;opacity:.75;fill:none;stroke:currentColor;stroke-width:2;}
+  .nav-search-field input{width:100%;min-width:0;border:0;outline:0;background:transparent;color:#fff;font:600 12px/1.2 inherit;}
+  .nav-search-field input::placeholder{color:#aeb9da;}
+  .nav-group-label{display:flex;align-items:center;justify-content:space-between;gap:8px;cursor:pointer;user-select:none;border-radius:8px;padding:5px 6px;transition:background .16s,color .16s;}
+  .nav-group-label:hover,.nav-group-label:focus-visible{background:rgba(255,255,255,.07);color:#f0cf68;outline:none;}
+  .nav-group-label::after{content:'⌄';font-size:14px;line-height:1;transition:transform .18s;}
+  .nav-group-label.collapsed::after{transform:rotate(-90deg);}
+  .nav-group-items{display:block;}
+  .nav-group-items.collapsed{display:none;}
+  .nav-empty-search{display:none;padding:14px 10px;color:#b9c4e8;font-size:12px;text-align:center;}
   .nav-item{
     display:flex; align-items:center; gap:11px; padding:10px 12px; border-radius:10px;
     color:#DCE3F7; text-decoration:none; font-size:13.5px; font-weight:600; cursor:pointer;
@@ -1008,7 +1021,7 @@ window.addEventListener('online',()=>{ admsCarregarMembrosCloud(); admsCarregarE
 @media(max-width:1080px){#app-screen .command-actions,#app-screen .smart-metrics{grid-template-columns:1fr 1fr}}
 @media(max-width:760px){#app-screen .command-bar{align-items:stretch;flex-direction:column}#app-screen .command-updated{text-align:left}#app-screen .command-filters{display:grid;grid-template-columns:1fr 1fr}#app-screen .command-filters select{min-width:0;width:100%}#app-screen .smart-grid{grid-template-columns:1fr}}
 @media(max-width:520px){#app-screen .command-actions,#app-screen .smart-metrics,#app-screen .command-filters{grid-template-columns:1fr}#app-screen .command-action{padding:12px}#app-screen .smart-metric{min-height:126px}}
-/* Portal ADMS Nexus v80 — escalas com traje e menus organizados */
+/* Portal ADMS Nexus v81 — navegação pesquisável e grupos recolhíveis */
 #app-screen{--nx-navy:#06143c;--nx-blue:#123a97;--nx-gold:#ddb845;--nx-bg:#edf2f8;--nx-panel:rgba(255,255,255,.9);--nx-line:rgba(17,42,102,.11);--nx-text:#101d3d;--nx-muted:#64708a;--nx-shadow:0 22px 55px -38px rgba(6,20,60,.55);font-family:'Inter',sans-serif;color:var(--nx-text);background:var(--nx-bg)}
 #app-screen .shell{grid-template-columns:282px minmax(0,1fr);background:radial-gradient(circle at 88% 4%,rgba(47,102,210,.12),transparent 27%),radial-gradient(circle at 50% 105%,rgba(221,184,69,.1),transparent 30%),var(--nx-bg);transition:grid-template-columns .28s ease}
 #app-screen .sidebar{width:auto;padding:20px 14px 18px;background:radial-gradient(circle at 20% 0,rgba(47,102,210,.36),transparent 28%),linear-gradient(180deg,#081d58 0%,#05143d 56%,#030e2c 100%);border-right:1px solid rgba(255,255,255,.08);box-shadow:18px 0 50px -38px #02091e}
@@ -1044,7 +1057,7 @@ window.addEventListener('online',()=>{ admsCarregarMembrosCloud(); admsCarregarE
 @media(max-width:760px){#app-screen .shell,#app-screen.compact-nav .shell{display:block}#app-screen .sidebar{padding:10px 12px;border-right:0;border-bottom:1px solid rgba(255,255,255,.1)}#app-screen .side-brand,#app-screen.compact-nav .side-brand{display:grid;grid-template-columns:auto minmax(0,1fr) auto;justify-items:stretch;margin:0;padding:3px 2px 10px}#app-screen.compact-nav .side-brand>div:not(.side-brand-actions){display:block}#app-screen .side-brand img,#app-screen.compact-nav .side-brand img{width:43px;height:43px}#app-screen .sidebar-toggle{display:none}#app-screen #nav-container{padding:7px 0 6px}#app-screen .nav-group-label{display:none}#app-screen .nav-item,#app-screen.compact-nav .nav-item{flex:0 0 auto;justify-content:flex-start;min-height:42px;padding:10px 12px}#app-screen.compact-nav .nav-item span:not(.nav-badge){display:inline}#app-screen .side-user{display:none}#app-screen .main{padding:18px 14px 92px}#app-screen .topbar{padding:15px;border-radius:17px}#app-screen .card{border-radius:18px}#app-screen .portal-actions{overflow-x:auto;display:flex;flex-wrap:nowrap}#app-screen .portal-actions .portal-action{flex:0 0 auto}#app-screen table{min-width:650px}#app-screen .table-wrap{overflow-x:auto;scrollbar-width:thin}}
 @media(prefers-reduced-motion:reduce){#app-screen *,#app-screen *::before,#app-screen *::after{scroll-behavior:auto!important;transition-duration:.01ms!important;animation-duration:.01ms!important}}
 @media(max-width:520px){#app-screen .system-health{grid-template-columns:1fr}}
-@media(max-width:760px){#app-screen .nav-group-label{display:block;flex:0 0 100%;width:100%;margin:12px 8px 4px;padding-top:9px;border-top:1px solid rgba(255,255,255,.1);font-size:8px}#app-screen .scale-attire-summary{width:100%}}
+@media(max-width:760px){#app-screen .nav-search{flex:0 0 100%;width:100%;padding:0 0 6px;background:var(--royal-deep)}#app-screen .nav-group-label{display:flex;flex:0 0 100%;width:100%;margin:12px 8px 4px;padding:9px 7px 4px;border-top:1px solid rgba(255,255,255,.1);font-size:8px}#app-screen .nav-group-items{display:contents}#app-screen .nav-group-items.collapsed{display:none}#app-screen .scale-attire-summary{width:100%}}
 </style>
 </head>
 <body>
@@ -2205,7 +2218,7 @@ function myEscalaDepts(){
 function roleLabel(){
   if(session.tipo==='pastor') return session.label + ' · Pastor Local';
   if(session.tipo==='tesoureiro') return session.label + ' · Tesouraria';
-  if(session.tipo==='secretaria') return session.label + ' · Secretaria';
+  if(session.tipo==='secretaria') return session.label + ' · Secretaria Master';
   if(session.tipo==='membro'||session.tipo==='consulta') return 'Membro · Visualização';
   if(session.tipo==='lider') return 'Líder · ' + (session.deptIds||[]).map(deptNome).join(' / ');
   return session.label||'Utilizador';
@@ -2226,6 +2239,94 @@ function navDeptItem(id, icon, label, enabled){
   return `<div class="nav-item ${active?'active':''} ${enabled?'':'locked'}" role="button" tabindex="${enabled?'0':'-1'}" data-department="${id}" data-enabled="${enabled?'true':'false'}" onclick="${acao}" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();${acao}}" aria-current="${active?'page':'false'}" aria-disabled="${enabled?'false':'true'}">${ICON[icon]||ICON.dept||''}<span>${label}</span></div>`;
 }
 
+const NAV_COLLAPSE_KEY='adms_nav_collapsed_v81';
+function navGroupId(label){
+  return String(label||'grupo').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+}
+function gruposMenuRecolhidos(){
+  try{return JSON.parse(localStorage.getItem(NAV_COLLAPSE_KEY)||'[]')}catch(error){return []}
+}
+function guardarGruposMenu(ids){
+  try{localStorage.setItem(NAV_COLLAPSE_KEY,JSON.stringify(ids))}catch(error){}
+}
+function alternarGrupoMenu(id){
+  const label=document.querySelector(`.nav-group-label[data-group-id="${id}"]`);
+  const body=document.querySelector(`.nav-group-items[data-group-id="${id}"]`);
+  if(!label||!body)return;
+  const collapsed=!body.classList.contains('collapsed');
+  body.classList.toggle('collapsed',collapsed);
+  label.classList.toggle('collapsed',collapsed);
+  label.setAttribute('aria-expanded',String(!collapsed));
+  const ids=new Set(gruposMenuRecolhidos());
+  collapsed?ids.add(id):ids.delete(id);
+  guardarGruposMenu([...ids]);
+}
+function organizarGruposNavegacao(){
+  const host=document.getElementById('nav-container');
+  if(!host)return;
+  const labels=[...host.querySelectorAll('.nav-group-label')];
+  const collapsed=new Set(gruposMenuRecolhidos());
+  labels.forEach(label=>{
+    const id=navGroupId(label.textContent);
+    label.dataset.groupId=id;
+    label.setAttribute('role','button');
+    label.setAttribute('tabindex','0');
+    label.onclick=()=>alternarGrupoMenu(id);
+    label.onkeydown=event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();alternarGrupoMenu(id)}};
+    const body=document.createElement('div');
+    body.className='nav-group-items';
+    body.dataset.groupId=id;
+    let node=label.nextSibling;
+    while(node&&!node.classList?.contains('nav-group-label')){
+      const next=node.nextSibling;
+      body.appendChild(node);
+      node=next;
+    }
+    label.after(body);
+    const containsActive=!!body.querySelector('.nav-item.active');
+    const isCollapsed=collapsed.has(id)&&!containsActive;
+    body.classList.toggle('collapsed',isCollapsed);
+    label.classList.toggle('collapsed',isCollapsed);
+    label.setAttribute('aria-expanded',String(!isCollapsed));
+  });
+}
+function filtrarMenuPortal(value){
+  const term=String(value||'').trim().toLocaleLowerCase('pt');
+  const host=document.getElementById('nav-container');
+  if(!host)return;
+  let found=0;
+  host.querySelectorAll('.nav-group-label').forEach(label=>{
+    const id=label.dataset.groupId;
+    const body=host.querySelector(`.nav-group-items[data-group-id="${id}"]`);
+    if(!body)return;
+    let groupMatches=0;
+    body.querySelectorAll('.nav-item').forEach(item=>{
+      const match=!term||item.textContent.toLocaleLowerCase('pt').includes(term);
+      item.style.display=match?'':'none';
+      if(match)groupMatches++;
+    });
+    const show=!term||groupMatches>0;
+    label.style.display=show?'':'none';
+    body.style.display=show?'':'none';
+    if(term&&show){body.classList.remove('collapsed');label.classList.remove('collapsed');label.setAttribute('aria-expanded','true')}
+    if(term)found+=groupMatches;
+  });
+  const empty=document.getElementById('nav-empty-search');
+  if(empty)empty.style.display=term&&!found?'block':'none';
+  if(!term)organizarEstadoGruposMenu();
+}
+function organizarEstadoGruposMenu(){
+  const collapsed=new Set(gruposMenuRecolhidos());
+  document.querySelectorAll('.nav-group-label').forEach(label=>{
+    const body=document.querySelector(`.nav-group-items[data-group-id="${label.dataset.groupId}"]`);
+    if(!body)return;
+    const isCollapsed=collapsed.has(label.dataset.groupId)&&!body.querySelector('.nav-item.active');
+    body.classList.toggle('collapsed',isCollapsed);
+    label.classList.toggle('collapsed',isCollapsed);
+    label.setAttribute('aria-expanded',String(!isCollapsed));
+  });
+}
+
 function renderShell(){
   aplicarPreferenciasPortal();
   document.getElementById('side-user-name').textContent=session.label;
@@ -2233,7 +2334,7 @@ function renderShell(){
   document.body.classList.toggle('member-view',session.tipo==='membro'||session.tipo==='consulta');
   const membro=session.tipo==='membro'||session.tipo==='consulta';
   const lider=session.tipo==='lider';
-  let nav='<div class="nav-group-label">Visão Geral</div>';
+  let nav='<div class="nav-search"><label class="nav-search-field" aria-label="Pesquisar no menu"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg><input type="search" placeholder="Pesquisar função…" autocomplete="off" oninput="filtrarMenuPortal(this.value)"></label></div><div id="nav-empty-search" class="nav-empty-search">Nenhuma função encontrada.</div><div class="nav-group-label">Visão Geral</div>';
   nav+=navItem('home','dashboard','Página Inicial',true);
   nav+=navItem('notificacoes','bell','Notificações',true);
 
@@ -2292,6 +2393,7 @@ function renderShell(){
     if(canAccessAuditoria()) nav+=navItem('auditoria','audit','Registo de Atividade',true);
   }
   document.getElementById('nav-container').innerHTML=nav;
+  organizarGruposNavegacao();
   renderModule();
   setTimeout(aplicarPermissoesNaInterface,0);
   setTimeout(atualizarBadgeNotificacoes,0);
@@ -6314,7 +6416,7 @@ async function handleLogout(){
   document.body.classList.remove('portal-active');
   session=null; admsCloudProfile=null; pendingLoginKey=null; pendingLoginLeaderId=null; currentProfileRef=null;
   try{ localStorage.removeItem(SESSAO_KEY);localStorage.removeItem(ESTADO_KEY); }catch(e){}
-  location.replace('/sistema?v=80');
+  location.replace('/sistema?v=81');
 }
 
 admsSupabase?.auth.onAuthStateChange((event)=>{

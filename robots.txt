@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 Disallow: /sistema
 
-Sitemap: https://adms-braga.vercel.app/sitemap.xml
+Sitemap: https://adms-braga-site.vercel.app/sitemap.xml
