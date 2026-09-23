@@ -1,0 +1,34 @@
+ADMS BRAGA — SITE E PORTAL v73
+================================
+
+CORREÇÃO PRINCIPAL
+------------------
+- A Secretaria mantém o perfil de Usuário Master e passa a poder gerir todos
+  os departamentos, incluindo o departamento Pastoral.
+- A edição de departamentos existentes agora utiliza UPDATE, sem exigir
+  indevidamente autorização de INSERT através de UPSERT.
+- Foram incluídas políticas RLS específicas para leitura, criação e alteração
+  de departamentos por Master, Pastor e Secretaria.
+- Mantidas a barra de rolagem e todas as melhorias da versão 72.
+
+PASSO OBRIGATÓRIO — SUPABASE
+----------------------------
+1. Abra o projeto no Supabase.
+2. Entre em SQL Editor e crie uma nova consulta.
+3. Abra o ficheiro EXECUTAR-NO-SUPABASE-v73.sql.
+4. Copie todo o conteúdo, cole no SQL Editor e carregue em Run.
+5. Termine a sessão no portal e entre novamente.
+
+PUBLICAÇÃO
+----------
+1. Extraia adms-braga-site-portal-v73.zip.
+2. Envie todos os ficheiros e pastas para o GitHub.
+3. Faça o commit na branch main e aguarde a Vercel concluir o deployment.
+4. Abra https://adms-braga.vercel.app/sistema?v=73.
+
+VALIDAÇÃO
+---------
+- Entre com a conta da Secretaria.
+- Abra Todos os Departamentos > Pastoral > Editar.
+- Faça uma pequena alteração e carregue em Guardar departamento.
+- A mensagem esperada é: Departamento guardado com sucesso.
