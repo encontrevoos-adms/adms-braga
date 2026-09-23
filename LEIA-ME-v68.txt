@@ -1,0 +1,36 @@
+ADMS BRAGA — SITE E PORTAL v68
+================================
+
+CORREÇÕES DA HOMOLOGAÇÃO
+------------------------
+- O painel mostra agora o nome e a mensagem de cada consulta que falhar.
+- Cada consulta do dashboard possui limite de 8 segundos.
+- A contagem "Requerem atenção" passa a discriminar também novos contactos.
+- O cartão de pessoas diferencia base vazia de erro de carregamento.
+- Cadastros locais existentes deixam de ser substituídos por uma lista vazia.
+- Se a tabela central de membros estiver vazia, a Secretaria/Master pode migrar
+  automaticamente os cadastros locais existentes para o Supabase.
+- A migração exige confirmação de todas as linhas pelo servidor antes de concluir.
+- A migração fica registada no histórico de atividade.
+- Mantidos o painel de saúde, a confirmação de gravação e a proteção contra
+  lançamentos financeiros duplicados da versão 67.
+
+PUBLICAÇÃO
+----------
+1. Extraia adms-braga-site-portal-v68.zip.
+2. Envie todos os ficheiros e pastas para o GitHub, preservando a estrutura.
+3. Faça o commit na branch main e aguarde o deployment da Vercel.
+4. Abra https://adms-braga.vercel.app/sistema?v=68.
+
+VALIDAÇÃO
+---------
+1. Entre como Secretaria / Usuário Master.
+2. Abra o Painel Administrativo.
+3. Confirme os quatro indicadores verdes.
+4. Se aparecer "Atualização parcial", consulte a caixa "Situação operacional":
+   ela mostrará o nome exato da consulta e a mensagem recebida do Supabase.
+5. Abra Recursos Humanos e confirme a quantidade de pessoas cadastradas.
+
+SUPABASE
+--------
+Esta versão não cria tabelas nem altera políticas RLS. Não exige novo SQL.
