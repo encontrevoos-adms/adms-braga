@@ -993,7 +993,7 @@ window.addEventListener('online',()=>{ admsCarregarMembrosCloud(); admsCarregarE
 @media(max-width:1080px){#app-screen .command-actions,#app-screen .smart-metrics{grid-template-columns:1fr 1fr}}
 @media(max-width:760px){#app-screen .command-bar{align-items:stretch;flex-direction:column}#app-screen .command-updated{text-align:left}#app-screen .command-filters{display:grid;grid-template-columns:1fr 1fr}#app-screen .command-filters select{min-width:0;width:100%}#app-screen .smart-grid{grid-template-columns:1fr}}
 @media(max-width:520px){#app-screen .command-actions,#app-screen .smart-metrics,#app-screen .command-filters{grid-template-columns:1fr}#app-screen .command-action{padding:12px}#app-screen .smart-metric{min-height:126px}}
-/* Portal ADMS Nexus v77 — isolado do ecrã de acesso */
+/* Portal ADMS Nexus v78 — isolado do ecrã de acesso */
 #app-screen{--nx-navy:#06143c;--nx-blue:#123a97;--nx-gold:#ddb845;--nx-bg:#edf2f8;--nx-panel:rgba(255,255,255,.9);--nx-line:rgba(17,42,102,.11);--nx-text:#101d3d;--nx-muted:#64708a;--nx-shadow:0 22px 55px -38px rgba(6,20,60,.55);font-family:'Inter',sans-serif;color:var(--nx-text);background:var(--nx-bg)}
 #app-screen .shell{grid-template-columns:282px minmax(0,1fr);background:radial-gradient(circle at 88% 4%,rgba(47,102,210,.12),transparent 27%),radial-gradient(circle at 50% 105%,rgba(221,184,69,.1),transparent 30%),var(--nx-bg);transition:grid-template-columns .28s ease}
 #app-screen .sidebar{width:auto;padding:20px 14px 18px;background:radial-gradient(circle at 20% 0,rgba(47,102,210,.36),transparent 28%),linear-gradient(180deg,#081d58 0%,#05143d 56%,#030e2c 100%);border-right:1px solid rgba(255,255,255,.08);box-shadow:18px 0 50px -38px #02091e}
@@ -1394,7 +1394,7 @@ let PERMISSOES_PERFIS = [];
 let permissaoPerfilSelecionado = 'lider';
 const PERMISSAO_ACOES = ['visualizar','inserir','editar','arquivar','exportar'];
 const PERMISSAO_PERFIS = [
-  {id:'master',nome:'Master'},{id:'pastor',nome:'Pastoral'},{id:'secretaria',nome:'Secretaria'},
+  {id:'master',nome:'Master'},{id:'pastor',nome:'Pastoral'},{id:'secretaria',nome:'Secretaria · Master'},
   {id:'tesouraria',nome:'Tesouraria'},{id:'lider',nome:'Liderança'},{id:'consulta',nome:'Consulta'}
 ];
 const PERMISSAO_MODULOS = [
@@ -2116,6 +2116,7 @@ function permissaoBloqueada(perfil,modulo){
 }
 function permissaoFallback(perfil,modulo,acao){
   if(perfil==='master') return true;
+  if(perfil==='secretaria') return true;
   if(permissaoBloqueada(perfil,modulo)) return false;
   if(perfil==='pastor') return true;
   if(perfil==='secretaria') return acao==='visualizar' || !['financeiro','patrimonio'].includes(modulo);
@@ -2124,7 +2125,7 @@ function permissaoFallback(perfil,modulo,acao){
   return acao==='visualizar' && ['departamentos','eventos','escalas','avisos'].includes(modulo);
 }
 function permPode(modulo,acao='visualizar',perfil=perfilPermissaoAtual()){
-  if(perfil==='master') return true;
+  if(perfil==='master' || perfil==='secretaria') return true;
   if(permissaoBloqueada(perfil,modulo)) return false;
   const regra=PERMISSOES_PERFIS.find(p=>p.perfil===perfil && p.modulo===modulo);
   return regra ? regra[acao]===true : permissaoFallback(perfil,modulo,acao);
@@ -4944,12 +4945,16 @@ function viewPermissoes(){
   const membrosTotal=(PESSOAS.membros||[]).length;
   const membrosNumerados=(PESSOAS.membros||[]).filter(m=>/^ADMSBRG\d{4,}$/.test(String(m.numeroMembro||m.numero_membro||''))).length;
   const matrizCompleta=PERMISSOES_PERFIS.length>0;
+  const perfilIntegral=['master','secretaria'].includes(perfil.id);
+  const permissoesEfetivas=PERMISSAO_MODULOS.flatMap(m=>PERMISSAO_ACOES.map(a=>({modulo:m.id,acao:a,permitido:permPode(m.id,a,perfil.id)})));
+  const permitidas=permissoesEfetivas.filter(x=>x.permitido).length;
+  const totalPermissoes=permissoesEfetivas.length;
   const tabs=PERMISSAO_PERFIS.map(p=>`<button class="permission-role-tab ${p.id===perfil.id?'active':''}" onclick="selecionarPerfilPermissao('${p.id}')">${p.nome}</button>`).join('');
   const rows=PERMISSAO_MODULOS.map(m=>{
-    const bloqueado=permissaoBloqueada(perfil.id,m.id) || perfil.id==='master';
+    const bloqueado=permissaoBloqueada(perfil.id,m.id) || perfilIntegral;
     const cells=PERMISSAO_ACOES.map(a=>{
       const ligado=permPode(m.id,a,perfil.id);
-      const titulo=perfil.id==='master'?'O perfil Master mantém sempre acesso total.':(bloqueado?'Proteção fixa de segurança.':`${ligado?'Retirar':'Conceder'} permissão para ${a}.`);
+      const titulo=perfilIntegral?'Master e Secretaria mantêm sempre acesso total.':(bloqueado?'Proteção fixa de segurança.':`${ligado?'Retirar':'Conceder'} permissão para ${a}.`);
       return `<td><button type="button" class="permission-toggle ${ligado?'on':''}" aria-pressed="${ligado}" aria-label="${a}: ${ligado?'permitido':'bloqueado'}" title="${titulo}" ${bloqueado?'disabled':''} onclick="atualizarPermissao('${perfil.id}','${m.id}','${a}',${!ligado},this)"></button></td>`;
     }).join('');
     return `<tr><td><span class="permission-module-name">${m.nome}</span><span class="permission-module-note">${m.nota}</span></td>${cells}</tr>`;
@@ -4964,6 +4969,7 @@ function viewPermissoes(){
       <div class="permission-check ${membrosTotal===membrosNumerados?'':'warn'}"><span class="permission-check-dot"></span><span><strong>Numeração de membros</strong>${membrosNumerados}/${membrosTotal} no padrão ADMSBRG</span></div>
     </div>
     <div class="permission-role-tabs">${tabs}</div>
+    <div class="hint-box" style="margin:0 0 16px;border-left-color:${perfilIntegral?'var(--ok)':'var(--gold)'}"><strong>${admsEsc(perfil.nome)}</strong> — ${perfilIntegral?'acesso administrativo integral e fixo, incluindo Pastoral, Financeiro, Gestão de Acessos e Auditoria.':`${permitidas} de ${totalPermissoes} permissões efetivas neste momento.`}</div>
     <div class="permission-table-wrap"><table class="permission-matrix"><thead><tr><th>Módulo</th><th>Visualizar</th><th>Inserir</th><th>Editar</th><th>Arquivar</th><th>Exportar</th></tr></thead><tbody>${rows}</tbody></table></div>
     <div class="permission-legend"><span>Azul: permitido</span><span>Cinzento: bloqueado</span><span>Controlos desativados: proteção fixa</span></div>
   </div>`;
@@ -4976,7 +4982,7 @@ function selecionarPerfilPermissao(perfil){
 }
 
 async function atualizarPermissao(perfil,modulo,acao,valor,botao){
-  if(!canManagePermissions() || !PERMISSAO_ACOES.includes(acao) || permissaoBloqueada(perfil,modulo) || perfil==='master') return;
+  if(!canManagePermissions() || !PERMISSAO_ACOES.includes(acao) || permissaoBloqueada(perfil,modulo) || ['master','secretaria'].includes(perfil)) return;
   botao.disabled=true;
   const alteracao={}; alteracao[acao]=!!valor; alteracao.updated_by=admsCloudProfile?.id||null; alteracao.updated_at=new Date().toISOString();
   const {error}=await admsSupabase.from('permissoes_perfis').update(alteracao).eq('perfil',perfil).eq('modulo',modulo);
@@ -6251,7 +6257,7 @@ async function handleLogout(){
   document.body.classList.remove('portal-active');
   session=null; admsCloudProfile=null; pendingLoginKey=null; pendingLoginLeaderId=null; currentProfileRef=null;
   try{ localStorage.removeItem(SESSAO_KEY);localStorage.removeItem(ESTADO_KEY); }catch(e){}
-  location.replace('/sistema?v=77');
+  location.replace('/sistema?v=78');
 }
 
 admsSupabase?.auth.onAuthStateChange((event)=>{

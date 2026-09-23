@@ -1,0 +1,24 @@
+ADMS BRAGA — SITE E PORTAL v78
+================================
+
+HOMOLOGAÇÃO DE PERMISSÕES
+-------------------------
+- A Secretaria aparece explicitamente como "Secretaria · Master".
+- Master e Secretaria possuem acesso integral e fixo a todos os módulos,
+  incluindo Pastoral, Financeiro, Gestão de Acessos e Auditoria.
+- As permissões desses dois perfis não podem ser desligadas acidentalmente na
+  matriz de autorização.
+- Os demais perfis apresentam um resumo das permissões efetivamente concedidas.
+- Mantidas as proteções fixas das áreas confidenciais.
+
+PUBLICAÇÃO
+----------
+1. Extraia adms-braga-site-portal-v78.zip.
+2. Envie todos os ficheiros e pastas para o GitHub.
+3. Faça o commit na branch main e aguarde a Vercel concluir o deployment.
+4. Abra https://adms-braga.vercel.app/sistema?v=78.
+
+SUPABASE
+--------
+Não existe SQL novo nesta versão. A política da Secretaria criada na versão 73
+deve permanecer aplicada.
