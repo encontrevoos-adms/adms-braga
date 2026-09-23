@@ -1,0 +1,44 @@
+ADMS BRAGA — SITE E PORTAL v67 (HOMOLOGAÇÃO)
+================================================
+
+OBJETIVO
+--------
+Esta versão inicia a preparação do Portal para utilização real, reforçando a
+confirmação das gravações, o diagnóstico de ligação e a prevenção de operações
+duplicadas.
+
+ALTERAÇÕES
+----------
+- Gravações no estado central passam a exigir confirmação devolvida pelo Supabase.
+- Falha quando algum módulo solicitado não é confirmado pela nuvem.
+- Limite de 15 segundos nas gravações para evitar carregamento infinito.
+- Estado global de sincronização: inativo, a guardar, sincronizado ou com erro.
+- Novo painel de saúde no Painel Administrativo.
+- Diagnóstico de internet, sessão autenticada, persistência e última sincronização.
+- Limite de 8 segundos para os testes de saúde do sistema.
+- Proteção contra múltiplos cliques no registo de lançamento financeiro.
+- Mensagens de erro mais claras para falhas inesperadas e tempo excedido.
+- Mantida a interface ADMS Nexus e o ecrã de acesso aprovado.
+
+PUBLICAÇÃO
+----------
+1. Extraia adms-braga-site-portal-v67.zip.
+2. No GitHub, escolha Add file > Upload files.
+3. Envie todos os ficheiros e pastas, preservando a estrutura.
+4. Confirme a substituição dos ficheiros existentes e faça o commit na main.
+5. Aguarde a Vercel apresentar o deployment como Ready.
+6. Aceda a https://adms-braga.vercel.app/sistema?v=67.
+
+TESTE DE HOMOLOGAÇÃO RECOMENDADO
+-------------------------------
+- Entre como Secretaria / Usuário Master.
+- Confirme quatro indicadores verdes no painel de saúde.
+- Crie um lançamento financeiro de teste.
+- Termine a sessão e entre novamente.
+- Confirme que o lançamento permanece visível.
+- Repita o teste com conta a pagar, conta a receber, escala e fornecedor.
+
+SUPABASE
+--------
+Esta versão não exige a execução de novo SQL. As políticas atuais devem ser
+auditadas separadamente no projeto Supabase antes da abertura geral do Portal.

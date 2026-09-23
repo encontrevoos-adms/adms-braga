@@ -531,6 +531,32 @@ const ADMS_CLOUD_MODULE_KEYS = ['pessoas','financeiro','contas','recibos','forne
 let admsStateRealtimeChannel=null;
 let admsAplicandoEstadoCloud=false;
 let admsCloudSaveQueue=Promise.resolve({ok:true});
+let ADMS_SYNC_STATUS={state:'idle',lastSuccess:null,lastError:null,lastModules:[]};
+const ADMS_OPERACOES_EM_CURSO=new Set();
+
+function admsComTimeout(promise,ms=15000,label='A operação'){
+  let timer;
+  return Promise.race([
+    Promise.resolve(promise),
+    new Promise((_,reject)=>{timer=setTimeout(()=>reject(new Error(`${label} excedeu ${Math.round(ms/1000)} segundos.`)),ms)})
+  ]).finally(()=>clearTimeout(timer));
+}
+
+async function admsExecutarUmaVez(chave,acao){
+  if(ADMS_OPERACOES_EM_CURSO.has(chave)){showToast('Esta operação já está em processamento.');return {ok:false,reason:'duplicate_in_progress'};}
+  ADMS_OPERACOES_EM_CURSO.add(chave);
+  try{return await acao();}
+  catch(error){console.error(`[ADMS ${chave}]`,error);showToast(error?.message||'Ocorreu uma falha inesperada. Tente novamente.');return {ok:false,error};}
+  finally{ADMS_OPERACOES_EM_CURSO.delete(chave);}
+}
+
+function admsAtualizarSync(state,extra={}){
+  ADMS_SYNC_STATUS={...ADMS_SYNC_STATUS,state,...extra};
+  window.dispatchEvent(new CustomEvent('adms:sync',{detail:ADMS_SYNC_STATUS}));
+}
+window.addEventListener('adms:sync',()=>{
+  if(typeof currentModule!=='undefined'&&currentModule==='dashboard'&&document.getElementById('system-health'))carregarSaudeSistema();
+});
 
 function admsPodeAtualizarInterfaceRealtime(){
   const ativo=document.activeElement;
@@ -581,9 +607,16 @@ async function admsGuardarEstadoCloud(){
   const sess=await admsCloudSession(); if(!sess) return {ok:false,reason:'no_session'};
   const snap=admsEstadoCloudSnapshot();
   const rows=Object.entries(snap).map(([module_key,payload])=>({module_key,payload,updated_by:sess.user.id,updated_at:new Date().toISOString()}));
-  const {error}=await admsSupabase.from('adms_module_state').upsert(rows,{onConflict:'module_key'});
-  if(error){ console.error('ADMS cloud state:',error); return {ok:false,error}; }
-  return {ok:true};
+  admsAtualizarSync('saving',{lastModules:Object.keys(snap),lastError:null});
+  try{
+    const {data,error}=await admsComTimeout(admsSupabase.from('adms_module_state').upsert(rows,{onConflict:'module_key'}).select('module_key,updated_at'),15000,'A gravação na nuvem');
+    if(error)throw error;
+    const confirmados=new Set((data||[]).map(r=>r.module_key));
+    const ausentes=rows.map(r=>r.module_key).filter(key=>!confirmados.has(key));
+    if(ausentes.length)throw new Error(`A nuvem não confirmou: ${ausentes.join(', ')}.`);
+    const lastSuccess=new Date().toISOString();admsAtualizarSync('synced',{lastSuccess,lastError:null});
+    return {ok:true,confirmed:confirmados.size,lastSuccess};
+  }catch(error){console.error('ADMS cloud state:',error);admsAtualizarSync('error',{lastError:error?.message||String(error)});return {ok:false,error};}
 }
 
 async function admsGuardarModulosCloud(moduleKeys){
@@ -593,9 +626,16 @@ async function admsGuardarModulosCloud(moduleKeys){
   const keys=[...new Set(moduleKeys||[])].filter(key=>Object.prototype.hasOwnProperty.call(snap,key));
   if(!keys.length) return {ok:false,reason:'no_modules'};
   const rows=keys.map(module_key=>({module_key,payload:snap[module_key],updated_by:sess.user.id,updated_at:agora}));
-  const {error}=await admsSupabase.from('adms_module_state').upsert(rows,{onConflict:'module_key'});
-  if(error){ console.error('ADMS cloud modules:',error); return {ok:false,error}; }
-  return {ok:true};
+  admsAtualizarSync('saving',{lastModules:keys,lastError:null});
+  try{
+    const {data,error}=await admsComTimeout(admsSupabase.from('adms_module_state').upsert(rows,{onConflict:'module_key'}).select('module_key,updated_at'),15000,'A gravação na nuvem');
+    if(error)throw error;
+    const confirmados=new Set((data||[]).map(r=>r.module_key));
+    const ausentes=keys.filter(key=>!confirmados.has(key));
+    if(ausentes.length)throw new Error(`A nuvem não confirmou: ${ausentes.join(', ')}.`);
+    const lastSuccess=new Date().toISOString();admsAtualizarSync('synced',{lastSuccess,lastError:null});
+    return {ok:true,confirmed:confirmados.size,lastSuccess};
+  }catch(error){console.error('ADMS cloud modules:',error);admsAtualizarSync('error',{lastError:error?.message||String(error)});return {ok:false,error};}
 }
 
 function admsEnfileirarEstadoCloud(moduleKeys=null){
@@ -915,7 +955,7 @@ window.addEventListener('online',()=>{ admsCarregarMembrosCloud(); admsCarregarE
 @media(max-width:1080px){#app-screen .command-actions,#app-screen .smart-metrics{grid-template-columns:1fr 1fr}}
 @media(max-width:760px){#app-screen .command-bar{align-items:stretch;flex-direction:column}#app-screen .command-updated{text-align:left}#app-screen .command-filters{display:grid;grid-template-columns:1fr 1fr}#app-screen .command-filters select{min-width:0;width:100%}#app-screen .smart-grid{grid-template-columns:1fr}}
 @media(max-width:520px){#app-screen .command-actions,#app-screen .smart-metrics,#app-screen .command-filters{grid-template-columns:1fr}#app-screen .command-action{padding:12px}#app-screen .smart-metric{min-height:126px}}
-/* Portal ADMS Nexus v66 — isolado do ecrã de acesso */
+/* Portal ADMS Nexus v67 — isolado do ecrã de acesso */
 #app-screen{--nx-navy:#06143c;--nx-blue:#123a97;--nx-gold:#ddb845;--nx-bg:#edf2f8;--nx-panel:rgba(255,255,255,.9);--nx-line:rgba(17,42,102,.11);--nx-text:#101d3d;--nx-muted:#64708a;--nx-shadow:0 22px 55px -38px rgba(6,20,60,.55);font-family:'Inter',sans-serif;color:var(--nx-text);background:var(--nx-bg)}
 #app-screen .shell{grid-template-columns:282px minmax(0,1fr);background:radial-gradient(circle at 88% 4%,rgba(47,102,210,.12),transparent 27%),radial-gradient(circle at 50% 105%,rgba(221,184,69,.1),transparent 30%),var(--nx-bg);transition:grid-template-columns .28s ease}
 #app-screen .sidebar{width:auto;padding:20px 14px 18px;background:radial-gradient(circle at 20% 0,rgba(47,102,210,.36),transparent 28%),linear-gradient(180deg,#081d58 0%,#05143d 56%,#030e2c 100%);border-right:1px solid rgba(255,255,255,.08);box-shadow:18px 0 50px -38px #02091e}
@@ -946,9 +986,11 @@ window.addEventListener('online',()=>{ admsCarregarMembrosCloud(); admsCarregarE
 #app-screen.compact-nav .shell{grid-template-columns:88px minmax(0,1fr)}#app-screen.compact-nav .side-brand{grid-template-columns:1fr;justify-items:center;padding-inline:0}#app-screen.compact-nav .side-brand>div:not(.side-brand-actions){display:none}#app-screen.compact-nav .side-brand-actions{grid-template-columns:1fr 1fr}#app-screen.compact-nav .side-brand img{width:46px;height:46px}#app-screen.compact-nav .nav-group-label{font-size:0;margin:16px 0 7px;border-top:1px solid rgba(255,255,255,.1)}#app-screen.compact-nav .nav-item{justify-content:center;padding-inline:8px}#app-screen.compact-nav .nav-item span:not(.nav-badge){display:none}#app-screen.compact-nav .side-user{padding:12px 8px;text-align:center}#app-screen.compact-nav .side-user .who,#app-screen.compact-nav .side-user .role{display:none}#app-screen.compact-nav .logout-link{font-size:0!important}#app-screen.compact-nav .logout-link::after{content:"Sair";font-size:10px}
 #app-screen.dark-ui{--nx-bg:#071126;--nx-panel:rgba(13,29,62,.88);--nx-line:rgba(156,180,235,.14);--nx-text:#edf3ff;--nx-muted:#a7b4d1;--nx-shadow:0 24px 58px -35px rgba(0,0,0,.88);color-scheme:dark}#app-screen.dark-ui .shell{background:radial-gradient(circle at 90% 0,rgba(47,102,210,.18),transparent 30%),#071126}#app-screen.dark-ui .main{color:#edf3ff}#app-screen.dark-ui .topbar,#app-screen.dark-ui .portal-actions{background:rgba(11,25,54,.72)}
 #app-screen.dark-ui h1,#app-screen.dark-ui h2,#app-screen.dark-ui h3,#app-screen.dark-ui h4,#app-screen.dark-ui .topbar h1,#app-screen.dark-ui .smart-row-title,#app-screen.dark-ui .metric-value{color:#f2f6ff}#app-screen.dark-ui p,#app-screen.dark-ui .sub,#app-screen.dark-ui .metric-detail,#app-screen.dark-ui .smart-row-meta{color:#aebbd5}#app-screen.dark-ui .card,#app-screen.dark-ui .smart-panel,#app-screen.dark-ui .smart-metric,#app-screen.dark-ui .command-bar,#app-screen.dark-ui .portal-panel,#app-screen.dark-ui .dashboard-section{background:linear-gradient(145deg,rgba(16,35,75,.94),rgba(9,24,54,.91))}#app-screen.dark-ui input,#app-screen.dark-ui select,#app-screen.dark-ui textarea{color:#edf3ff;background:#0d214b;border-color:rgba(159,183,238,.22)}#app-screen.dark-ui option{background:#0d214b}#app-screen.dark-ui table{background:#0b1e44}#app-screen.dark-ui thead th{background:#102b60;color:#dce6ff}#app-screen.dark-ui .command-action,#app-screen.dark-ui .portal-action{color:#eaf0ff;background:rgba(19,43,88,.82)}
-@media(max-width:980px){#app-screen .shell{grid-template-columns:240px minmax(0,1fr)}#app-screen.compact-nav .shell{grid-template-columns:82px minmax(0,1fr)}#app-screen .main{padding:24px 20px 58px}}
+#app-screen .system-health{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:18px}#app-screen .health-item{display:flex;align-items:center;gap:11px;padding:14px 15px;border:1px solid var(--nx-line);border-radius:16px;background:var(--nx-panel);box-shadow:var(--nx-shadow)}#app-screen .health-dot{width:10px;height:10px;border-radius:50%;flex:none;background:#8893aa;box-shadow:0 0 0 5px rgba(136,147,170,.12)}#app-screen .health-dot.ok{background:#26885b;box-shadow:0 0 0 5px rgba(38,136,91,.12)}#app-screen .health-dot.warn{background:#d2a527;box-shadow:0 0 0 5px rgba(210,165,39,.14)}#app-screen .health-dot.error{background:#c62a38;box-shadow:0 0 0 5px rgba(198,42,56,.12)}#app-screen .health-copy{min-width:0}#app-screen .health-copy strong{display:block;color:var(--nx-navy);font-size:12px}#app-screen .health-copy span{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--nx-muted);font-size:10px;margin-top:3px}#app-screen.dark-ui .health-copy strong{color:#f2f6ff}#app-screen.dark-ui .health-item{background:rgba(14,32,69,.86)}
+@media(max-width:980px){#app-screen .shell{grid-template-columns:240px minmax(0,1fr)}#app-screen.compact-nav .shell{grid-template-columns:82px minmax(0,1fr)}#app-screen .main{padding:24px 20px 58px}#app-screen .system-health{grid-template-columns:1fr 1fr}}
 @media(max-width:760px){#app-screen .shell,#app-screen.compact-nav .shell{display:block}#app-screen .sidebar{padding:10px 12px;border-right:0;border-bottom:1px solid rgba(255,255,255,.1)}#app-screen .side-brand,#app-screen.compact-nav .side-brand{display:grid;grid-template-columns:auto minmax(0,1fr) auto;justify-items:stretch;margin:0;padding:3px 2px 10px}#app-screen.compact-nav .side-brand>div:not(.side-brand-actions){display:block}#app-screen .side-brand img,#app-screen.compact-nav .side-brand img{width:43px;height:43px}#app-screen .sidebar-toggle{display:none}#app-screen #nav-container{padding:7px 0 6px}#app-screen .nav-group-label{display:none}#app-screen .nav-item,#app-screen.compact-nav .nav-item{flex:0 0 auto;justify-content:flex-start;min-height:42px;padding:10px 12px}#app-screen.compact-nav .nav-item span:not(.nav-badge){display:inline}#app-screen .side-user{display:none}#app-screen .main{padding:18px 14px 92px}#app-screen .topbar{padding:15px;border-radius:17px}#app-screen .card{border-radius:18px}#app-screen .portal-actions{overflow-x:auto;display:flex;flex-wrap:nowrap}#app-screen .portal-actions .portal-action{flex:0 0 auto}#app-screen table{min-width:650px}#app-screen .table-wrap{overflow-x:auto;scrollbar-width:thin}}
 @media(prefers-reduced-motion:reduce){#app-screen *,#app-screen *::before,#app-screen *::after{scroll-behavior:auto!important;transition-duration:.01ms!important;animation-duration:.01ms!important}}
+@media(max-width:520px){#app-screen .system-health{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -2260,6 +2302,7 @@ function renderModule(){
     if(session.tipo!=='membro'&&session.tipo!=='consulta'){
       setTimeout(carregarDashboardInteligente,0);
       setTimeout(carregarCentralPendencias,0);
+      setTimeout(carregarSaudeSistema,0);
     }
     return;
   }
@@ -2639,6 +2682,12 @@ function dashboardV58Shell(){
       <button class="command-action" onclick="goTo('eventos')">${ICON.events}<span>Agendar evento</span></button>
       ${permPode('site-publico')?`<button class="command-action" onclick="goTo('site-publico')">${ICON.megaphone}<span>Publicar conteúdo</span></button>`:''}
     </div>
+    <div class="system-health" id="system-health" aria-label="Saúde do sistema">
+      <div class="health-item"><span class="health-dot warn"></span><span class="health-copy"><strong>Ligação</strong><span>A verificar…</span></span></div>
+      <div class="health-item"><span class="health-dot warn"></span><span class="health-copy"><strong>Sessão segura</strong><span>A verificar…</span></span></div>
+      <div class="health-item"><span class="health-dot warn"></span><span class="health-copy"><strong>Persistência</strong><span>A confirmar…</span></span></div>
+      <div class="health-item"><span class="health-dot warn"></span><span class="health-copy"><strong>Última sincronização</strong><span>A consultar…</span></span></div>
+    </div>
     <div class="smart-metrics" id="dashboard-smart-metrics">${[1,2,3,4].map(()=>'<article class="smart-metric loading"><span class="metric-label">A carregar</span><strong class="metric-value">0000</strong><span class="metric-detail">A consultar dados seguros</span></article>').join('')}</div>
     <div class="smart-grid"><article class="smart-panel"><div class="smart-panel-head"><h3>Próximos compromissos</h3><button class="smart-panel-link" onclick="goTo('eventos')">Abrir agenda →</button></div><div class="smart-list" id="dashboard-events-list"><div class="smart-empty">A carregar agenda…</div></div></article><article class="smart-panel"><div class="smart-panel-head"><h3>Aniversários nos próximos 7 dias</h3><button class="smart-panel-link" onclick="goTo('aniversariantes')">Ver aniversariantes →</button></div><div class="smart-list" id="dashboard-birthdays-list"><div class="smart-empty">A consultar cadastros…</div></div></article></div>
     <article class="smart-panel" style="margin-bottom:18px"><div class="smart-panel-head"><h3>Situação operacional</h3><button class="smart-panel-link" onclick="carregarDashboardInteligente(true)">Atualizar agora ↻</button></div><div class="smart-list" id="dashboard-operational-list"><div class="smart-empty">A reunir informações…</div></div></article>
@@ -2667,6 +2716,31 @@ async function carregarDashboardInteligente(manual=false){
   const opHost=document.getElementById('dashboard-operational-list'),ops=[{n:oracoes,t:'Pedidos de oração novos',m:'pedidos-oracao',c:'red'},{n:contactos,t:'Novos contactos do site',m:'novos-contactos',c:'gold'},{n:vencidas,t:'Contas vencidas',m:'contas-pagar',c:'red'},{n:rascunhos,t:'Conteúdos em rascunho',m:'site-publico',c:'gold'}].filter(x=>x.n>0);if(opHost){const conteudo=ops.length?ops.map(x=>`<button class="pending-item" onclick="goTo('${x.m}')"><span class="pending-dot ${x.c==='red'?'high':'medium'}"></span><span><span class="pending-title">${admsEsc(x.t)}</span><span class="pending-detail">${x.n} item(ns) aguardando ação</span></span><span class="pending-time">Abrir →</span></button>`).join(''):'<div class="smart-empty">Tudo em ordem. Não existem alertas prioritários.</div>';opHost.innerHTML=conteudo+(falhas?`<div class="smart-error">${falhas} indicador(es) não puderam ser atualizados. Os restantes dados continuam disponíveis.</div>`:'')}
   const updated=document.getElementById('dashboard-updated');if(updated)updated.innerHTML=`<strong>● ${falhas?'Atualização parcial':'Dados atualizados'}</strong>${new Date().toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'})}${manual?' · atualização manual':''}`;
   dashboardRefreshTimer=setTimeout(()=>{if(currentModule==='dashboard')carregarDashboardInteligente()},60000);
+}
+
+async function carregarSaudeSistema(){
+  const host=document.getElementById('system-health');if(!host||currentModule!=='dashboard')return;
+  const item=(titulo,detalhe,estado='ok')=>`<div class="health-item"><span class="health-dot ${estado}"></span><span class="health-copy"><strong>${admsEsc(titulo)}</strong><span title="${admsEsc(detalhe)}">${admsEsc(detalhe)}</span></span></div>`;
+  const online=navigator.onLine;
+  let sessao=false,persistencia=false,detalhePersistencia='Não confirmada';
+  try{
+    const sess=await admsComTimeout(admsCloudSession(),8000,'A verificação da sessão');sessao=!!sess;
+    if(sessao){
+      const {data,error}=await admsComTimeout(admsSupabase.from('adms_module_state').select('module_key,updated_at').limit(30),8000,'A verificação da persistência');
+      if(error)throw error;
+      persistencia=Array.isArray(data);
+      const modulos=(data||[]).length,maisRecente=(data||[]).map(x=>x.updated_at).filter(Boolean).sort().pop();
+      detalhePersistencia=`${modulos} módulo(s) acessíveis${maisRecente?' · atualizado '+new Date(maisRecente).toLocaleString('pt-PT'):''}`;
+    }
+  }catch(error){detalhePersistencia=error?.message||'Falha na verificação';}
+  const sync=ADMS_SYNC_STATUS,last=sync.lastSuccess?new Date(sync.lastSuccess).toLocaleString('pt-PT'):'Ainda sem gravação nesta sessão';
+  const syncState=sync.state==='error'?'error':sync.state==='saving'?'warn':sync.lastSuccess?'ok':'warn';
+  host.innerHTML=[
+    item('Ligação',online?'Dispositivo online':'Sem ligação à internet',online?'ok':'error'),
+    item('Sessão segura',sessao?'Autenticação Supabase ativa':'Sessão não confirmada',sessao?'ok':'error'),
+    item('Persistência',detalhePersistencia,persistencia?'ok':'error'),
+    item('Última sincronização',sync.state==='saving'?'Gravação em curso…':sync.lastError||last,syncState)
+  ].join('');
 }
 
 function viewDashboard(){
@@ -3619,6 +3693,9 @@ function renderLancamentosTable(){
 function entityDeptLabel(id){ return id==='geral' ? 'Geral / Sede' : deptNome(id); }
 
 async function addLancamento(){
+  return admsExecutarUmaVez('financeiro:novo-lancamento',admsAdicionarLancamento);
+}
+async function admsAdicionarLancamento(){
   if(!exigirPermissao('financeiro','inserir')) return;
   const data = document.getElementById('fin-data').value;
   const tipo = document.getElementById('fin-tipo').value;
@@ -6073,7 +6150,7 @@ async function handleLogout(){
   await admsSupabase.auth.signOut();
   session=null; admsCloudProfile=null; pendingLoginKey=null; pendingLoginLeaderId=null; currentProfileRef=null;
   try{ localStorage.removeItem(SESSAO_KEY);localStorage.removeItem(ESTADO_KEY); }catch(e){}
-  location.replace('/sistema?v=66');
+  location.replace('/sistema?v=67');
 }
 
 admsSupabase?.auth.onAuthStateChange((event)=>{
