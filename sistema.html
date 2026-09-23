@@ -971,7 +971,7 @@ window.addEventListener('online',()=>{ admsCarregarMembrosCloud(); admsCarregarE
 @media(max-width:1080px){#app-screen .command-actions,#app-screen .smart-metrics{grid-template-columns:1fr 1fr}}
 @media(max-width:760px){#app-screen .command-bar{align-items:stretch;flex-direction:column}#app-screen .command-updated{text-align:left}#app-screen .command-filters{display:grid;grid-template-columns:1fr 1fr}#app-screen .command-filters select{min-width:0;width:100%}#app-screen .smart-grid{grid-template-columns:1fr}}
 @media(max-width:520px){#app-screen .command-actions,#app-screen .smart-metrics,#app-screen .command-filters{grid-template-columns:1fr}#app-screen .command-action{padding:12px}#app-screen .smart-metric{min-height:126px}}
-/* Portal ADMS Nexus v68 — isolado do ecrã de acesso */
+/* Portal ADMS Nexus v69 — isolado do ecrã de acesso */
 #app-screen{--nx-navy:#06143c;--nx-blue:#123a97;--nx-gold:#ddb845;--nx-bg:#edf2f8;--nx-panel:rgba(255,255,255,.9);--nx-line:rgba(17,42,102,.11);--nx-text:#101d3d;--nx-muted:#64708a;--nx-shadow:0 22px 55px -38px rgba(6,20,60,.55);font-family:'Inter',sans-serif;color:var(--nx-text);background:var(--nx-bg)}
 #app-screen .shell{grid-template-columns:282px minmax(0,1fr);background:radial-gradient(circle at 88% 4%,rgba(47,102,210,.12),transparent 27%),radial-gradient(circle at 50% 105%,rgba(221,184,69,.1),transparent 30%),var(--nx-bg);transition:grid-template-columns .28s ease}
 #app-screen .sidebar{width:auto;padding:20px 14px 18px;background:radial-gradient(circle at 20% 0,rgba(47,102,210,.36),transparent 28%),linear-gradient(180deg,#081d58 0%,#05143d 56%,#030e2c 100%);border-right:1px solid rgba(255,255,255,.08);box-shadow:18px 0 50px -38px #02091e}
@@ -2712,6 +2712,16 @@ function dashboardV58Shell(){
 function dashboardDataLancamento(value){const s=String(value||'');if(/^\d{2}\/\d{2}\/\d{4}$/.test(s)){const[d,m,y]=s.split('/');return new Date(`${y}-${m}-${d}T12:00:00`)}const d=new Date(s);return Number.isNaN(d.getTime())?null:d}
 function dashboardAniversariosSemana(){const hoje=new Date();hoje.setHours(0,0,0,0);return PESSOAS.membros.map(p=>{const n=aniversarioPartes(p);if(!n)return null;let data=new Date(hoje.getFullYear(),n.mes-1,n.dia);if(data<hoje)data=new Date(hoje.getFullYear()+1,n.mes-1,n.dia);const dias=Math.round((data-hoje)/86400000);return dias<=7?{nome:p.nome,data,dias}:null}).filter(Boolean).sort((a,b)=>a.data-b.data)}
 function dashboardResultado(resultado,fallback=0){return resultado?.status==='fulfilled'&&!resultado.value?.error?(resultado.value.count??resultado.value.data?.length??fallback):fallback}
+function dashboardMensagemErro(error){
+  if(!error)return 'Falha desconhecida.';
+  if(typeof error==='string')return error;
+  const partes=[error.message,error.details,error.hint,error.code]
+    .map(valor=>typeof valor==='string'?valor.trim():'')
+    .filter(Boolean);
+  if(partes.length)return [...new Set(partes)].join(' · ');
+  try{const json=JSON.stringify(error);return json&&json!=='{}'?json:'Falha sem detalhes devolvidos pelo servidor.'}
+  catch(_){return 'Falha sem detalhes devolvidos pelo servidor.'}
+}
 async function carregarDashboardInteligente(manual=false){
   const metrics=document.getElementById('dashboard-smart-metrics');if(!metrics||currentModule!=='dashboard')return;
   clearTimeout(dashboardRefreshTimer);
@@ -2720,10 +2730,12 @@ async function carregarDashboardInteligente(manual=false){
   const consultas=[
     {nome:'Pedidos de oração',promise:canAccessPrayerRequests()?admsSupabase.from('pedidos_oracao').select('id',{count:'exact',head:true}).eq('status','novo'):Promise.resolve({count:0})},
     {nome:'Novos contactos',promise:isMaster()?admsSupabase.from('novos_contactos').select('id',{count:'exact',head:true}).eq('status','novo'):Promise.resolve({count:0})},
-    {nome:'Conteúdo editorial',promise:permPode('site-publico')?admsSupabase.from('site_conteudos').select('id',{count:'exact',head:true}).eq('status','rascunho'):Promise.resolve({count:0})},
+    // `ativo = false` identifica rascunhos nas estruturas antiga e atual do CMS.
+    // Evita depender da coluna `status` no dashboard enquanto mantém o editor v57.
+    {nome:'Conteúdo editorial',promise:permPode('site-publico')?admsSupabase.from('site_conteudos').select('id').eq('ativo',false):Promise.resolve({data:[]})},
     {nome:'Notificações',promise:admsSupabase.from('notificacoes_internas').select('id',{count:'exact',head:true}).eq('lida',false)}
   ];
-  const resultados=await Promise.allSettled(consultas.map(x=>admsComTimeout(x.promise,8000,`A consulta ${x.nome}`))),oracoes=dashboardResultado(resultados[0]),contactos=dashboardResultado(resultados[1]),rascunhos=dashboardResultado(resultados[2]),notificacoes=dashboardResultado(resultados[3]),falhasDetalhadas=resultados.map((r,i)=>{const erro=r.status==='rejected'?r.reason:r.value?.error;return erro?{nome:consultas[i].nome,mensagem:erro.message||String(erro)}:null}).filter(Boolean),falhas=falhasDetalhadas.length,vencidas=canAccessFinanceiro()?CONTAS_PAGAR.filter(c=>statusConta(c)==='Atrasado').length+CONTAS_RECEBER.filter(c=>statusConta(c)==='Atrasado').length:0,pessoas=PESSOAS.membros.length+PESSOAS.congregados.length+PESSOAS.visitantes.length,atencao=oracoes+contactos+vencidas+notificacoes;
+  const resultados=await Promise.allSettled(consultas.map(x=>admsComTimeout(x.promise,8000,`A consulta ${x.nome}`))),oracoes=dashboardResultado(resultados[0]),contactos=dashboardResultado(resultados[1]),rascunhos=dashboardResultado(resultados[2]),notificacoes=dashboardResultado(resultados[3]),falhasDetalhadas=resultados.map((r,i)=>{const erro=r.status==='rejected'?r.reason:r.value?.error;return erro?{nome:consultas[i].nome,mensagem:dashboardMensagemErro(erro)}:null}).filter(Boolean),falhas=falhasDetalhadas.length,vencidas=canAccessFinanceiro()?CONTAS_PAGAR.filter(c=>statusConta(c)==='Atrasado').length+CONTAS_RECEBER.filter(c=>statusConta(c)==='Atrasado').length:0,pessoas=PESSOAS.membros.length+PESSOAS.congregados.length+PESSOAS.visitantes.length,atencao=oracoes+contactos+vencidas+notificacoes;
   const pessoasCard=canAccessRH()?`<article class="smart-metric" style="--metric-soft:#e4f5ec" onclick="goTo('rh')"><span class="metric-label">Pessoas acompanhadas</span><strong class="metric-value">${pessoas}</strong><span class="metric-detail">${pessoas?`${PESSOAS.membros.length} membros · ${PESSOAS.congregados.length} congregados · ${PESSOAS.visitantes.length} visitantes`:'Base central pronta · nenhum cadastro encontrado'}</span></article>`:`<article class="smart-metric" style="--metric-soft:#f0edf5"><span class="metric-label">Pessoas</span><strong class="metric-value" style="font-size:23px">Restrito</strong><span class="metric-detail">Disponível aos perfis autorizados</span></article>`;
   const conteudoCard=permPode('site-publico')?`<article class="smart-metric" style="--metric-soft:#fbf1dc" onclick="goTo('site-publico')"><span class="metric-label">Conteúdo editorial</span><strong class="metric-value">${rascunhos}</strong><span class="metric-detail">rascunho(s) à espera de publicação</span></article>`:`<article class="smart-metric" style="--metric-soft:#f0edf5"><span class="metric-label">Conteúdo editorial</span><strong class="metric-value" style="font-size:23px">Restrito</strong><span class="metric-detail">Disponível aos perfis autorizados</span></article>`;
   metrics.innerHTML=`${canAccessFinanceiro()?`<article class="smart-metric" style="--metric-soft:#e7ecfb" onclick="goTo('financeiro')"><span class="metric-label">Saldo do período</span><strong class="metric-value">${formatEuro(saldo)}</strong><span class="metric-detail">${formatEuro(entradas)} entradas · ${formatEuro(saidas)} saídas</span></article>`:`<article class="smart-metric" style="--metric-soft:#f0edf5"><span class="metric-label">Financeiro</span><strong class="metric-value" style="font-size:23px">Restrito</strong><span class="metric-detail">Disponível aos perfis autorizados</span></article>`}${pessoasCard}<article class="smart-metric" style="--metric-soft:#fbe7e9" onclick="goTo('notificacoes')"><span class="metric-label">Requerem atenção</span><strong class="metric-value">${atencao}</strong><span class="metric-detail">${oracoes} orações · ${contactos} contactos · ${vencidas} contas vencidas · ${notificacoes} notificações</span></article>${conteudoCard}`;
@@ -6166,7 +6178,7 @@ async function handleLogout(){
   await admsSupabase.auth.signOut();
   session=null; admsCloudProfile=null; pendingLoginKey=null; pendingLoginLeaderId=null; currentProfileRef=null;
   try{ localStorage.removeItem(SESSAO_KEY);localStorage.removeItem(ESTADO_KEY); }catch(e){}
-  location.replace('/sistema?v=68');
+  location.replace('/sistema?v=69');
 }
 
 admsSupabase?.auth.onAuthStateChange((event)=>{

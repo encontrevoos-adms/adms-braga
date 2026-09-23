@@ -1,0 +1,34 @@
+ADMS BRAGA — SITE E PORTAL v69
+================================
+
+CORREÇÃO DO PAINEL ADMINISTRATIVO
+---------------------------------
+- Corrigida a consulta "Conteúdo editorial" que mantinha o painel em
+  "Atualização parcial".
+- A contagem de rascunhos utiliza agora o campo `ativo`, compatível com a
+  estrutura original e com o fluxo editorial atual.
+- Removida a dependência da coluna `status` apenas no resumo do dashboard.
+- Mensagens do Supabase passam a mostrar mensagem, detalhe, sugestão e código,
+  deixando de aparecer como `[object Object]`.
+- Mantidos os 13 módulos persistentes, o painel de saúde e todas as correções
+  financeiras das versões anteriores.
+
+PUBLICAÇÃO
+----------
+1. Extraia adms-braga-site-portal-v69.zip.
+2. Envie todos os ficheiros e pastas para o GitHub, preservando a estrutura.
+3. Faça o commit na branch main e aguarde o deployment da Vercel.
+4. Abra https://adms-braga.vercel.app/sistema?v=69.
+
+VALIDAÇÃO
+---------
+1. Entre como Secretaria / Usuário Master.
+2. Abra o Painel Administrativo.
+3. Confirme a indicação verde "Dados atualizados".
+4. A caixa "Situação operacional" não deverá apresentar falha editorial.
+5. O aviso "Ainda sem gravação nesta sessão" desaparece após guardar uma
+   alteração real no portal; antes disso, é um estado normal.
+
+SUPABASE
+--------
+Esta versão não cria tabelas nem altera políticas RLS. Não exige novo SQL.
