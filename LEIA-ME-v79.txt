@@ -1,0 +1,24 @@
+ADMS BRAGA — SITE E PORTAL v79
+================================
+
+MAPA GERAL DE PERMISSÕES
+------------------------
+- Nova visão consolidada com todos os perfis lado a lado e todos os módulos.
+- Verde indica acesso total; amarelo, acesso parcial; vermelho, bloqueado.
+- Cada célula informa quantas ações estão permitidas e mostra os detalhes ao
+  passar o cursor.
+- Ao clicar numa célula, o perfil correspondente é aberto na matriz detalhada
+  para realizar os ajustes autorizados.
+- O mapa completo pode ser exportado em CSV para conferência administrativa.
+- Secretaria e Master permanecem com acesso integral e fixo.
+
+PUBLICAÇÃO
+----------
+1. Extraia adms-braga-site-portal-v79.zip.
+2. Envie todos os ficheiros e pastas para o GitHub.
+3. Faça o commit na branch main e aguarde a Vercel concluir o deployment.
+4. Abra https://adms-braga.vercel.app/sistema?v=79.
+
+SUPABASE
+--------
+Não existe SQL novo nesta versão.

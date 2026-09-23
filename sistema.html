@@ -448,6 +448,15 @@
   .permission-check strong{display:block;color:var(--royal-deep);font-size:13px;}
   .permission-check-dot{width:10px;height:10px;flex:0 0 auto;border-radius:50%;background:var(--ok);box-shadow:0 0 0 5px rgba(30,142,90,.1);}
   .permission-check.warn .permission-check-dot{background:#C28B13;box-shadow:0 0 0 5px rgba(194,139,19,.11);}
+  .permission-map-wrap{overflow:auto;border:1px solid var(--line);border-radius:14px;background:#fff;margin:14px 0 22px;}
+  .permission-map{width:100%;min-width:880px;border-collapse:separate;border-spacing:0;}
+  .permission-map th,.permission-map td{padding:11px 10px;border-bottom:1px solid var(--paper-2);text-align:center;font-size:11px;}
+  .permission-map th{background:#F5F7FC;color:var(--ink-soft);position:sticky;top:0;z-index:2;}
+  .permission-map th:first-child,.permission-map td:first-child{position:sticky;left:0;text-align:left;background:#fff;z-index:1;font-weight:800;color:var(--royal-deep);}
+  .permission-map th:first-child{z-index:3;background:#F5F7FC;}
+  .permission-map-cell{border:0;border-radius:999px;min-width:74px;padding:6px 9px;font:800 10px 'Inter',sans-serif;cursor:pointer;}
+  .permission-map-cell.full{background:#DFF4E9;color:#176B46;}.permission-map-cell.partial{background:#FFF0C9;color:#805D0A;}.permission-map-cell.none{background:#F7E1E4;color:#9B1F2A;}
+  .permission-map-cell:hover{filter:brightness(.97);transform:translateY(-1px);}
   #app-screen .permission-action-blocked{opacity:.42!important;filter:grayscale(.35);cursor:not-allowed!important;box-shadow:none!important;}
   @media(max-width:700px){.permission-intro{display:block}.permission-status{display:inline-flex;margin-top:12px}.permission-checks{grid-template-columns:1fr}.permission-role-tab{padding:8px 11px}.permission-matrix th,.permission-matrix td{padding:11px 9px}}
 </style>
@@ -993,7 +1002,7 @@ window.addEventListener('online',()=>{ admsCarregarMembrosCloud(); admsCarregarE
 @media(max-width:1080px){#app-screen .command-actions,#app-screen .smart-metrics{grid-template-columns:1fr 1fr}}
 @media(max-width:760px){#app-screen .command-bar{align-items:stretch;flex-direction:column}#app-screen .command-updated{text-align:left}#app-screen .command-filters{display:grid;grid-template-columns:1fr 1fr}#app-screen .command-filters select{min-width:0;width:100%}#app-screen .smart-grid{grid-template-columns:1fr}}
 @media(max-width:520px){#app-screen .command-actions,#app-screen .smart-metrics,#app-screen .command-filters{grid-template-columns:1fr}#app-screen .command-action{padding:12px}#app-screen .smart-metric{min-height:126px}}
-/* Portal ADMS Nexus v78 — isolado do ecrã de acesso */
+/* Portal ADMS Nexus v79 — isolado do ecrã de acesso */
 #app-screen{--nx-navy:#06143c;--nx-blue:#123a97;--nx-gold:#ddb845;--nx-bg:#edf2f8;--nx-panel:rgba(255,255,255,.9);--nx-line:rgba(17,42,102,.11);--nx-text:#101d3d;--nx-muted:#64708a;--nx-shadow:0 22px 55px -38px rgba(6,20,60,.55);font-family:'Inter',sans-serif;color:var(--nx-text);background:var(--nx-bg)}
 #app-screen .shell{grid-template-columns:282px minmax(0,1fr);background:radial-gradient(circle at 88% 4%,rgba(47,102,210,.12),transparent 27%),radial-gradient(circle at 50% 105%,rgba(221,184,69,.1),transparent 30%),var(--nx-bg);transition:grid-template-columns .28s ease}
 #app-screen .sidebar{width:auto;padding:20px 14px 18px;background:radial-gradient(circle at 20% 0,rgba(47,102,210,.36),transparent 28%),linear-gradient(180deg,#081d58 0%,#05143d 56%,#030e2c 100%);border-right:1px solid rgba(255,255,255,.08);box-shadow:18px 0 50px -38px #02091e}
@@ -4950,6 +4959,17 @@ function viewPermissoes(){
   const permitidas=permissoesEfetivas.filter(x=>x.permitido).length;
   const totalPermissoes=permissoesEfetivas.length;
   const tabs=PERMISSAO_PERFIS.map(p=>`<button class="permission-role-tab ${p.id===perfil.id?'active':''}" onclick="selecionarPerfilPermissao('${p.id}')">${p.nome}</button>`).join('');
+  const mapaCabecalho=PERMISSAO_PERFIS.map(p=>`<th>${admsEsc(p.nome)}</th>`).join('');
+  const mapaLinhas=PERMISSAO_MODULOS.map(m=>{
+    const celulas=PERMISSAO_PERFIS.map(p=>{
+      const acoes=PERMISSAO_ACOES.filter(a=>permPode(m.id,a,p.id));
+      const quantidade=acoes.length,classe=quantidade===PERMISSAO_ACOES.length?'full':quantidade?'partial':'none';
+      const rotulo=classe==='full'?'Total':classe==='partial'?`${quantidade}/5`:'Bloqueado';
+      const detalhe=acoes.length?acoes.map(a=>a.charAt(0).toUpperCase()+a.slice(1)).join(', '):'Sem acesso';
+      return `<td><button class="permission-map-cell ${classe}" title="${admsEsc(detalhe)}" onclick="abrirPerfilNoMapa('${p.id}')">${rotulo}</button></td>`;
+    }).join('');
+    return `<tr><td>${admsEsc(m.nome)}</td>${celulas}</tr>`;
+  }).join('');
   const rows=PERMISSAO_MODULOS.map(m=>{
     const bloqueado=permissaoBloqueada(perfil.id,m.id) || perfilIntegral;
     const cells=PERMISSAO_ACOES.map(a=>{
@@ -4968,6 +4988,9 @@ function viewPermissoes(){
       <div class="permission-check ${matrizCompleta?'':'warn'}"><span class="permission-check-dot"></span><span><strong>Matriz de permissões</strong>${matrizCompleta?`${PERMISSOES_PERFIS.length} regra(s) carregada(s)`:'A usar proteção incorporada'}</span></div>
       <div class="permission-check ${membrosTotal===membrosNumerados?'':'warn'}"><span class="permission-check-dot"></span><span><strong>Numeração de membros</strong>${membrosNumerados}/${membrosTotal} no padrão ADMSBRG</span></div>
     </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap"><div><h3 style="margin:0;color:var(--royal-deep)">Mapa geral de permissões</h3><p style="margin:4px 0 0;color:var(--ink-soft);font-size:12px">Clique numa célula para abrir os controlos detalhados daquele perfil.</p></div><button class="btn btn-outline" onclick="exportarMapaPermissoes()">Exportar mapa CSV</button></div>
+    <div class="permission-map-wrap"><table class="permission-map"><thead><tr><th>Módulo</th>${mapaCabecalho}</tr></thead><tbody>${mapaLinhas}</tbody></table></div>
+    <div id="permission-detail-matrix"></div>
     <div class="permission-role-tabs">${tabs}</div>
     <div class="hint-box" style="margin:0 0 16px;border-left-color:${perfilIntegral?'var(--ok)':'var(--gold)'}"><strong>${admsEsc(perfil.nome)}</strong> — ${perfilIntegral?'acesso administrativo integral e fixo, incluindo Pastoral, Financeiro, Gestão de Acessos e Auditoria.':`${permitidas} de ${totalPermissoes} permissões efetivas neste momento.`}</div>
     <div class="permission-table-wrap"><table class="permission-matrix"><thead><tr><th>Módulo</th><th>Visualizar</th><th>Inserir</th><th>Editar</th><th>Arquivar</th><th>Exportar</th></tr></thead><tbody>${rows}</tbody></table></div>
@@ -4979,6 +5002,22 @@ function selecionarPerfilPermissao(perfil){
   if(!PERMISSAO_PERFIS.some(p=>p.id===perfil)) return;
   permissaoPerfilSelecionado=perfil;
   renderModule();
+}
+
+function abrirPerfilNoMapa(perfil){
+  permissaoPerfilSelecionado=perfil;
+  renderModule();
+  requestAnimationFrame(()=>document.getElementById('permission-detail-matrix')?.scrollIntoView({behavior:'smooth',block:'start'}));
+}
+
+function exportarMapaPermissoes(){
+  if(!exigirPermissao('acessos','exportar'))return;
+  const cabecalho=['Módulo',...PERMISSAO_PERFIS.map(p=>p.nome)];
+  const linhas=PERMISSAO_MODULOS.map(m=>[m.nome,...PERMISSAO_PERFIS.map(p=>PERMISSAO_ACOES.filter(a=>permPode(m.id,a,p.id)).join(' | ')||'Bloqueado')]);
+  const csv=[cabecalho,...linhas].map(l=>l.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(';')).join('\n');
+  const blob=new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download=`mapa-permissoes-adms-${new Date().toISOString().slice(0,10)}.csv`;a.click();URL.revokeObjectURL(url);
+  logAction('acesso','Mapa de permissões exportado','Exportação consolidada de todos os perfis e módulos.');
 }
 
 async function atualizarPermissao(perfil,modulo,acao,valor,botao){
@@ -6257,7 +6296,7 @@ async function handleLogout(){
   document.body.classList.remove('portal-active');
   session=null; admsCloudProfile=null; pendingLoginKey=null; pendingLoginLeaderId=null; currentProfileRef=null;
   try{ localStorage.removeItem(SESSAO_KEY);localStorage.removeItem(ESTADO_KEY); }catch(e){}
-  location.replace('/sistema?v=78');
+  location.replace('/sistema?v=79');
 }
 
 admsSupabase?.auth.onAuthStateChange((event)=>{
