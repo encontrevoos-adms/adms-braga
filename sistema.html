@@ -1030,7 +1030,7 @@ window.addEventListener('online',()=>{ admsCarregarMembrosCloud(); admsCarregarE
 @media(max-width:1080px){#app-screen .command-actions,#app-screen .smart-metrics{grid-template-columns:1fr 1fr}}
 @media(max-width:760px){#app-screen .command-bar{align-items:stretch;flex-direction:column}#app-screen .command-updated{text-align:left}#app-screen .command-filters{display:grid;grid-template-columns:1fr 1fr}#app-screen .command-filters select{min-width:0;width:100%}#app-screen .smart-grid{grid-template-columns:1fr}}
 @media(max-width:520px){#app-screen .command-actions,#app-screen .smart-metrics,#app-screen .command-filters{grid-template-columns:1fr}#app-screen .command-action{padding:12px}#app-screen .smart-metric{min-height:126px}}
-/* Portal ADMS Nexus v82 — pesquisa geral visível no site e portal */
+/* Portal ADMS Nexus v83 — publicação seletiva de eventos no site */
 #app-screen{--nx-navy:#06143c;--nx-blue:#123a97;--nx-gold:#ddb845;--nx-bg:#edf2f8;--nx-panel:rgba(255,255,255,.9);--nx-line:rgba(17,42,102,.11);--nx-text:#101d3d;--nx-muted:#64708a;--nx-shadow:0 22px 55px -38px rgba(6,20,60,.55);font-family:'Inter',sans-serif;color:var(--nx-text);background:var(--nx-bg)}
 #app-screen .shell{grid-template-columns:282px minmax(0,1fr);background:radial-gradient(circle at 88% 4%,rgba(47,102,210,.12),transparent 27%),radial-gradient(circle at 50% 105%,rgba(221,184,69,.1),transparent 30%),var(--nx-bg);transition:grid-template-columns .28s ease}
 #app-screen .sidebar{width:auto;padding:20px 14px 18px;background:radial-gradient(circle at 20% 0,rgba(47,102,210,.36),transparent 28%),linear-gradient(180deg,#081d58 0%,#05143d 56%,#030e2c 100%);border-right:1px solid rgba(255,255,255,.08);box-shadow:18px 0 50px -38px #02091e}
@@ -2249,7 +2249,7 @@ function navDeptItem(id, icon, label, enabled){
   return `<div class="nav-item ${active?'active':''} ${enabled?'':'locked'}" role="button" tabindex="${enabled?'0':'-1'}" data-department="${id}" data-enabled="${enabled?'true':'false'}" onclick="${acao}" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();${acao}}" aria-current="${active?'page':'false'}" aria-disabled="${enabled?'false':'true'}">${ICON[icon]||ICON.dept||''}<span>${label}</span></div>`;
 }
 
-const NAV_COLLAPSE_KEY='adms_nav_collapsed_v82';
+const NAV_COLLAPSE_KEY='adms_nav_collapsed_v83';
 function navGroupId(label){
   return String(label||'grupo').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
 }
@@ -4264,6 +4264,7 @@ function viewEventos(){
       </div>
       <div><label>Descrição</label><input id="ev-desc" placeholder="Detalhes do evento"></div>
       <div class="form-row" style="margin-top:12px"><div><label>Link externo / inscrição</label><input id="ev-link" type="url" placeholder="https://..."></div><div><label>Imagem, vídeo, áudio ou PDF</label><input id="ev-media" type="file" accept="image/jpeg,image/png,image/webp,video/mp4,audio/mpeg,audio/mp4,audio/ogg,application/pdf"></div></div><div class="hint-box" style="margin-top:10px">Anexo multimédia até 25 MB.</div>
+      ${permPode('site-publico','inserir')?`<div class="form-row" style="margin-top:12px"><div><label>Publicação no site público</label><select id="ev-site-publicar" onchange="document.getElementById('ev-site-local').disabled=this.value!=='sim'"><option value="nao">Somente no portal</option><option value="sim">Publicar também no site</option></select></div><div><label>Local da publicação</label><select id="ev-site-local" disabled><option value="inicio">Início do site — destaque principal</option><option value="video">Próximo da área do vídeo</option><option value="agenda">Agenda pública</option><option value="avisos">Avisos da igreja</option></select></div></div><div class="hint-box" style="margin-top:10px">Escolha se o evento será interno ou em que área do site público deverá aparecer.</div>`:''}
       <button class="btn btn-primary" style="width:auto; margin-top:14px;" onclick="criarEvento()">Criar evento</button>
     </div>` : ''}
 
@@ -4307,11 +4308,23 @@ async function criarEvento(){
   const titulo=document.getElementById('ev-titulo').value.trim(), deptId=document.getElementById('ev-dept').value, data=document.getElementById('ev-data').value;
   const hora=document.getElementById('ev-hora').value.trim(), local=document.getElementById('ev-local').value.trim(), vagas=parseInt(document.getElementById('ev-vagas').value,10)||0;
   const descricao=document.getElementById('ev-desc').value.trim(), link=document.getElementById('ev-link')?.value.trim()||'', media=document.getElementById('ev-media')?.files?.[0]||null;
+  const publicarSite=document.getElementById('ev-site-publicar')?.value==='sim', siteLocal=document.getElementById('ev-site-local')?.value||'';
   if(!titulo||!data){showToast('Preencha pelo menos o título e a data.');return;}
+  if(link&&!admsUrlSegura(link)){showToast('O link deve começar por https:// ou http://');return;}
   const id='ev'+Date.now(); let mediaPath='';
   if(media){ if(media.size>25*1024*1024){showToast('O anexo não pode exceder 25 MB.');return;} const ext=(media.name.split('.').pop()||'bin').toLowerCase(); mediaPath=`${deptId||'geral'}/eventos/${id}/${Date.now()}.${ext}`; const {error}=await admsSupabase.storage.from('comunicacoes-media').upload(mediaPath,media,{contentType:media.type,cacheControl:'3600'}); if(error){showToast('Não foi possível enviar o anexo.');return;} }
-  EVENTOS.push({id,titulo,deptId,data,hora,local,vagas,descricao,link,mediaPath,inscritos:[],criadoPor:session.label});
-  logAction('sistema','Evento criado',`${titulo} — ${formatDate(data)}`); salvarEstado(); showToast('Evento criado.'); renderModule();
+  const novoEvento={id,titulo,deptId,data,hora,local,vagas,descricao,link,mediaPath,publicarSite,siteLocal,inscritos:[],criadoPor:session.label};
+  EVENTOS.push(novoEvento);
+  const guardado=await salvarEstado(['eventos']);
+  if(!guardado?.ok){EVENTOS=EVENTOS.filter(e=>e.id!==id);showToast('Não foi possível guardar o evento.');return;}
+  if(publicarSite){
+    const {data:userData}=await admsSupabase.auth.getUser();
+    const meta=[formatDate(data),hora,local].filter(Boolean).join(' · ');
+    const row={chave:`evento_${siteLocal}_${id}`,titulo,subtitulo:meta||null,conteudo:descricao||null,url:link||null,status:'publicado',publicar_em:null,ordem:0,ativo:true,updated_by:userData?.user?.id||null,updated_at:new Date().toISOString()};
+    const {error:siteError}=await admsSupabase.from('site_conteudos').upsert(row,{onConflict:'chave'});
+    if(siteError){console.error(siteError);showToast('Evento guardado no portal, mas não foi possível publicá-lo no site.');renderModule();return;}
+  }
+  logAction('sistema','Evento criado',`${titulo} — ${formatDate(data)}${publicarSite?` · publicado no site (${siteLocal})`:''}`); showToast(publicarSite?'Evento criado e publicado no site.':'Evento criado.'); renderModule();
 }
 async function abrirMediaEvento(id){const e=EVENTOS.find(x=>x.id===id);if(!e?.mediaPath)return;const {data,error}=await admsSupabase.storage.from('comunicacoes-media').createSignedUrl(e.mediaPath,300);if(error||!data?.signedUrl){showToast('Não foi possível abrir o anexo.');return;}window.open(data.signedUrl,'_blank','noopener');}
 function inscreverEvento(eventoId){
@@ -6452,7 +6465,7 @@ async function handleLogout(){
   document.body.classList.remove('portal-active');
   session=null; admsCloudProfile=null; pendingLoginKey=null; pendingLoginLeaderId=null; currentProfileRef=null;
   try{ localStorage.removeItem(SESSAO_KEY);localStorage.removeItem(ESTADO_KEY); }catch(e){}
-  location.replace('/sistema?v=82');
+  location.replace('/sistema?v=83');
 }
 
 admsSupabase?.auth.onAuthStateChange((event)=>{

@@ -1,0 +1,23 @@
+ADMS BRAGA — SITE E PORTAL v83
+
+NOVIDADE PRINCIPAL
+
+- A criação de eventos mantém o funcionamento atual do Portal.
+- Utilizadores autorizados podem optar por publicar o evento também no site.
+- Locais disponíveis: início do site, próximo ao vídeo, agenda pública ou avisos.
+- Se a publicação pública falhar, o evento continua guardado no Portal.
+- A data, o horário e o local são apresentados junto ao evento no site.
+- O link externo é opcional e, quando informado, aparece como “Mais informações”.
+
+PUBLICAÇÃO
+
+Envie todos os ficheiros desta versão para o projeto. Não existe SQL novo nesta
+versão; a funcionalidade utiliza a tabela site_conteudos já existente.
+
+TESTE RECOMENDADO
+
+1. Entre no Portal e abra Eventos.
+2. Crie um evento e escolha “Publicar também no site”.
+3. Selecione um dos quatro locais de publicação.
+4. Abra o site público numa janela anónima e confirme o posicionamento.
+

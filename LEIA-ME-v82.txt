@@ -20,4 +20,3 @@ PUBLICAÇÃO
 SUPABASE
 --------
 Não existe SQL novo nesta versão.
-Deployment automático v82.
