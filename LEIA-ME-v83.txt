@@ -20,4 +20,4 @@ TESTE RECOMENDADO
 2. Crie um evento e escolha “Publicar também no site”.
 3. Selecione um dos quatro locais de publicação.
 4. Abra o site público numa janela anónima e confirme o posicionamento.
-
+Deployment automático v83.
