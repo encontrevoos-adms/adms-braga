@@ -1,0 +1,7 @@
+ADMS BRAGA — SITE E PORTAL v84
+
+- Logotipo comemorativo “102 anos” ampliado em 20%.
+- Cabeçalho ajustado para evitar cortes no computador, tablet e telemóvel.
+- Endereço da imagem atualizado para impedir a utilização da versão em cache.
+
+Não existe SQL novo nesta versão.
