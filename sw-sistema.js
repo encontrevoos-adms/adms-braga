@@ -1,4 +1,4 @@
-// ADMS Braga v89: suporte à instalação sem cache de páginas ou dados do Portal.
+// ADMS Braga v90: suporte à instalação sem cache de páginas ou dados do Portal.
 self.addEventListener('install',()=>self.skipWaiting());
 self.addEventListener('activate',event=>{
   event.waitUntil(

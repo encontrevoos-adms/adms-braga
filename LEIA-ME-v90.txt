@@ -1,0 +1,43 @@
+ADMS BRAGA — GESTÃO SEGURA DE ACESSOS v90
+
+NOVIDADES
+
+- Aprovação e rejeição de solicitações dentro de Administração > Gestão de Acessos.
+- Perfis disponíveis: Pastoral, Secretaria Master, Tesouraria, Liderança e Consulta.
+- Associação de um ou mais departamentos ao utilizador.
+- Convite por e-mail para a própria pessoa criar a palavra-passe.
+- Palavra-passe administrativa nunca é exposta no navegador.
+- Secretaria permanece como Usuário Master com acesso integral, inclusive Pastoral.
+- Decisões de acesso registadas no histórico de atividade.
+- Layout adaptado a computador, tablet e telemóvel.
+
+INSTALAÇÃO — ORDEM OBRIGATÓRIA
+
+1. No Supabase, abra SQL Editor > New query.
+2. Abra o ficheiro EXECUTAR-NO-SUPABASE-v90.sql, copie TODO o conteúdo e cole no editor.
+3. Clique em Run e confirme “Success”. Não cole apenas o nome ou caminho do ficheiro.
+4. No Supabase, abra Edge Functions e crie a função com o nome exato: gestao-acessos
+5. Substitua o conteúdo da função pelo ficheiro supabase/functions/gestao-acessos/index.ts.
+6. Faça Deploy da função mantendo a verificação JWT ativa.
+7. Em Authentication > URL Configuration, confirme:
+   Site URL: https://adms-braga.vercel.app
+   Redirect URLs: https://adms-braga.vercel.app/**
+8. Configure um SMTP próprio em Authentication > SMTP para entrega confiável dos convites.
+9. Publique a pasta completa da v90 no projeto Vercel.
+10. Aceda a /sistema?v=90 numa janela anónima.
+
+TESTE CONTROLADO
+
+1. Na página de login, envie uma solicitação com um e-mail de teste real.
+2. Entre como Usuário Master.
+3. Abra Administração > Gestão de Acessos.
+4. Escolha “Consulta” e clique em “Aprovar e convidar”.
+5. Abra o convite recebido, defina a palavra-passe e aceite o RGPD.
+6. Confirme que a conta Consulta não entra em Financeiro, Pastoral ou Gestão de Acessos.
+7. Só depois cadastre Pastor, Secretaria, Tesouraria e líderes.
+
+SEGURANÇA
+
+- Nunca coloque SUPABASE_SERVICE_ROLE_KEY no sistema.html, no GitHub ou na Vercel.
+- A chave service role fica somente nos segredos internos do Supabase Edge Functions.
+- Não aprove solicitações sem confirmar pessoalmente a identidade e o e-mail.

@@ -755,6 +755,12 @@ window.addEventListener('online',()=>{ admsCarregarMembrosCloud(); admsCarregarE
 #adms-access-modal.open{display:flex}.adms-access-card{width:min(520px,100%);background:#fff;border-radius:20px;padding:28px;color:#17213a;box-shadow:0 25px 80px #0008}
 .adms-access-card h2{margin:0;color:#071b50;font-family:Georgia,serif;font-size:31px}.adms-access-card p{color:#667085;line-height:1.55}.adms-access-card input{margin:6px 0 10px}
 .adms-access-actions{display:flex;gap:10px;margin-top:12px}.adms-access-actions button{margin:0}.adms-secondary{background:#e9edf5!important;color:#071b50!important}
+.access-requests-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:18px 0}
+.access-requests-summary{display:flex;gap:8px;flex-wrap:wrap}.access-requests-summary span{padding:7px 11px;border-radius:999px;background:#eef3ff;color:var(--royal);font-size:11px;font-weight:800}
+.access-request-list{display:grid;gap:12px}.access-request-card{border:1px solid var(--line);border-radius:16px;padding:16px;background:var(--white);box-shadow:0 8px 22px rgba(11,32,82,.06)}
+.access-request-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px}.access-request-head h4{margin:0 0 4px;color:var(--royal-deep);font-size:17px}.access-request-meta{color:var(--ink-soft);font-size:12px;line-height:1.55}.access-request-status{padding:6px 10px;border-radius:999px;font:800 10px 'Inter',sans-serif;text-transform:uppercase;letter-spacing:.45px;white-space:nowrap}.access-request-status.pendente{background:#fff0c9;color:#805d0a}.access-request-status.aprovado{background:#dff4e9;color:#176b46}.access-request-status.rejeitado{background:#f7e1e4;color:#9b1f2a}
+.access-request-controls{display:grid;grid-template-columns:minmax(150px,.8fr) minmax(220px,1.2fr) auto;gap:10px;align-items:end;margin-top:14px}.access-request-controls label{margin:0}.access-request-controls select{margin-top:6px}.access-request-actions{display:flex;gap:8px;align-items:center}.access-request-actions .btn{white-space:nowrap;margin:0}.access-request-feedback{display:none;margin-top:10px;padding:9px 11px;border-radius:10px;background:#eef3ff;color:var(--royal-deep);font-size:12px;font-weight:700}.access-request-feedback.error{display:block;background:#fbeaec;color:#9b1f2a}.access-request-feedback.success{display:block;background:#e4f5ec;color:#176b46}
+@media(max-width:850px){.access-request-controls{grid-template-columns:1fr 1fr}.access-request-actions{grid-column:1/-1}}@media(max-width:560px){.access-request-controls{grid-template-columns:1fr}.access-request-actions{grid-column:auto;flex-direction:column;align-items:stretch}.access-request-head{display:block}.access-request-status{display:inline-flex;margin-top:8px}}
 </style>
 <style id="portal-modern-v24">
 /* Repaginação do ambiente interno. Deliberadamente isolada de #login-screen. */
@@ -5220,7 +5226,7 @@ async function atualizarPermissao(perfil,modulo,acao,valor,botao){
 function viewAcessos(){
  return `<div class="topbar"><div><div class="breadcrumb">Administração</div><h1>Gestão de Acessos</h1></div><span class="access-pill">${ICON.acesso} Secretaria</span></div>
  ${ruleDivider()}
- <div class="card"><h3>Solicitações de acesso</h3><p style="color:var(--ink-soft)">Os acessos são criados exclusivamente a partir das solicitações enviadas pela página de login. A Secretaria aprova o pedido, define o grau de acesso e a palavra-passe temporária. O utilizador deverá alterá-la no primeiro login.</p><div id="solicitacoes-acesso-lista">A carregar solicitações...</div></div>`;
+ <div class="card"><h3>Solicitações de acesso</h3><p style="color:var(--ink-soft)">Confirme a identidade do solicitante, escolha o perfil e os departamentos autorizados. Ao aprovar, o sistema envia um convite seguro para que a própria pessoa defina a sua palavra-passe.</p><div class="hint-box" style="margin:14px 0"><strong>Comece apenas pelos responsáveis principais.</strong> Pastor, Secretaria Master, Tesouraria e um líder de departamento para validação.</div><div id="solicitacoes-acesso-lista">A carregar solicitações...</div></div>`;
 }
 
 function enviarBoasVindas(leaderId, deptId){
@@ -6365,7 +6371,7 @@ async function admsPerfilAtual(){
   const {data:{user}, error:userError} = await admsSupabase.auth.getUser();
   if(userError || !user) return null;
   const {data:profile, error} = await admsSupabase.from('profiles')
-    .select('id,nome,role,ativo,cargo,dept_ids,rgpd_accepted_at')
+    .select('id,nome,role,ativo,cargo,dept_ids,rgpd_accepted_at,must_set_password')
     .eq('id', user.id).single();
   if(error || !profile || !profile.ativo) return null;
   return {user, profile};
@@ -6434,8 +6440,14 @@ async function submitForcePassword(){
   if(nova!==confirma){ err.textContent='As palavras-passe não coincidem.'; err.style.display='block'; return; }
   const {error}=await admsSupabase.auth.updateUser({password:nova});
   if(error){ err.textContent='Não foi possível alterar a palavra-passe.'; err.style.display='block'; return; }
+  const atual=await admsPerfilAtual();
+  if(!atual){ err.textContent='Não foi possível confirmar o perfil da conta.'; err.style.display='block'; return; }
+  const {error:profileError}=await admsSupabase.from('profiles').update({must_set_password:false}).eq('id',atual.user.id);
+  if(profileError){ err.textContent='A palavra-passe foi alterada, mas o perfil não foi confirmado. Contacte a Secretaria.'; err.style.display='block'; return; }
+  admsCloudProfile={...atual.profile,must_set_password:false};
   document.getElementById('fp-new').value=''; document.getElementById('fp-confirm').value='';
   showToast('Palavra-passe atualizada com segurança.');
+  if(!admsCloudProfile.rgpd_accepted_at){hideAllLoginSteps();document.getElementById('step-rgpd').style.display='block';return;}
   await finalizeLogin();
 }
 
@@ -6466,8 +6478,10 @@ function sessaoAindaValida(){ return !!session?.cloud; }
 
 async function tentarRestaurarSessao(){
   const atual=await admsPerfilAtual();
-  if(!atual || !atual.profile.rgpd_accepted_at) return false;
+  if(!atual) return false;
   admsCloudProfile=atual.profile;
+  if(atual.profile.must_set_password){document.body.classList.remove('portal-active');document.getElementById('app-screen').style.display='none';document.getElementById('login-screen').style.display='flex';hideAllLoginSteps();document.getElementById('step-forcepw').style.display='block';return true;}
+  if(!atual.profile.rgpd_accepted_at){document.body.classList.remove('portal-active');document.getElementById('app-screen').style.display='none';document.getElementById('login-screen').style.display='flex';hideAllLoginSteps();document.getElementById('step-rgpd').style.display='block';return true;}
   return await finalizeLogin();
 }
 
@@ -6488,7 +6502,7 @@ async function handleLogout(){
   document.body.classList.remove('portal-active');
   session=null; admsCloudProfile=null; pendingLoginKey=null; pendingLoginLeaderId=null; currentProfileRef=null;
   try{ localStorage.removeItem(SESSAO_KEY);localStorage.removeItem(ESTADO_KEY); }catch(e){}
-  location.replace('/sistema?v=89');
+  location.replace('/sistema?v=90');
 }
 
 admsSupabase?.auth.onAuthStateChange((event)=>{
@@ -6539,7 +6553,7 @@ if(paramsUrl.get('form') === 'cadastro'){
 
 // Mantém a instalação como aplicação sem guardar páginas ou dados sensíveis em cache.
 if('serviceWorker' in navigator){
-  window.addEventListener('load',()=>navigator.serviceWorker.register('/sw-sistema.js?v=89').catch(()=>{}));
+  window.addEventListener('load',()=>navigator.serviceWorker.register('/sw-sistema.js?v=90').catch(()=>{}));
 }
 if(window.caches){
   caches.keys().then(keys=>Promise.all(keys.map(key=>caches.delete(key)))).catch(()=>{});
@@ -6593,7 +6607,34 @@ async function renderSolicitacoesAcesso(){
  const box=document.getElementById('solicitacoes-acesso-lista');if(!box||!admsSupabase)return;
  const {data,error}=await admsSupabase.from('solicitacoes_acesso').select('*').order('created_at',{ascending:false});
  if(error){box.textContent='Não foi possível carregar as solicitações.';return}
- box.innerHTML=(data||[]).map(x=>`<div style="padding:12px 0;border-bottom:1px solid var(--line)"><b>${admsEsc(x.nome_completo)}</b> · ${admsEsc(x.email)}<br><small>${admsEsc(x.contacto)} · ${formatDate(x.data_nascimento)} · ${admsEsc(x.status)}</small></div>`).join('')||'<p>Nenhuma solicitação.</p>';
+ const pedidos=data||[],pendentes=pedidos.filter(x=>(x.status||'pendente')==='pendente').length;
+ const deptOptions=DEPARTMENTS.filter(d=>d.ativo!==false).map(d=>`<option value="${admsEsc(d.id)}">${admsEsc(d.nome)}</option>`).join('');
+ const cards=pedidos.map(x=>{
+  const status=(x.status||'pendente').toLowerCase(),finalizado=status!=='pendente';
+  const perfil=x.perfil_atribuido||'consulta',depts=Array.isArray(x.dept_ids)?x.dept_ids:[];
+  const opcoesPerfil=[['pastor','Pastoral'],['secretaria','Secretaria — Usuário Master'],['tesouraria','Tesouraria'],['lider','Liderança de departamento'],['consulta','Consulta']].map(([v,l])=>`<option value="${v}" ${perfil===v?'selected':''}>${l}</option>`).join('');
+  const opcoesDept=deptOptions.replace(/<option value="([^"]+)"/g,(m,id)=>`<option value="${id}" ${depts.includes(id)?'selected':''}`);
+  return `<article class="access-request-card" data-request-id="${admsEsc(x.id)}"><div class="access-request-head"><div><h4>${admsEsc(x.nome_completo)}</h4><div class="access-request-meta">${admsEsc(x.email)} · ${admsEsc(x.contacto)}<br>Nascimento: ${formatDate(x.data_nascimento)} · Pedido: ${x.created_at?new Date(x.created_at).toLocaleString('pt-PT'):'—'}${x.decidido_em?`<br>Decisão: ${new Date(x.decidido_em).toLocaleString('pt-PT')}`:''}</div></div><span class="access-request-status ${status}">${admsEsc(status)}</span></div>${finalizado?`<div class="access-request-meta" style="margin-top:12px"><strong>Perfil atribuído:</strong> ${admsEsc(perfil)}${depts.length?` · ${depts.map(deptNome).join(', ')}`:''}${x.motivo_rejeicao?`<br><strong>Motivo:</strong> ${admsEsc(x.motivo_rejeicao)}`:''}</div>`:`<div class="access-request-controls"><label>Perfil<select id="acc-role-${admsEsc(x.id)}">${opcoesPerfil}</select></label><label>Departamento(s)<select id="acc-depts-${admsEsc(x.id)}" multiple size="3">${opcoesDept}</select></label><div class="access-request-actions"><button class="btn btn-primary" onclick="admsDecidirSolicitacao('${admsEsc(x.id)}','aprovar',this)">Aprovar e convidar</button><button class="btn btn-outline" onclick="admsDecidirSolicitacao('${admsEsc(x.id)}','rejeitar',this)">Rejeitar</button></div></div><div class="access-request-feedback" id="acc-feedback-${admsEsc(x.id)}" role="status"></div>`}</article>`;
+ }).join('');
+ box.innerHTML=`<div class="access-requests-toolbar"><div class="access-requests-summary"><span>${pendentes} pendente(s)</span><span>${pedidos.length} pedido(s) no total</span></div><button class="btn btn-outline" onclick="renderSolicitacoesAcesso()">Atualizar</button></div><div class="access-request-list">${cards||'<p>Nenhuma solicitação.</p>'}</div>`;
+}
+
+async function admsDecidirSolicitacao(id,acao,botao){
+ if(!canAccessGestaoAcessos()||!exigirPermissao('acessos','editar'))return;
+ const feedback=document.getElementById(`acc-feedback-${id}`),perfil=document.getElementById(`acc-role-${id}`)?.value||'consulta';
+ const deptIds=[...(document.getElementById(`acc-depts-${id}`)?.selectedOptions||[])].map(o=>o.value);
+ if(acao==='aprovar'&&perfil==='lider'&&!deptIds.length){feedback.className='access-request-feedback error';feedback.textContent='Escolha pelo menos um departamento para a Liderança.';return}
+ let motivo='';
+ if(acao==='rejeitar'){motivo=(prompt('Indique o motivo da rejeição:')||'').trim();if(!motivo)return}
+ const botoes=[...document.querySelectorAll(`[data-request-id="${id}"] button`)];botoes.forEach(b=>b.disabled=true);
+ feedback.className='access-request-feedback';feedback.style.display='block';feedback.textContent=acao==='aprovar'?'A aprovar e enviar o convite…':'A registar a rejeição…';
+ try{
+  const {data,error}=await admsSupabase.functions.invoke('gestao-acessos',{body:{action:acao,requestId:id,profileRole:perfil,deptIds,motivo,redirectTo:`${location.origin}/sistema?v=90`}});
+  if(error)throw error;if(!data?.ok)throw new Error(data?.error||'Não foi possível concluir a operação.');
+  feedback.className='access-request-feedback success';feedback.textContent=data.message||'Operação concluída.';
+  await logAction('acesso',acao==='aprovar'?'Acesso aprovado':'Acesso rejeitado',`${id} · perfil ${perfil}.`);
+  setTimeout(renderSolicitacoesAcesso,900);
+ }catch(e){feedback.className='access-request-feedback error';feedback.textContent=e?.message||'Não foi possível concluir a operação.';botoes.forEach(b=>b.disabled=false)}
 }
 
 </script>
@@ -6630,7 +6671,7 @@ function admsComTimeout(promise,ms=20000){
 window.fazerLogin=async function(){
  const campo=document.getElementById('login-email'),valor=(campo?.value||'').trim(),senha=(document.getElementById('login-pass')?.value||'');
  const botao=document.querySelector('#step-credentials .btn-primary');
- const concluir=async()=>{const atual=await admsPerfilAtual();if(!atual){await admsSupabase.auth.signOut();throw new Error('Conta sem perfil ativo ou sem autorização.')}admsCloudProfile=atual.profile;if(!atual.profile.rgpd_accepted_at){hideAllLoginSteps();document.getElementById('step-rgpd').style.display='block';return}await finalizeLogin()};
+ const concluir=async()=>{const atual=await admsPerfilAtual();if(!atual){await admsSupabase.auth.signOut();throw new Error('Conta sem perfil ativo ou sem autorização.')}admsCloudProfile=atual.profile;if(atual.profile.must_set_password){hideAllLoginSteps();document.getElementById('step-forcepw').style.display='block';return}if(!atual.profile.rgpd_accepted_at){hideAllLoginSteps();document.getElementById('step-rgpd').style.display='block';return}await finalizeLogin()};
  document.getElementById('denied-box').style.display='none';
  if(!valor||!senha){showLoginError('Introduza o usuário ou e-mail e a palavra-passe.');return}
  if(botao){botao.disabled=true;botao.textContent='A entrar…'}
@@ -6761,12 +6802,12 @@ async function exportarBackupCloudV88(){
   const button=document.getElementById('cloud-backup-button'),status=document.getElementById('cloud-backup-status');if(button){button.disabled=true;button.textContent='A preparar…'}if(status)status.textContent='A reunir os dados autorizados…';
   const dados={},falhas=[];
   for(const table of ADMS_BACKUP_TABLES){try{dados[table]=await admsLerTabelaBackup(table);if(status)status.textContent=`A copiar ${table}…`}catch(error){falhas.push({tabela:table,erro:error.message})}}
-  const stamp=new Date().toISOString().replace(/[:.]/g,'-'),payload={produto:'ADMS Braga',versao:89,tipo:'backup-cloud',geradoEm:new Date().toISOString(),geradoPor:session?.label||'Usuário Master',aviso:'Contém dados pessoais. Guardar em local protegido.',tabelas:dados,falhas};
+  const stamp=new Date().toISOString().replace(/[:.]/g,'-'),payload={produto:'ADMS Braga',versao:90,tipo:'backup-cloud',geradoEm:new Date().toISOString(),geradoPor:session?.label||'Usuário Master',aviso:'Contém dados pessoais. Guardar em local protegido.',tabelas:dados,falhas};
   descarregarJsonV88(`backup-adms-braga-cloud-${stamp}.json`,payload);
   await logAction('sistema','Backup cloud exportado',`${Object.keys(dados).length} tabela(s); ${falhas.length} falha(s).`);
   if(status)status.textContent=falhas.length?`Backup concluído com ${falhas.length} tabela(s) indisponível(is).`:'Backup concluído sem falhas.';if(button){button.disabled=false;button.textContent='Descarregar backup'}localStorage.setItem('adms_ultimo_backup_cloud',new Date().toISOString());atualizarLembreteBackupV89();showToast('Cópia de segurança descarregada.');
 }
-function exportarDiagnosticoV88(){if(!window.admsUltimoDiagnostico)return showToast('Execute primeiro o diagnóstico.');descarregarJsonV88(`diagnostico-adms-v89-${new Date().toISOString().slice(0,10)}.json`,window.admsUltimoDiagnostico);logAction('sistema','Diagnóstico exportado','Relatório técnico v89 descarregado.')}
+function exportarDiagnosticoV88(){if(!window.admsUltimoDiagnostico)return showToast('Execute primeiro o diagnóstico.');descarregarJsonV88(`diagnostico-adms-v90-${new Date().toISOString().slice(0,10)}.json`,window.admsUltimoDiagnostico);logAction('sistema','Diagnóstico exportado','Relatório técnico v90 descarregado.')}
 async function instalarPortalV88(){if(!admsInstallPrompt){showToast('Use o menu do navegador e escolha “Instalar aplicação” ou “Adicionar ao ecrã principal”.');return}admsInstallPrompt.prompt();await admsInstallPrompt.userChoice;admsInstallPrompt=null;const button=document.getElementById('adms-install-button');if(button)button.disabled=true}
 
 async function comprimirImagemV88(file){
@@ -6777,14 +6818,14 @@ async function comprimirImagemV88(file){
 cmsUpload=async function(file,type){if(!file)return'';const permitidos={'image/jpeg':'jpg','image/png':'png','image/webp':'webp','application/pdf':'pdf'};if(file.size>10*1024*1024)throw new Error('O ficheiro não pode ultrapassar 10 MB.');if(!permitidos[file.type])throw new Error('Tipo de ficheiro não permitido.');const preparado=await comprimirImagemV88(file),ext=permitidos[preparado.type]||'webp',pasta=String(type).replace(/[^a-zA-Z0-9_-]/g,''),path=`${pasta}/${Date.now()}-${crypto.randomUUID()}.${ext}`;const{error}=await admsSupabase.storage.from('site-media').upload(path,preparado,{cacheControl:'3600',upsert:false,contentType:preparado.type});if(error)throw error;return admsSupabase.storage.from('site-media').getPublicUrl(path).data.publicUrl};
 </script>
 <script>
-/* Preparação para produção v89 — acessibilidade, conectividade e erros seguros. */
+/* Preparação para produção v90 — acessibilidade, conectividade e erros seguros. */
 window.admsErrosTecnicos=[];
 let admsErroEmRegisto=false,admsUltimoErroRegistado=0;
 function admsTextoErroSeguro(value){return String(value||'Erro desconhecido').replace(/(access_token|refresh_token|apikey|password|senha)\s*[:=]\s*[^\s,;]+/gi,'$1=[oculto]').replace(/https?:\/\/[^\s]+/g,'[endereço]').slice(0,300)}
 function admsCapturarErroV89(tipo,mensagem,origem=''){
   const item={tipo,mensagem:admsTextoErroSeguro(mensagem),origem:admsTextoErroSeguro(origem),em:new Date().toISOString(),modulo:currentModule||'inicialização'};
   window.admsErrosTecnicos.unshift(item);window.admsErrosTecnicos=window.admsErrosTecnicos.slice(0,10);
-  if(session&&!admsErroEmRegisto&&Date.now()-admsUltimoErroRegistado>60000){admsErroEmRegisto=true;admsUltimoErroRegistado=Date.now();Promise.resolve(logAction('sistema','Erro técnico detetado',`Módulo: ${item.modulo}. Consulte o diagnóstico v89.`)).finally(()=>{admsErroEmRegisto=false})}
+  if(session&&!admsErroEmRegisto&&Date.now()-admsUltimoErroRegistado>60000){admsErroEmRegisto=true;admsUltimoErroRegistado=Date.now();Promise.resolve(logAction('sistema','Erro técnico detetado',`Módulo: ${item.modulo}. Consulte o diagnóstico v90.`)).finally(()=>{admsErroEmRegisto=false})}
 }
 window.addEventListener('error',event=>admsCapturarErroV89('javascript',event.message,event.filename));
 window.addEventListener('unhandledrejection',event=>admsCapturarErroV89('promessa',event.reason?.message||event.reason||'Falha assíncrona'));
@@ -6801,7 +6842,7 @@ function atualizarLembreteBackupV89(){
   host.innerHTML=`<div style="padding:10px 12px;border-radius:10px;background:${urgent?'#fff2db':'#e9f7ef'};color:${urgent?'#7a5200':'#146a42'};font-weight:700">${label}${urgent?' Recomendamos uma nova cópia.':''}</div>`;
 }
 const executarDiagnosticoBaseV89=executarDiagnosticoOperacional;
-executarDiagnosticoOperacional=async function(){await executarDiagnosticoBaseV89();if(window.admsUltimoDiagnostico){window.admsUltimoDiagnostico.versao=89;window.admsUltimoDiagnostico.errosRecentes=[...window.admsErrosTecnicos];const host=document.getElementById('diagnostico-detalhes');if(host&&window.admsErrosTecnicos.length)host.insertAdjacentHTML('beforeend',`<div class="hint-box" style="margin-top:12px"><strong>${window.admsErrosTecnicos.length} ocorrência(s) técnica(s) nesta sessão.</strong> O relatório descarregável contém os detalhes protegidos.</div>`)}}
+executarDiagnosticoOperacional=async function(){await executarDiagnosticoBaseV89();if(window.admsUltimoDiagnostico){window.admsUltimoDiagnostico.versao=90;window.admsUltimoDiagnostico.errosRecentes=[...window.admsErrosTecnicos];const host=document.getElementById('diagnostico-detalhes');if(host&&window.admsErrosTecnicos.length)host.insertAdjacentHTML('beforeend',`<div class="hint-box" style="margin-top:12px"><strong>${window.admsErrosTecnicos.length} ocorrência(s) técnica(s) nesta sessão.</strong> O relatório descarregável contém os detalhes protegidos.</div>`)}}
 </script>
 </body>
 </html>
