@@ -1,0 +1,31 @@
+ADMS BRAGA — PREPARAÇÃO PARA PRODUÇÃO v89
+
+NOVIDADES
+
+- Mantém todas as funcionalidades e a central de segurança da v88.
+- Aviso imediato quando o dispositivo fica sem internet.
+- Confirmação quando a ligação é restabelecida.
+- Captura segura de erros técnicos, sem guardar credenciais.
+- Erros recentes incluídos no diagnóstico descarregável.
+- Lembrete de backup quando nunca foi realizado ou tem sete dias ou mais.
+- Atalho “Saltar para o conteúdo” no site e no Portal.
+- Foco de teclado mais visível para utilização acessível.
+- Mensagens do Portal anunciadas corretamente por leitores de ecrã.
+- Título do Portal corrigido e referências atualizadas para a v89.
+
+INSTALAÇÃO
+
+1. Extraia e publique a pasta completa no projeto Vercel do site.
+2. Caso o Portal esteja noutro projeto Vercel, publique a mesma pasta nele.
+3. Esta versão não exige um novo SQL.
+4. O SQL EXECUTAR-NO-SUPABASE-v87.sql continua obrigatório caso ainda não tenha sido executado.
+5. Abra /sistema?v=89 numa janela anónima.
+6. Entre como Usuário Master.
+7. Abra Administração > Segurança e Backup.
+8. Confirme o diagnóstico e faça uma cópia de segurança.
+
+RECOMENDAÇÃO DE LANÇAMENTO
+
+Depois de instalar a v89, não acrescente novas funcionalidades durante sete dias.
+Use o Portal com os responsáveis principais, registe eventuais problemas e só
+depois prepare a próxima versão. Isto reduz risco e facilita identificar falhas.
