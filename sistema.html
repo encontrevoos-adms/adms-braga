@@ -1030,7 +1030,7 @@ window.addEventListener('online',()=>{ admsCarregarMembrosCloud(); admsCarregarE
 @media(max-width:1080px){#app-screen .command-actions,#app-screen .smart-metrics{grid-template-columns:1fr 1fr}}
 @media(max-width:760px){#app-screen .command-bar{align-items:stretch;flex-direction:column}#app-screen .command-updated{text-align:left}#app-screen .command-filters{display:grid;grid-template-columns:1fr 1fr}#app-screen .command-filters select{min-width:0;width:100%}#app-screen .smart-grid{grid-template-columns:1fr}}
 @media(max-width:520px){#app-screen .command-actions,#app-screen .smart-metrics,#app-screen .command-filters{grid-template-columns:1fr}#app-screen .command-action{padding:12px}#app-screen .smart-metric{min-height:126px}}
-/* Portal ADMS Nexus v83 — publicação seletiva de eventos no site */
+/* Portal ADMS Nexus v85 — gestão completa de eventos públicos */
 #app-screen{--nx-navy:#06143c;--nx-blue:#123a97;--nx-gold:#ddb845;--nx-bg:#edf2f8;--nx-panel:rgba(255,255,255,.9);--nx-line:rgba(17,42,102,.11);--nx-text:#101d3d;--nx-muted:#64708a;--nx-shadow:0 22px 55px -38px rgba(6,20,60,.55);font-family:'Inter',sans-serif;color:var(--nx-text);background:var(--nx-bg)}
 #app-screen .shell{grid-template-columns:282px minmax(0,1fr);background:radial-gradient(circle at 88% 4%,rgba(47,102,210,.12),transparent 27%),radial-gradient(circle at 50% 105%,rgba(221,184,69,.1),transparent 30%),var(--nx-bg);transition:grid-template-columns .28s ease}
 #app-screen .sidebar{width:auto;padding:20px 14px 18px;background:radial-gradient(circle at 20% 0,rgba(47,102,210,.36),transparent 28%),linear-gradient(180deg,#081d58 0%,#05143d 56%,#030e2c 100%);border-right:1px solid rgba(255,255,255,.08);box-shadow:18px 0 50px -38px #02091e}
@@ -1639,6 +1639,7 @@ let EBD_TURMAS = []; // {id, nome, professor, alunos:[nomes], licoes:[{id,titulo
 
 // Eventos — programações da igreja com inscrições
 let EVENTOS = []; // {id, titulo, data, hora, local, descricao, departamento, vagas, inscritos:[{nome,contacto,data}]}
+let EVENTO_EDITANDO_ID = null;
 
 /* =========================================================
    PERSISTÊNCIA (localStorage) — garante que nada se perde entre sessões
@@ -2249,7 +2250,7 @@ function navDeptItem(id, icon, label, enabled){
   return `<div class="nav-item ${active?'active':''} ${enabled?'':'locked'}" role="button" tabindex="${enabled?'0':'-1'}" data-department="${id}" data-enabled="${enabled?'true':'false'}" onclick="${acao}" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();${acao}}" aria-current="${active?'page':'false'}" aria-disabled="${enabled?'false':'true'}">${ICON[icon]||ICON.dept||''}<span>${label}</span></div>`;
 }
 
-const NAV_COLLAPSE_KEY='adms_nav_collapsed_v83';
+const NAV_COLLAPSE_KEY='adms_nav_collapsed_v85';
 function navGroupId(label){
   return String(label||'grupo').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
 }
@@ -4236,8 +4237,9 @@ async function receberConta(id){
 function podeCriarEventos(){ return session.tipo!=='membro' && permPode('eventos','inserir'); }
 function viewEventos(){
   const hoje = new Date().toISOString().split('T')[0];
-  const proximos = EVENTOS.filter(e=>e.data>=hoje).sort((a,b)=>a.data.localeCompare(b.data));
-  const passados = EVENTOS.filter(e=>e.data<hoje).sort((a,b)=>b.data.localeCompare(a.data));
+  const proximos = EVENTOS.filter(e=>!e.arquivado&&e.data>=hoje).sort((a,b)=>a.data.localeCompare(b.data));
+  const passados = EVENTOS.filter(e=>!e.arquivado&&e.data<hoje).sort((a,b)=>b.data.localeCompare(a.data));
+  const arquivados = EVENTOS.filter(e=>e.arquivado).sort((a,b)=>b.data.localeCompare(a.data));
   const meuNome = session.tipo==='membro' ? session.label : null;
 
   return `
@@ -4264,8 +4266,8 @@ function viewEventos(){
       </div>
       <div><label>Descrição</label><input id="ev-desc" placeholder="Detalhes do evento"></div>
       <div class="form-row" style="margin-top:12px"><div><label>Link externo / inscrição</label><input id="ev-link" type="url" placeholder="https://..."></div><div><label>Imagem, vídeo, áudio ou PDF</label><input id="ev-media" type="file" accept="image/jpeg,image/png,image/webp,video/mp4,audio/mpeg,audio/mp4,audio/ogg,application/pdf"></div></div><div class="hint-box" style="margin-top:10px">Anexo multimédia até 25 MB.</div>
-      ${permPode('site-publico','inserir')?`<div class="form-row" style="margin-top:12px"><div><label>Publicação no site público</label><select id="ev-site-publicar" onchange="document.getElementById('ev-site-local').disabled=this.value!=='sim'"><option value="nao">Somente no portal</option><option value="sim">Publicar também no site</option></select></div><div><label>Local da publicação</label><select id="ev-site-local" disabled><option value="inicio">Início do site — destaque principal</option><option value="video">Próximo da área do vídeo</option><option value="agenda">Agenda pública</option><option value="avisos">Avisos da igreja</option></select></div></div><div class="hint-box" style="margin-top:10px">Escolha se o evento será interno ou em que área do site público deverá aparecer.</div>`:''}
-      <button class="btn btn-primary" style="width:auto; margin-top:14px;" onclick="criarEvento()">Criar evento</button>
+      ${permPode('site-publico','inserir')?`<div class="form-row" style="margin-top:12px"><div><label>Publicação no site público</label><select id="ev-site-publicar" onchange="alternarCamposPublicacaoEvento()"><option value="nao">Somente no portal</option><option value="sim">Publicar também no site</option></select></div><div><label>Local da publicação</label><select id="ev-site-local" disabled><option value="inicio">Início do site — destaque principal</option><option value="video">Próximo da área do vídeo</option><option value="agenda">Agenda pública</option><option value="avisos">Avisos da igreja</option></select></div></div><div class="form-row"><div><label>Exibir no site a partir de</label><input id="ev-site-inicio" type="datetime-local" disabled></div><div><label>Retirar do site em</label><input id="ev-site-fim" type="datetime-local" disabled></div></div><div class="form-row"><div><label>Imagem de capa pública</label><input id="ev-site-imagem" type="file" accept="image/jpeg,image/png,image/webp" disabled></div><div><label>Imagem atual</label><input id="ev-site-imagem-atual" readonly placeholder="Nenhuma imagem"></div></div><div class="hint-box" style="margin-top:10px">A publicação pode ser imediata ou programada. Por padrão, termina às 23h59 do dia do evento.</div>`:''}
+      <input id="ev-edit-id" type="hidden"><div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px"><button id="ev-save-button" class="btn btn-primary" style="width:auto" onclick="criarEvento()">Criar evento</button><button id="ev-cancel-button" class="btn btn-outline" style="width:auto;display:none" onclick="cancelarEdicaoEvento()">Cancelar edição</button><button class="btn btn-outline" style="width:auto" onclick="preVisualizarEventoFormulario()">Pré-visualizar</button></div>
     </div>` : ''}
 
     <div class="section-title"><h2>Próximos eventos</h2></div>
@@ -4275,9 +4277,11 @@ function viewEventos(){
     <div class="section-title"><h2>Eventos passados</h2></div>
     ${passados.slice(0,5).map(e=>eventoCardHTML(e, meuNome, true)).join('')}
     ` : ''}
+    ${arquivados.length?`<div class="section-title"><h2>Eventos arquivados</h2></div>${arquivados.slice(0,10).map(e=>eventoCardHTML(e,meuNome,true,true)).join('')}`:''}
   `;
 }
-function eventoCardHTML(e, meuNome, passado){
+function eventoCardHTML(e, meuNome, passado, arquivado=false){
+  e.inscritos=e.inscritos||[];
   const jaInscrito = meuNome && e.inscritos.some(i=>i.nome===meuNome);
   const cheio = e.vagas>0 && e.inscritos.length>=e.vagas;
   return `
@@ -4287,44 +4291,54 @@ function eventoCardHTML(e, meuNome, passado){
         <div class="event-info" style="flex:1;">
           <h3>${e.titulo}</h3>
           <p>${e.descricao||''}</p>
-          <div class="meta-row"><span>🕐 ${e.hora||'—'}</span><span>📍 ${e.local||'—'}</span><span>${e.deptId?deptNome(e.deptId):'Toda a igreja'}</span></div>${e.link?`<p><a href="${e.link}" target="_blank" rel="noopener">Abrir link do evento</a></p>`:''}${e.mediaPath?`<button class="btn btn-outline" style="width:auto;margin-top:10px" onclick="abrirMediaEvento('${e.id}')">Abrir anexo</button>`:''}
+          <div class="meta-row"><span>🕐 ${e.hora||'—'}</span><span>📍 ${e.local||'—'}</span><span>${e.deptId?deptNome(e.deptId):'Toda a igreja'}</span><span class="tag ${classeEstadoEvento(e)}">${estadoEventoPublico(e)}</span></div>${e.link?`<p><a href="${e.link}" target="_blank" rel="noopener">Abrir link do evento</a></p>`:''}${e.mediaPath?`<button class="btn btn-outline" style="width:auto;margin-top:10px" onclick="abrirMediaEvento('${e.id}')">Abrir anexo</button>`:''}
         </div>
       </div>
       <div style="display:flex; justify-content:space-between; align-items:center; margin-top:14px; padding-top:12px; border-top:1px solid var(--paper-2);">
         <span style="font-size:12px; color:var(--ink-soft);">${e.inscritos.length} inscrito(s)${e.vagas>0?` / ${e.vagas} vaga(s)`:''}</span>
-        ${!passado ? `
+        <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">${!passado ? `
           ${meuNome
             ? (jaInscrito
                 ? `<span class="tag tag-green">Já inscrito(a)</span>`
                 : (cheio ? `<span class="tag tag-red">Esgotado</span>` : `<button class="btn btn-primary" style="width:auto; margin-top:0;" onclick="inscreverEvento('${e.id}')">Inscrever-me</button>`))
             : `<span style="color:var(--royal-dark); font-weight:700; cursor:pointer; font-size:12px;" onclick="verInscritosEvento('${e.id}')">Ver inscritos</span>`
-          }` : ''}
+          }` : ''}${session.tipo!=='membro'&&permPode('eventos','editar')?`${!arquivado?`<button class="btn btn-outline" style="width:auto" onclick="editarEvento('${e.id}')">Editar</button>${e.publicarSite?`<button class="btn btn-outline" style="width:auto" onclick="retirarEventoDoSite('${e.id}')">Retirar do site</button>`:''}<button class="btn btn-outline" style="width:auto" onclick="arquivarEvento('${e.id}')">Arquivar</button>`:`<button class="btn btn-outline" style="width:auto" onclick="restaurarEvento('${e.id}')">Restaurar</button>`}`:''}</div>
       </div>
     </div>
   `;
 }
+const EVENTO_SITE_LOCAIS=['inicio','video','agenda','avisos'];
+function chavesPublicasEvento(id){return EVENTO_SITE_LOCAIS.map(local=>`evento_${local}_${id}`)}
+function estadoEventoPublico(e){const now=Date.now(),inicio=e.publicarEm?new Date(e.publicarEm).getTime():0,fim=e.expirarEm?new Date(e.expirarEm).getTime():0;if(e.arquivado)return'Arquivado';if(!e.publicarSite)return'Interno';if(fim&&fim<now)return'Expirado';if(inicio&&inicio>now)return'Agendado';return'Publicado'}
+function classeEstadoEvento(e){const estado=estadoEventoPublico(e);return estado==='Publicado'?'tag-green':estado==='Expirado'?'tag-red':'tag-gold'}
+function alternarCamposPublicacaoEvento(){const ativo=document.getElementById('ev-site-publicar')?.value==='sim';['ev-site-local','ev-site-inicio','ev-site-fim','ev-site-imagem'].forEach(id=>{const el=document.getElementById(id);if(el)el.disabled=!ativo})}
+function valorDataLocal(value){if(!value)return'';const d=new Date(value);if(Number.isNaN(d.getTime()))return String(value).slice(0,16);const local=new Date(d.getTime()-d.getTimezoneOffset()*60000);return local.toISOString().slice(0,16)}
+async function uploadImagemPublicaEvento(file,id){if(!file)return'';if(file.size>8*1024*1024)throw new Error('A imagem pública não pode exceder 8 MB.');const ext=(file.name.split('.').pop()||'webp').toLowerCase(),path=`eventos/${id}/${Date.now()}.${ext}`,result=await admsSupabase.storage.from('site-media').upload(path,file,{contentType:file.type,cacheControl:'3600',upsert:true});if(result.error)throw result.error;return admsSupabase.storage.from('site-media').getPublicUrl(path).data.publicUrl||''}
+async function sincronizarEventoSite(e){const keys=chavesPublicasEvento(e.id);const {error:deleteError}=await admsSupabase.from('site_conteudos').delete().in('chave',keys);if(deleteError)throw deleteError;if(!e.publicarSite||e.arquivado)return;const {data:userData}=await admsSupabase.auth.getUser(),agendado=e.publicarEm&&new Date(e.publicarEm).getTime()>Date.now(),meta=[formatDate(e.data),e.hora,e.local].filter(Boolean).join(' · '),agenda=e.siteLocal==='agenda',row={chave:`evento_${e.siteLocal||'agenda'}_${e.id}`,titulo:agenda?formatDate(e.data):e.titulo,subtitulo:agenda?e.titulo:(meta||null),conteudo:agenda?[e.hora,e.local,e.descricao].filter(Boolean).join(' · '):(e.descricao||null),url:e.link||null,imagem_url:e.siteImagemUrl||null,evento_id:e.id,status:agendado?'agendado':'publicado',publicar_em:e.publicarEm||null,expirar_em:e.expirarEm||null,ordem:0,ativo:true,updated_by:userData?.user?.id||null,updated_at:new Date().toISOString()};const {error}=await admsSupabase.from('site_conteudos').upsert(row,{onConflict:'chave'});if(error)throw error}
+function editarEvento(id){if(!exigirPermissao('eventos','editar'))return;const e=EVENTOS.find(x=>x.id===id);if(!e)return;EVENTO_EDITANDO_ID=id;const set=(field,value='')=>{const el=document.getElementById(field);if(el)el.value=value};set('ev-edit-id',id);set('ev-titulo',e.titulo);set('ev-dept',e.deptId||'');set('ev-data',e.data);set('ev-hora',e.hora||'');set('ev-local',e.local||'');set('ev-vagas',e.vagas||0);set('ev-desc',e.descricao||'');set('ev-link',e.link||'');set('ev-site-publicar',e.publicarSite?'sim':'nao');set('ev-site-local',e.siteLocal||'agenda');set('ev-site-inicio',valorDataLocal(e.publicarEm));set('ev-site-fim',valorDataLocal(e.expirarEm));set('ev-site-imagem-atual',e.siteImagemUrl?'Imagem publicada':'Nenhuma imagem');alternarCamposPublicacaoEvento();const btn=document.getElementById('ev-save-button'),cancel=document.getElementById('ev-cancel-button');if(btn)btn.textContent='Guardar alterações';if(cancel)cancel.style.display='inline-flex';document.getElementById('ev-titulo')?.scrollIntoView({behavior:'smooth',block:'center'})}
+function cancelarEdicaoEvento(){EVENTO_EDITANDO_ID=null;renderModule()}
+function preVisualizarEventoFormulario(){const titulo=document.getElementById('ev-titulo')?.value.trim()||'Título do evento',data=document.getElementById('ev-data')?.value,hora=document.getElementById('ev-hora')?.value.trim(),local=document.getElementById('ev-local')?.value.trim(),descricao=document.getElementById('ev-desc')?.value.trim(),siteLocal=document.getElementById('ev-site-local')?.selectedOptions?.[0]?.textContent||'Somente no portal',file=document.getElementById('ev-site-imagem')?.files?.[0],editado=EVENTOS.find(e=>e.id===EVENTO_EDITANDO_ID),image=file?URL.createObjectURL(file):(editado?.siteImagemUrl||''),modal=document.createElement('div');modal.id='evento-preview-modal';modal.style.cssText='position:fixed;inset:0;z-index:9999;background:#020b22dd;display:grid;place-items:center;padding:20px';modal.innerHTML=`<article style="width:min(760px,100%);max-height:92vh;overflow:auto;border-radius:26px;background:linear-gradient(135deg,#07194f,#123681);color:white;padding:30px;position:relative"><button type="button" onclick="document.getElementById('evento-preview-modal')?.remove()" style="position:absolute;right:16px;top:12px;border:0;background:#ffffff22;color:white;border-radius:50%;width:38px;height:38px;font-size:24px">×</button>${image?`<img src="${admsEsc(image)}" alt="" style="width:100%;max-height:330px;object-fit:cover;border-radius:18px;margin-bottom:22px">`:''}<div style="color:#f0c956;font-size:12px;font-weight:800;letter-spacing:2px">EVENTO · ADMS BRAGA</div><h2 style="font:700 44px Georgia;margin:10px 0">${admsEsc(titulo)}</h2><b style="color:#f0c956">${data?admsEsc(formatDate(data)):'Data não definida'}${hora?' · '+admsEsc(hora):''}${local?' · '+admsEsc(local):''}</b><p style="line-height:1.7;color:#ffffffcc">${admsEsc(descricao||'Sem descrição')}</p><small>Posição escolhida: ${admsEsc(siteLocal)}</small></article>`;document.body.appendChild(modal)}
+async function retirarEventoDoSite(id){if(!exigirPermissao('eventos','editar'))return;const e=EVENTOS.find(x=>x.id===id);if(!e||!confirm('Retirar este evento do site público? Ele continuará guardado no Portal.'))return;e.publicarSite=false;try{await sincronizarEventoSite(e);const saved=await salvarEstado(['eventos']);if(!saved?.ok)throw new Error('Falha ao guardar');showToast('Evento retirado do site.');renderModule()}catch(error){console.error(error);showToast('Não foi possível retirar o evento do site.') }}
+async function arquivarEvento(id){if(!exigirPermissao('eventos','arquivar'))return;const e=EVENTOS.find(x=>x.id===id);if(!e||!confirm('Arquivar este evento? A publicação pública será retirada.'))return;e.arquivado=true;try{await sincronizarEventoSite(e);await salvarEstado(['eventos']);showToast('Evento arquivado.');renderModule()}catch(error){console.error(error);showToast('Não foi possível arquivar o evento.') }}
+async function restaurarEvento(id){if(!exigirPermissao('eventos','editar'))return;const e=EVENTOS.find(x=>x.id===id);if(!e)return;e.arquivado=false;e.publicarSite=false;await salvarEstado(['eventos']);showToast('Evento restaurado como interno.');renderModule()}
 async function criarEvento(){
-  if(!exigirPermissao('eventos','inserir')) return;
+  const editando=EVENTO_EDITANDO_ID||document.getElementById('ev-edit-id')?.value||'';
+  if(!exigirPermissao('eventos',editando?'editar':'inserir')) return;
   const titulo=document.getElementById('ev-titulo').value.trim(), deptId=document.getElementById('ev-dept').value, data=document.getElementById('ev-data').value;
   const hora=document.getElementById('ev-hora').value.trim(), local=document.getElementById('ev-local').value.trim(), vagas=parseInt(document.getElementById('ev-vagas').value,10)||0;
   const descricao=document.getElementById('ev-desc').value.trim(), link=document.getElementById('ev-link')?.value.trim()||'', media=document.getElementById('ev-media')?.files?.[0]||null;
-  const publicarSite=document.getElementById('ev-site-publicar')?.value==='sim', siteLocal=document.getElementById('ev-site-local')?.value||'';
+  const publicarSite=document.getElementById('ev-site-publicar')?.value==='sim',siteLocal=document.getElementById('ev-site-local')?.value||'agenda',publicarEm=document.getElementById('ev-site-inicio')?.value?new Date(document.getElementById('ev-site-inicio').value).toISOString():null,expirarEm=document.getElementById('ev-site-fim')?.value?new Date(document.getElementById('ev-site-fim').value).toISOString():new Date(`${data}T23:59:00`).toISOString(),siteImage=document.getElementById('ev-site-imagem')?.files?.[0]||null;
   if(!titulo||!data){showToast('Preencha pelo menos o título e a data.');return;}
   if(link&&!admsUrlSegura(link)){showToast('O link deve começar por https:// ou http://');return;}
-  const id='ev'+Date.now(); let mediaPath='';
+  const existente=editando?EVENTOS.find(e=>e.id===editando):null,id=existente?.id||'ev'+Date.now();let mediaPath=existente?.mediaPath||'',siteImagemUrl=existente?.siteImagemUrl||'';
   if(media){ if(media.size>25*1024*1024){showToast('O anexo não pode exceder 25 MB.');return;} const ext=(media.name.split('.').pop()||'bin').toLowerCase(); mediaPath=`${deptId||'geral'}/eventos/${id}/${Date.now()}.${ext}`; const {error}=await admsSupabase.storage.from('comunicacoes-media').upload(mediaPath,media,{contentType:media.type,cacheControl:'3600'}); if(error){showToast('Não foi possível enviar o anexo.');return;} }
-  const novoEvento={id,titulo,deptId,data,hora,local,vagas,descricao,link,mediaPath,publicarSite,siteLocal,inscritos:[],criadoPor:session.label};
-  EVENTOS.push(novoEvento);
+  try{if(publicarSite&&siteImage)siteImagemUrl=await uploadImagemPublicaEvento(siteImage,id)}catch(error){console.error(error);showToast(error.message||'Não foi possível enviar a imagem pública.');return}
+  const novoEvento={...(existente||{}),id,titulo,deptId,data,hora,local,vagas,descricao,link,mediaPath,publicarSite,siteLocal,publicarEm,expirarEm,siteImagemUrl,arquivado:false,inscritos:existente?.inscritos||[],criadoPor:existente?.criadoPor||session.label,atualizadoPor:session.label,atualizadoEm:new Date().toISOString()};
+  if(existente)Object.assign(existente,novoEvento);else EVENTOS.push(novoEvento);
   const guardado=await salvarEstado(['eventos']);
-  if(!guardado?.ok){EVENTOS=EVENTOS.filter(e=>e.id!==id);showToast('Não foi possível guardar o evento.');return;}
-  if(publicarSite){
-    const {data:userData}=await admsSupabase.auth.getUser();
-    const meta=[formatDate(data),hora,local].filter(Boolean).join(' · ');
-    const row={chave:`evento_${siteLocal}_${id}`,titulo,subtitulo:meta||null,conteudo:descricao||null,url:link||null,status:'publicado',publicar_em:null,ordem:0,ativo:true,updated_by:userData?.user?.id||null,updated_at:new Date().toISOString()};
-    const {error:siteError}=await admsSupabase.from('site_conteudos').upsert(row,{onConflict:'chave'});
-    if(siteError){console.error(siteError);showToast('Evento guardado no portal, mas não foi possível publicá-lo no site.');renderModule();return;}
-  }
-  logAction('sistema','Evento criado',`${titulo} — ${formatDate(data)}${publicarSite?` · publicado no site (${siteLocal})`:''}`); showToast(publicarSite?'Evento criado e publicado no site.':'Evento criado.'); renderModule();
+  if(!guardado?.ok){if(!existente)EVENTOS=EVENTOS.filter(e=>e.id!==id);showToast('Não foi possível guardar o evento.');return;}
+  try{await sincronizarEventoSite(novoEvento)}catch(siteError){console.error(siteError);showToast('Evento guardado no Portal. Execute a migração v85 para sincronizar a publicação.');EVENTO_EDITANDO_ID=null;renderModule();return}
+  logAction('sistema',existente?'Evento atualizado':'Evento criado',`${titulo} — ${formatDate(data)}${publicarSite?` · site (${siteLocal})`:''}`);EVENTO_EDITANDO_ID=null;showToast(publicarSite?(existente?'Evento atualizado e sincronizado.':'Evento criado e publicado no site.'):(existente?'Evento atualizado.':'Evento criado.'));renderModule();
 }
 async function abrirMediaEvento(id){const e=EVENTOS.find(x=>x.id===id);if(!e?.mediaPath)return;const {data,error}=await admsSupabase.storage.from('comunicacoes-media').createSignedUrl(e.mediaPath,300);if(error||!data?.signedUrl){showToast('Não foi possível abrir o anexo.');return;}window.open(data.signedUrl,'_blank','noopener');}
 function inscreverEvento(eventoId){
@@ -6465,7 +6479,7 @@ async function handleLogout(){
   document.body.classList.remove('portal-active');
   session=null; admsCloudProfile=null; pendingLoginKey=null; pendingLoginLeaderId=null; currentProfileRef=null;
   try{ localStorage.removeItem(SESSAO_KEY);localStorage.removeItem(ESTADO_KEY); }catch(e){}
-  location.replace('/sistema?v=83');
+  location.replace('/sistema?v=85');
 }
 
 admsSupabase?.auth.onAuthStateChange((event)=>{
