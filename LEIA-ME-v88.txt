@@ -1,0 +1,29 @@
+ADMS BRAGA — SEGURANÇA OPERACIONAL v88
+
+NOVIDADES
+
+- Nova área Administração > Segurança e Backup, exclusiva do Usuário Master.
+- Diagnóstico de internet, autenticação, base de dados e armazenamento.
+- Backup real dos dados acessíveis no Supabase, sem palavras-passe ou tokens.
+- Exportação de diagnóstico técnico sem credenciais.
+- Preparação melhorada para instalar o Portal no computador ou telemóvel.
+- Compressão automática de imagens grandes antes do envio ao site.
+- Ligações do site atualizadas para abrir o Portal v88.
+- Mantidas todas as melhorias editoriais e de eventos da versão 87.
+
+INSTALAÇÃO
+
+1. Extraia o pacote completo.
+2. Publique a pasta no projeto do site público.
+3. Se adms-braga.vercel.app estiver noutro projeto, publique a mesma pasta nesse projeto.
+4. Se ainda não executou a migração editorial, execute EXECUTAR-NO-SUPABASE-v87.sql.
+5. A versão 88 não exige um novo SQL.
+6. Abra o Portal numa janela anónima usando /sistema?v=88.
+7. Entre como Usuário Master e abra Administração > Segurança e Backup.
+8. Confirme que os quatro diagnósticos aparecem como operacionais.
+9. Descarregue o primeiro backup e guarde-o num local protegido.
+
+ATENÇÃO
+
+O backup pode conter dados pessoais de membros e contactos. Não o envie por
+WhatsApp, redes sociais ou e-mail comum. Guarde-o num disco ou pasta protegida.

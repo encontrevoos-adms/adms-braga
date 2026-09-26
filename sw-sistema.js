@@ -1,10 +1,9 @@
-// Versão de limpeza: remove o cache offline antigo e deixa o navegador usar a rede normalmente.
+// ADMS Braga v88: suporte à instalação sem cache de páginas ou dados do Portal.
 self.addEventListener('install',()=>self.skipWaiting());
 self.addEventListener('activate',event=>{
   event.waitUntil(
     caches.keys()
       .then(keys=>Promise.all(keys.map(key=>caches.delete(key))))
-      .then(()=>self.registration.unregister())
       .then(()=>self.clients.claim())
   );
 });

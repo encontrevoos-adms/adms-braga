@@ -1,10 +1,12 @@
 {
   "name": "Sistema de Gestão — ADMS Braga",
   "short_name": "ADMS Braga",
+  "id": "/sistema",
   "description": "Sistema de gestão da Igreja Evangélica Assembleia de Deus Ministério de Santos — Congregação Braga",
-  "start_url": "/sistema",
+  "start_url": "/sistema?v=88",
   "scope": "/",
   "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
   "orientation": "portrait-primary",
   "background_color": "#F4F6FB",
   "theme_color": "#1B3A9C",

@@ -2403,6 +2403,7 @@ function renderShell(){
       nav+=navItem('permissoes','lock','Permissões por Perfil',true);
     }
     if(canAccessAuditoria()) nav+=navItem('auditoria','audit','Registo de Atividade',true);
+    if(isMaster()) nav+=navItem('seguranca-operacional','lock','Segurança e Backup',true);
   }
   document.getElementById('nav-container').innerHTML=nav;
   organizarGruposNavegacao();
@@ -2550,6 +2551,7 @@ function renderModule(){
   if(currentModule==='acessos'){ if(!canAccessGestaoAcessos()) return el.innerHTML=viewLocked('Gestão de Acessos'); el.innerHTML=viewAcessos(); setTimeout(renderSolicitacoesAcesso,0); return; }
   if(currentModule==='permissoes'){ if(!canManagePermissions()) return el.innerHTML=viewLocked('Permissões por Perfil'); el.innerHTML=viewPermissoes(); return; }
   if(currentModule==='auditoria') return el.innerHTML = canAccessAuditoria()? viewAuditoria() : viewLocked('Registo de Atividade');
+  if(currentModule==='seguranca-operacional'){ if(!isMaster()) return el.innerHTML=viewLocked('Segurança e Backup'); el.innerHTML=viewSegurancaOperacional(); setTimeout(executarDiagnosticoOperacional,0); return; }
   el.innerHTML = viewDashboard();
   if(isMaster()) carregarResumoNovosContactos();
 }
@@ -6479,7 +6481,7 @@ async function handleLogout(){
   document.body.classList.remove('portal-active');
   session=null; admsCloudProfile=null; pendingLoginKey=null; pendingLoginLeaderId=null; currentProfileRef=null;
   try{ localStorage.removeItem(SESSAO_KEY);localStorage.removeItem(ESTADO_KEY); }catch(e){}
-  location.replace('/sistema?v=87');
+  location.replace('/sistema?v=88');
 }
 
 admsSupabase?.auth.onAuthStateChange((event)=>{
@@ -6528,11 +6530,9 @@ if(paramsUrl.get('form') === 'cadastro'){
   })();
 }
 
-// Remove versões antigas do modo offline. Um cache preso não pode bloquear o Portal.
+// Mantém a instalação como aplicação sem guardar páginas ou dados sensíveis em cache.
 if('serviceWorker' in navigator){
-  navigator.serviceWorker.getRegistrations()
-    .then(registrations=>Promise.all(registrations.map(registration=>registration.unregister())))
-    .catch(()=>{});
+  window.addEventListener('load',()=>navigator.serviceWorker.register('/sw-sistema.js?v=88').catch(()=>{}));
 }
 if(window.caches){
   caches.keys().then(keys=>Promise.all(keys.map(key=>caches.delete(key)))).catch(()=>{});
@@ -6709,6 +6709,65 @@ function cmsPreviewNovoV87(){const file=document.getElementById('cms-new-file').
 async function cmsArquivar(key){if(!exigirPermissao('site-publico','arquivar')||!confirm('Arquivar este conteúdo e retirá-lo do site?'))return;const{error}=await admsSupabase.from('site_conteudos').update({status:'arquivado',ativo:false,editor_nome:session?.label||null,updated_at:new Date().toISOString()}).eq('chave',key);if(error)return showToast('Não foi possível arquivar.');showToast('Conteúdo arquivado.');renderSitePublico()}
 async function cmsDesarquivar(key){if(!exigirPermissao('site-publico','editar'))return;const{error}=await admsSupabase.from('site_conteudos').update({status:'rascunho',ativo:false,editor_nome:session?.label||null,updated_at:new Date().toISOString()}).eq('chave',key);if(error)return showToast('Não foi possível restaurar.');showToast('Conteúdo restaurado como rascunho.');renderSitePublico()}
 async function cmsDuplicar(key){if(!exigirPermissao('site-publico','inserir'))return;const{data,error}=await admsSupabase.from('site_conteudos').select('*').eq('chave',key).single();if(error||!data)return showToast('Conteúdo indisponível.');delete data.id;delete data.created_at;delete data.updated_by;delete data.created_by;data.chave=cmsNovaChave(cmsTypeFromKey(key));data.titulo=`${data.titulo||'Conteúdo'} — cópia`;data.status='rascunho';data.ativo=false;data.destaque=false;data.publicar_em=null;data.expirar_em=null;data.autor_nome=session?.label||null;data.editor_nome=session?.label||null;data.updated_at=new Date().toISOString();const result=await admsSupabase.from('site_conteudos').insert(data);if(result.error)return showToast('Não foi possível duplicar.');showToast('Cópia criada como rascunho.');renderSitePublico()}
+</script>
+<script>
+/* Segurança operacional v88 — diagnóstico, backup cloud, PWA e imagens otimizadas. */
+const ADMS_BACKUP_TABLES=['adms_module_state','departamentos','escala_respostas','gabinete_pastoral','membro_liderancas','membros','notificacoes_internas','novos_contactos','pedidos_oracao','permissoes_perfis','planeamentos_culto','profiles','registo_atividade','site_conteudos','site_conteudos_historico','solicitacoes_acesso'];
+let admsInstallPrompt=null;
+window.addEventListener('beforeinstallprompt',event=>{event.preventDefault();admsInstallPrompt=event;const button=document.getElementById('adms-install-button');if(button)button.disabled=false});
+window.addEventListener('appinstalled',()=>{admsInstallPrompt=null;showToast('Portal instalado neste dispositivo.')});
+
+function viewSegurancaOperacional(){
+  return `<div class="topbar"><div><div class="breadcrumb">Administração</div><h1>Segurança e Backup</h1></div><span class="access-pill">Apenas Usuário Master</span></div>${ruleDivider()}
+  <div class="hint-box" style="margin-bottom:18px">Esta área verifica os serviços essenciais e permite descarregar uma cópia dos dados que a sua conta está autorizada a consultar. O ficheiro não contém palavras-passe nem tokens de sessão.</div>
+  <div class="kpi-grid" style="margin-bottom:18px">
+    <div class="kpi"><span>Ligação</span><strong id="diag-network">…</strong><small id="diag-network-note">A verificar</small></div>
+    <div class="kpi"><span>Sessão</span><strong id="diag-auth">…</strong><small id="diag-auth-note">A verificar</small></div>
+    <div class="kpi"><span>Base de dados</span><strong id="diag-db">…</strong><small id="diag-db-note">A verificar</small></div>
+    <div class="kpi"><span>Armazenamento</span><strong id="diag-storage">…</strong><small id="diag-storage-note">A verificar</small></div>
+  </div>
+  <div class="form-row">
+    <article class="card"><h2 style="margin-top:0">Cópia de segurança</h2><p>Descarregue um ficheiro JSON com os registos acessíveis no Supabase. Guarde-o num local protegido e não o envie por aplicações de mensagens.</p><button class="btn btn-primary" style="width:auto" id="cloud-backup-button" onclick="exportarBackupCloudV88()">Descarregar backup</button><div id="cloud-backup-status" style="margin-top:12px;color:var(--ink-soft);font-size:12px"></div></article>
+    <article class="card"><h2 style="margin-top:0">Instalar o Portal</h2><p>Instale o Portal no computador ou telemóvel para abrir em modo de aplicação. No iPhone/iPad, utilize Partilhar → Adicionar ao ecrã principal.</p><button class="btn btn-outline" style="width:auto" id="adms-install-button" onclick="instalarPortalV88()" ${admsInstallPrompt?'':'disabled'}>Instalar aplicação</button><div id="adms-install-note" style="margin-top:12px;color:var(--ink-soft);font-size:12px">Se o botão estiver indisponível, o Portal já pode estar instalado ou o navegador não oferece instalação automática.</div></article>
+  </div>
+  <article class="card" style="margin-top:18px"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><div><h2 style="margin:0">Diagnóstico técnico</h2><p style="margin:5px 0 0;color:var(--ink-soft)">Resultado seguro para apoio técnico, sem credenciais.</p></div><div style="display:flex;gap:8px"><button class="btn btn-outline" style="width:auto" onclick="executarDiagnosticoOperacional()">Verificar novamente</button><button class="btn btn-outline" style="width:auto" onclick="exportarDiagnosticoV88()">Descarregar diagnóstico</button></div></div><div id="diagnostico-detalhes" style="margin-top:16px">A verificar os serviços…</div></article>`;
+}
+
+function admsDiagSet(id,ok,title,note){const value=document.getElementById(id),description=document.getElementById(`${id}-note`);if(value){value.textContent=title;value.style.color=ok?'var(--ok)':'var(--red)'}if(description)description.textContent=note}
+async function executarDiagnosticoOperacional(){
+  if(!isMaster())return;
+  const details=[],online=navigator.onLine;
+  admsDiagSet('diag-network',online,online?'Online':'Offline',online?'Dispositivo ligado à internet':'Verifique a ligação');
+  details.push({servico:'Ligação',ok:online,detalhe:online?'Online':'Offline'});
+  try{const{data,error}=await admsSupabase.auth.getSession();if(error)throw error;const ok=!!data?.session;admsDiagSet('diag-auth',ok,ok?'Ativa':'Inativa',ok?'Sessão autenticada':'Entre novamente no Portal');details.push({servico:'Autenticação',ok,detalhe:ok?'Sessão válida':'Sem sessão'})}catch(error){admsDiagSet('diag-auth',false,'Falha','Não foi possível validar');details.push({servico:'Autenticação',ok:false,detalhe:error.message})}
+  try{const{count,error}=await admsSupabase.from('site_conteudos').select('*',{count:'exact',head:true});if(error)throw error;admsDiagSet('diag-db',true,'Operacional',`${count||0} conteúdo(s) editorial(is)`);details.push({servico:'Base de dados',ok:true,detalhe:`site_conteudos: ${count||0}`})}catch(error){admsDiagSet('diag-db',false,'Falha','Consulta indisponível');details.push({servico:'Base de dados',ok:false,detalhe:error.message})}
+  try{const{data,error}=await admsSupabase.storage.from('site-media').list('',{limit:1});if(error)throw error;admsDiagSet('diag-storage',true,'Operacional','Imagens disponíveis');details.push({servico:'Armazenamento',ok:true,detalhe:`Acesso confirmado (${data?.length||0} item inicial)`})}catch(error){admsDiagSet('diag-storage',false,'Atenção','Verifique as permissões');details.push({servico:'Armazenamento',ok:false,detalhe:error.message})}
+  window.admsUltimoDiagnostico={versao:88,geradoEm:new Date().toISOString(),url:location.origin,online:navigator.onLine,userAgent:navigator.userAgent,resultados:details};
+  const host=document.getElementById('diagnostico-detalhes');if(host)host.innerHTML=details.map(item=>`<div class="feed-item"><div class="feed-dot" style="background:${item.ok?'var(--ok)':'var(--red)'}"></div><div><strong>${admsEsc(item.servico)}</strong><div class="time">${admsEsc(item.detalhe)}</div></div></div>`).join('');
+}
+
+function descarregarJsonV88(filename,payload){const url=URL.createObjectURL(new Blob([JSON.stringify(payload,null,2)],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500)}
+async function admsLerTabelaBackup(table){let rows=[],from=0;while(true){const{data,error}=await admsSupabase.from(table).select('*').range(from,from+999);if(error)throw error;rows.push(...(data||[]));if(!data||data.length<1000)break;from+=1000}return rows}
+async function exportarBackupCloudV88(){
+  if(!isMaster())return showToast('Apenas o Usuário Master pode exportar o backup.');
+  if(!confirm('O backup contém dados pessoais e administrativos. Confirma o descarregamento para este dispositivo?'))return;
+  const button=document.getElementById('cloud-backup-button'),status=document.getElementById('cloud-backup-status');if(button){button.disabled=true;button.textContent='A preparar…'}if(status)status.textContent='A reunir os dados autorizados…';
+  const dados={},falhas=[];
+  for(const table of ADMS_BACKUP_TABLES){try{dados[table]=await admsLerTabelaBackup(table);if(status)status.textContent=`A copiar ${table}…`}catch(error){falhas.push({tabela:table,erro:error.message})}}
+  const stamp=new Date().toISOString().replace(/[:.]/g,'-'),payload={produto:'ADMS Braga',versao:88,tipo:'backup-cloud',geradoEm:new Date().toISOString(),geradoPor:session?.label||'Usuário Master',aviso:'Contém dados pessoais. Guardar em local protegido.',tabelas:dados,falhas};
+  descarregarJsonV88(`backup-adms-braga-cloud-${stamp}.json`,payload);
+  await logAction('sistema','Backup cloud exportado',`${Object.keys(dados).length} tabela(s); ${falhas.length} falha(s).`);
+  if(status)status.textContent=falhas.length?`Backup concluído com ${falhas.length} tabela(s) indisponível(is).`:'Backup concluído sem falhas.';if(button){button.disabled=false;button.textContent='Descarregar backup'}showToast('Cópia de segurança descarregada.');
+}
+function exportarDiagnosticoV88(){if(!window.admsUltimoDiagnostico)return showToast('Execute primeiro o diagnóstico.');descarregarJsonV88(`diagnostico-adms-v88-${new Date().toISOString().slice(0,10)}.json`,window.admsUltimoDiagnostico);logAction('sistema','Diagnóstico exportado','Relatório técnico v88 descarregado.')}
+async function instalarPortalV88(){if(!admsInstallPrompt){showToast('Use o menu do navegador e escolha “Instalar aplicação” ou “Adicionar ao ecrã principal”.');return}admsInstallPrompt.prompt();await admsInstallPrompt.userChoice;admsInstallPrompt=null;const button=document.getElementById('adms-install-button');if(button)button.disabled=true}
+
+async function comprimirImagemV88(file){
+  if(!file||!file.type.startsWith('image/')||file.type==='image/gif'||file.size<350*1024)return file;
+  const bitmap=await createImageBitmap(file),limit=1920,ratio=Math.min(1,limit/Math.max(bitmap.width,bitmap.height)),canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(bitmap.width*ratio));canvas.height=Math.max(1,Math.round(bitmap.height*ratio));canvas.getContext('2d',{alpha:false}).drawImage(bitmap,0,0,canvas.width,canvas.height);bitmap.close?.();
+  const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/webp',.84));return blob&&blob.size<file.size?new File([blob],file.name.replace(/\.[^.]+$/,'.webp'),{type:'image/webp',lastModified:Date.now()}):file;
+}
+cmsUpload=async function(file,type){if(!file)return'';const permitidos={'image/jpeg':'jpg','image/png':'png','image/webp':'webp','application/pdf':'pdf'};if(file.size>10*1024*1024)throw new Error('O ficheiro não pode ultrapassar 10 MB.');if(!permitidos[file.type])throw new Error('Tipo de ficheiro não permitido.');const preparado=await comprimirImagemV88(file),ext=permitidos[preparado.type]||'webp',pasta=String(type).replace(/[^a-zA-Z0-9_-]/g,''),path=`${pasta}/${Date.now()}-${crypto.randomUUID()}.${ext}`;const{error}=await admsSupabase.storage.from('site-media').upload(path,preparado,{cacheControl:'3600',upsert:false,contentType:preparado.type});if(error)throw error;return admsSupabase.storage.from('site-media').getPublicUrl(path).data.publicUrl};
 </script>
 </body>
 </html>
