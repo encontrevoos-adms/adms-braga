@@ -26,4 +26,3 @@ PUBLICAÇÃO NA VERCEL
 
 Depois de executar o SQL, publique todos os ficheiros da versão 85. Teste a
 criação, edição, retirada e expiração de um evento numa janela anónima.
-Deployment automático v85.

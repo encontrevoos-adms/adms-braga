@@ -1,0 +1,17 @@
+ADMS BRAGA — CORREÇÃO DE ACESSO AO PORTAL v86
+
+- Todos os botões do site passam a abrir /sistema?v=85.
+- Corrigidos os links do cabeçalho, menu móvel e rodapé.
+- Atualizada também a referência local da Bíblia para evitar cache antigo.
+
+IMPORTANTE
+
+Existem dois endereços Vercel. Se eles pertencerem a projetos diferentes, publicar
+uma versão em adms-braga-site.vercel.app não atualiza adms-braga.vercel.app.
+
+Para manter o Portal no domínio antigo, publique este pacote também no projeto
+ligado a adms-braga.vercel.app. A opção recomendada é utilizar o Portal integrado:
+
+https://adms-braga-site.vercel.app/sistema?v=85
+
+O SQL da versão 85 continua obrigatório para a gestão completa dos eventos.

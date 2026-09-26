@@ -1,0 +1,33 @@
+ADMS BRAGA — GESTOR EDITORIAL COMPLETO v87
+
+NOVIDADES
+
+- A melhoria de publicação da v85 foi aplicada a todo o conteúdo do site.
+- Novo painel editorial com totais de publicados, agendados, rascunhos e arquivados.
+- Publicação imediata ou agendada.
+- Data opcional para retirada automática do site.
+- Imagem de capa em fotografias, avisos, agenda, estudos, devocionais e livros.
+- Conteúdo em destaque e ordenação editorial.
+- Pré-visualização antes da publicação.
+- Duplicação de conteúdo como rascunho.
+- Arquivo e restauração sem apagar o histórico.
+- Identificação de quem criou e de quem fez a última alteração.
+- Site público prioriza destaques e ignora conteúdos arquivados ou expirados.
+- Todos os botões do site abrem o Portal v87.
+
+INSTALAÇÃO
+
+1. Publique a pasta completa no projeto Vercel ligado ao domínio público.
+2. Publique a mesma pasta no projeto ligado ao Portal, se forem projetos separados.
+3. No Supabase, abra SQL Editor > New query.
+4. Copie TODO o conteúdo de EXECUTAR-NO-SUPABASE-v87.sql.
+5. Clique em Run e confirme que terminou sem erro.
+6. Abra o site e o Portal numa janela anónima.
+
+ENDEREÇOS ESPERADOS
+
+Site:   https://adms-braga-site.vercel.app/
+Portal: https://adms-braga-site.vercel.app/sistema?v=87
+
+Se adms-braga.vercel.app continuar ligado a outro projeto Vercel, esse projeto
+também deverá receber este pacote para apresentar a mesma versão.
