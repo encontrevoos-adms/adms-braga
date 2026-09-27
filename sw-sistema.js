@@ -1,4 +1,4 @@
-// ADMS Braga v91: suporte à instalação sem cache de páginas ou dados do Portal.
+// ADMS Braga v93: relógio Lisboa e ADMS Store.
 self.addEventListener('install',()=>self.skipWaiting());
 self.addEventListener('activate',event=>{
   event.waitUntil(
