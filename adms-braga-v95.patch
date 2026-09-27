@@ -1,0 +1,352 @@
+From f9aa6c703a03ae5738ad289ebbbf06ee78e9964a Mon Sep 17 00:00:00 2001
+From: OpenAI Codex <codex@openai.com>
+Date: Mon, 28 Sep 2026 00:23:00 +0200
+Subject: [PATCH] =?UTF-8?q?Implementa=20centro=20de=20relat=C3=B3rios=20ge?=
+ =?UTF-8?q?renciais=20v95?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+---
+ LEIA-ME-v95.txt |  47 ++++++++++++++
+ sistema.html    | 164 +++++++++++++++++++++++++++++++++++++++++-------
+ 2 files changed, 188 insertions(+), 23 deletions(-)
+ create mode 100644 LEIA-ME-v95.txt
+
+diff --git a/LEIA-ME-v95.txt b/LEIA-ME-v95.txt
+new file mode 100644
+index 0000000..b2e177d
+--- /dev/null
++++ b/LEIA-ME-v95.txt
+@@ -0,0 +1,47 @@
++ADMS BRAGA — VERSÃO 95
++=======================
++
++CENTRO DE RELATÓRIOS E INTELIGÊNCIA DE GESTÃO
++
++1. FINANCEIRO
++   - Razão financeiro detalhado.
++   - Receitas agrupadas por rubrica.
++   - Saídas nominais por categoria, fornecedor ou beneficiário.
++   - Fluxo de caixa mensal e saldo acumulado.
++   - Orçamento versus realizado por departamento.
++   - Contribuições e generosidade.
++   - Filtros por período, departamento, tipo, rubrica e entidade.
++   - Totais de entradas, saídas e saldo a transportar.
++   - Exportação para Excel e visualização para impressão/PDF.
++
++2. NOVAS RUBRICAS DE ENTRADA
++   Dízimos, Ofertas, Votos, Doações, Campanhas, Missões,
++   Ação Social, Eventos e Outras Receitas.
++
++3. NOVAS CATEGORIAS NOMINAIS DE SAÍDA
++   Arrendamento, Água, Energia, Telecomunicações, Manutenção e
++   Reparações, Equipamentos, Material de Culto, Material de Escritório,
++   Limpeza e Higiene, Ação Social, Missões e Evangelismo, Eventos,
++   Transporte e Deslocações, Formação, Honorários e Serviços,
++   Seguros e Taxas, Apoio Pastoral e Outras Despesas.
++
++4. GESTÃO MINISTERIAL
++   - Relatório de pessoas, integração e acompanhamento.
++   - Relatório de frequência e escalas ministeriais.
++   - Indicadores de membros, congregados, visitantes, dizimistas,
++     batizados e pessoas com contacto telefónico.
++
++5. DASHBOARD
++   - Receitas por rubrica.
++   - Maiores despesas por fornecedor ou beneficiário.
++   - Acesso direto aos relatórios analíticos.
++
++INSTALAÇÃO
++Esta versão não exige novo SQL. Os relatórios utilizam os lançamentos,
++orçamentos, pessoas, contas e escalas já persistidos pelo portal.
++
++Depois de publicar, valide numa janela anónima:
++  a) crie uma entrada e uma saída com as novas categorias;
++  b) abra Relatórios e teste os filtros;
++  c) exporte um relatório para Excel;
++  d) confirme a persistência depois de terminar e reiniciar a sessão.
+diff --git a/sistema.html b/sistema.html
+index 9708c7a..264a263 100644
+--- a/sistema.html
++++ b/sistema.html
+@@ -3874,6 +3874,27 @@ function categoriaLancamento(l){
+   if(texto.includes('doaç')||texto.includes('doac'))return 'Doação';
+   return 'Outros';
+ }
++const RUBRICAS_ENTRADA=['Dízimos','Ofertas','Votos','Doações','Campanhas','Missões','Ação Social','Eventos','Outras Receitas'];
++const CATEGORIAS_SAIDA=['Arrendamento','Água','Energia','Telecomunicações','Manutenção e Reparações','Equipamentos','Material de Culto','Material de Escritório','Limpeza e Higiene','Ação Social','Missões e Evangelismo','Eventos','Transporte e Deslocações','Formação','Honorários e Serviços','Seguros e Taxas','Apoio Pastoral','Outras Despesas'];
++function normalizarRubricaFinanceira(valor,tipo){
++  const v=String(valor||'Outros').trim();
++  if(tipo==='Entrada'){
++    const mapa={Voto:'Votos',Doação:'Doações',Outros:'Outras Receitas'};
++    return mapa[v]||v;
++  }
++  return ['Outros','Outras Receitas'].includes(v)?'Outras Despesas':v;
++}
++function opcoesCategoriasFinanceiras(tipo,selecionado=''){
++  const lista=tipo==='Saída'?CATEGORIAS_SAIDA:RUBRICAS_ENTRADA;
++  const atual=normalizarRubricaFinanceira(selecionado,tipo);
++  return lista.map(nome=>`<option value="${admsEsc(nome)}" ${nome===atual?'selected':''}>${admsEsc(nome)}</option>`).join('');
++}
++function atualizarCategoriasFinanceiras(){
++  const tipo=document.getElementById('fin-tipo')?.value||'Entrada';
++  const select=document.getElementById('fin-categoria');
++  if(select)select.innerHTML=opcoesCategoriasFinanceiras(tipo,select.value);
++  toggleFinPessoa();
++}
+ function emailValido(v){ return !v || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
+ function telemovelValido(v){ return !v || /^[0-9+\s()-]{6,20}$/.test(v); }
+ 
+@@ -3918,7 +3939,7 @@ function viewFinanceiro(){
+     <div class="card">
+       <div class="form-row">
+         <div><label>Data</label><input id="fin-data" type="date"></div>
+-        <div><label>Tipo</label><select id="fin-tipo" onchange="toggleFinPessoa()"><option>Entrada</option><option>Saída</option></select></div>
++        <div><label>Tipo</label><select id="fin-tipo" onchange="atualizarCategoriasFinanceiras()"><option>Entrada</option><option>Saída</option></select></div>
+       </div>
+       <div class="form-row">
+         <div><label>Departamento</label>
+@@ -3930,7 +3951,7 @@ function viewFinanceiro(){
+         <div><label>Fornecedor / Pagador (${fornecedoresDisponiveis().length} cadastrados)</label>
+           <select id="fin-fornecedor"><option value="">Selecione o fornecedor ou pagador</option><option value="Não identificado / Diversos">Não identificado / Diversos</option>${opcoesFornecedores()}</select>
+         </div>
+-        <div><label>Categoria do lançamento</label><select id="fin-categoria"><option>Dízimos</option><option>Ofertas</option><option>Voto</option><option>Doação</option><option>Outros</option></select></div>
++        <div><label>Rubrica / categoria nominal</label><select id="fin-categoria">${opcoesCategoriasFinanceiras('Entrada')}</select></div>
+       </div>
+       <div><label>Descrição</label><input id="fin-desc" placeholder="Ex: Dízimos e ofertas — culto domingo"></div>
+ 
+@@ -5139,7 +5160,7 @@ function admsAssinaturasFinanceiras(incluirRecebedor,recebedor){
+   itens.push(['1.º Tesoureiro',tes[0]?.nome||''],['2.º Tesoureiro',tes[1]?.nome||''],['Pr. Sénior',pastor?.nome||'']);
+   return `<div class="print-sign-row" style="flex-wrap:wrap;">${itens.map(([cargo,nome])=>`<div class="print-sign" style="min-width:180px;"><div class="line"></div><div class="label">${cargo}${nome?' — '+nome:''}</div></div>`).join('')}</div>`;
+ }
+-function admsRelatorioFinanceiro(tipo){return ['financeiro','contas-pagar','contas-receber'].includes(tipo);}
++function admsRelatorioFinanceiro(tipo){return ['financeiro','financeiro-rubricas','saidas-nominais','fluxo-caixa','orcamento-gestao','contribuicoes','contas-pagar','contas-receber'].includes(tipo);}
+ 
+ function verRecibo(reciboId){
+   const r = RECIBOS.find(x=>x.id===reciboId);
+@@ -5717,7 +5738,7 @@ function viewAuditoria(){
+ }
+ 
+ /* ================= RELATÓRIOS (PDF / EXCEL) ================= */
+-const RELATORIO_FILTROS={tipo:'',departamento:'',financeiroTipo:'Todos',inicio:'',fim:'',rhTipo:'todos',patCategoria:'Todas',contaStatus:'todos'};
++const RELATORIO_FILTROS={tipo:'',departamento:'',financeiroTipo:'Todos',financeiroRubrica:'Todas',financeiroEntidade:'Todas',inicio:'',fim:'',rhTipo:'todos',patCategoria:'Todas',contaStatus:'todos'};
+ 
+ function guardarFiltrosRelatorio(){
+   const valor=id=>document.getElementById(id)?.value;
+@@ -5727,6 +5748,10 @@ function guardarFiltrosRelatorio(){
+   if(departamento!==undefined) RELATORIO_FILTROS.departamento=departamento;
+   const financeiroTipo=valor('rel-fin-tipo');
+   if(financeiroTipo!==undefined) RELATORIO_FILTROS.financeiroTipo=financeiroTipo;
++  const financeiroRubrica=valor('rel-fin-rubrica');
++  if(financeiroRubrica!==undefined) RELATORIO_FILTROS.financeiroRubrica=financeiroRubrica;
++  const financeiroEntidade=valor('rel-fin-entidade');
++  if(financeiroEntidade!==undefined) RELATORIO_FILTROS.financeiroEntidade=financeiroEntidade;
+   const inicio=valor('rel-data-inicio');
+   if(inicio!==undefined) RELATORIO_FILTROS.inicio=inicio;
+   const fim=valor('rel-data-fim');
+@@ -5745,10 +5770,17 @@ function tiposRelatorioDisponiveis(){
+   if(isMaster()){
+     tipos.push({v:'rh', t:'Recursos Humanos'});
+     tipos.push({v:'patrimonio', t:'Património'});
+-    tipos.push({v:'financeiro', t:'Financeiro'});
++    tipos.push({v:'financeiro', t:'Financeiro — Razão detalhado'});
++    tipos.push({v:'financeiro-rubricas', t:'Financeiro — Receitas por rubrica'});
++    tipos.push({v:'saidas-nominais', t:'Financeiro — Saídas nominais'});
++    tipos.push({v:'fluxo-caixa', t:'Financeiro — Fluxo de caixa'});
++    tipos.push({v:'orcamento-gestao', t:'Financeiro — Orçamento vs. realizado'});
++    tipos.push({v:'contribuicoes', t:'Contribuições e generosidade'});
+     tipos.push({v:'contas-pagar', t:'Contas a Pagar'});
+     tipos.push({v:'contas-receber', t:'Contas a Receber'});
+     tipos.push({v:'departamentos', t:'Departamentos'});
++    tipos.push({v:'pessoas-gestao', t:'Pessoas e integração'});
++    tipos.push({v:'frequencia-escalas', t:'Frequência e escalas'});
+   }
+   if(canAccessEscalas()) tipos.push({v:'escalas', t:'Escalas de Serviço'});
+   tipos.push({v:'avisos', t:'Avisos e Comunicados'});
+@@ -5841,6 +5873,10 @@ function buildDashboardRelatorios(){
+   const totalPagarPendente = CONTAS_PAGAR.filter(c=>statusConta(c)!=='Pago').reduce((s,c)=>s+c.valor,0);
+   const totalReceberPendente = CONTAS_RECEBER.filter(c=>statusConta(c)!=='Recebido').reduce((s,c)=>s+c.valor,0);
+   const contasAtrasadas = CONTAS_PAGAR.filter(c=>statusConta(c)==='Atrasado').length + CONTAS_RECEBER.filter(c=>statusConta(c)==='Atrasado').length;
++  const receitasPorRubrica=agruparFinanceiro(FINANCEIRO.lancamentos.filter(l=>l.tipo==='Entrada'),l=>normalizarRubricaFinanceira(categoriaLancamento(l),'Entrada')).slice(0,6);
++  const despesasPorEntidade=agruparFinanceiro(FINANCEIRO.lancamentos.filter(l=>l.tipo==='Saída'),l=>l.fornecedor||l.beneficiario||'Não identificado').slice(0,6);
++  const maxReceita=Math.max(1,...receitasPorRubrica.map(([,d])=>d.total));
++  const maxDespesa=Math.max(1,...despesasPorEntidade.map(([,d])=>d.total));
+ 
+   return `
+     <div class="section-title"><h2>Dashboard Financeiro</h2></div>
+@@ -5886,6 +5922,19 @@ function buildDashboardRelatorios(){
+           </div>`).join('') : `<p style="color:var(--ink-soft); font-size:13px;">Sem movimentações registadas.</p>`}
+       </div>
+     </div>
++    <div class="section-title"><h2>Inteligência de gestão</h2></div>
++    <div class="grid grid-2">
++      <div class="card">
++        <h3 style="margin-top:0;font-size:15px;color:var(--royal-deep);">Receitas por rubrica</h3>
++        ${receitasPorRubrica.length?receitasPorRubrica.map(([nome,d])=>`<div class="cat-bar-row"><div class="cat-label">${admsEsc(nome)}</div><div class="cat-bar-track"><div class="cat-bar-fill" style="width:${Math.round(d.total/maxReceita*100)}%"></div></div><div class="cat-bar-val">${formatEuro(d.total)}</div></div>`).join(''):'<p style="color:var(--ink-soft);font-size:13px">Sem receitas registadas.</p>'}
++        <button class="btn btn-ghost" style="width:auto;margin-top:12px" onclick="abrirRelatorioTipo('financeiro-rubricas')">Abrir relatório por rubrica →</button>
++      </div>
++      <div class="card">
++        <h3 style="margin-top:0;font-size:15px;color:var(--royal-deep);">Maiores despesas nominais</h3>
++        ${despesasPorEntidade.length?despesasPorEntidade.map(([nome,d])=>`<div class="cat-bar-row"><div class="cat-label">${admsEsc(nome)}</div><div class="cat-bar-track"><div class="cat-bar-fill" style="width:${Math.round(d.total/maxDespesa*100)}%;background:linear-gradient(90deg,var(--red),var(--red-dark))"></div></div><div class="cat-bar-val">${formatEuro(d.total)}</div></div>`).join(''):'<p style="color:var(--ink-soft);font-size:13px">Sem despesas registadas.</p>'}
++        <button class="btn btn-ghost" style="width:auto;margin-top:12px" onclick="abrirRelatorioTipo('saidas-nominais')">Abrir saídas nominais →</button>
++      </div>
++    </div>
+   `;
+ }
+ function renderRelFilters(){
+@@ -5896,7 +5945,7 @@ function renderRelFilters(){
+   const extra = document.getElementById('rel-extra-filters');
+   const depts = tipo==='escalas' ? deptsParaRelatorio().filter(d=>ESCALA_DEPTS.includes(d.id)) : deptsParaRelatorio();
+ 
+-  if(tipo==='rh'){
++  if(tipo==='rh' || tipo==='pessoas-gestao'){
+     deptWrap.style.display='none';
+   } else {
+     deptWrap.style.display='block';
+@@ -5915,9 +5964,14 @@ function renderRelFilters(){
+     const cats = ['Todas', ...new Set(PATRIMONIO.map(p=>p.categoria))];
+     if(!cats.includes(RELATORIO_FILTROS.patCategoria)) RELATORIO_FILTROS.patCategoria='Todas';
+     extra.innerHTML = `<div class="form-row" style="margin-top:12px;"><div><label>Categoria</label><select id="rel-pat-cat" onchange="guardarFiltrosRelatorio()">${cats.map(c=>`<option ${RELATORIO_FILTROS.patCategoria===c?'selected':''}>${c}</option>`).join('')}</select></div></div>`;
+-  } else if(tipo==='financeiro'){
++  } else if(['financeiro','financeiro-rubricas','saidas-nominais','fluxo-caixa','contribuicoes'].includes(tipo)){
++    const categorias=[...new Set(FINANCEIRO.lancamentos.map(l=>normalizarRubricaFinanceira(categoriaLancamento(l),l.tipo)).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-PT'));
++    const entidades=[...new Set(FINANCEIRO.lancamentos.map(l=>l.fornecedor||l.beneficiario).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-PT'));
+     extra.innerHTML = `<div class="form-row" style="margin-top:12px;">
+       <div><label>Tipo</label><select id="rel-fin-tipo" onchange="atualizarFiltrosRelatorio()"><option value="Todos" ${RELATORIO_FILTROS.financeiroTipo==='Todos'?'selected':''}>Todos</option><option ${RELATORIO_FILTROS.financeiroTipo==='Entrada'?'selected':''}>Entrada</option><option ${RELATORIO_FILTROS.financeiroTipo==='Saída'?'selected':''}>Saída</option></select></div>
++      <div><label>Rubrica / categoria</label><select id="rel-fin-rubrica" onchange="atualizarFiltrosRelatorio()"><option value="Todas">Todas</option>${categorias.map(c=>`<option value="${admsEsc(c)}" ${RELATORIO_FILTROS.financeiroRubrica===c?'selected':''}>${admsEsc(c)}</option>`).join('')}</select></div>
++    </div><div class="form-row">
++      <div><label>Fornecedor / pagador / beneficiário</label><select id="rel-fin-entidade" onchange="atualizarFiltrosRelatorio()"><option value="Todas">Todos</option>${entidades.map(c=>`<option value="${admsEsc(c)}" ${RELATORIO_FILTROS.financeiroEntidade===c?'selected':''}>${admsEsc(c)}</option>`).join('')}</select></div>
+       <div><label>Data início</label><input id="rel-data-inicio" type="date" value="${RELATORIO_FILTROS.inicio}" onchange="atualizarFiltrosRelatorio()"></div>
+     </div><div class="form-row"><div><label>Data fim</label><input id="rel-data-fim" type="date" value="${RELATORIO_FILTROS.fim}" onchange="atualizarFiltrosRelatorio()"></div></div>`;
+   } else if(tipo==='escalas' || tipo==='avisos'){
+@@ -5938,7 +5992,7 @@ function renderRelFilters(){
+ function renderResumoFinanceiroRelatorio(){
+   const el=document.getElementById('rel-resumo-financeiro');
+   if(!el)return;
+-  if(document.getElementById('rel-tipo')?.value!=='financeiro'){el.innerHTML='';return;}
++  if(!['financeiro','financeiro-rubricas','saidas-nominais','fluxo-caixa','orcamento-gestao','contribuicoes'].includes(document.getElementById('rel-tipo')?.value)){el.innerHTML='';return;}
+   const dados=getReportData();
+   const resumo=dados.summary||{entradas:formatEuro(0),saidas:formatEuro(0),saldo:formatEuro(0)};
+   el.innerHTML=`<div class="grid grid-3" style="margin-top:18px;">
+@@ -5955,6 +6009,30 @@ function dentroIntervalo(dataISOouBR, inicio, fim){
+   if(fim && iso > fim) return false;
+   return true;
+ }
++function lancamentosFinanceirosFiltrados(){
++  const ft=document.getElementById('rel-fin-tipo')?.value||'Todos';
++  const rubrica=document.getElementById('rel-fin-rubrica')?.value||'Todas';
++  const entidade=document.getElementById('rel-fin-entidade')?.value||'Todas';
++  const ini=document.getElementById('rel-data-inicio')?.value||'';
++  const fim=document.getElementById('rel-data-fim')?.value||'';
++  const dept=document.getElementById('rel-dept')?.value||'todos';
++  return FINANCEIRO.lancamentos.filter(l=>{
++    const categoria=normalizarRubricaFinanceira(categoriaLancamento(l),l.tipo);
++    const nome=l.fornecedor||l.beneficiario||'Não identificado';
++    return (ft==='Todos'||l.tipo===ft) && (rubrica==='Todas'||categoria===rubrica) &&
++      (entidade==='Todas'||nome===entidade) && (dept==='todos'||l.departamento===dept) && dentroIntervalo(l.data,ini,fim);
++  });
++}
++function resumoLancamentosFinanceiros(lancamentos){
++  const entradas=lancamentos.filter(l=>l.tipo==='Entrada').reduce((s,l)=>s+parseValorEuro(l.valor),0);
++  const saidas=lancamentos.filter(l=>l.tipo==='Saída').reduce((s,l)=>s+parseValorEuro(l.valor),0);
++  return {entradas:formatEuro(entradas),saidas:formatEuro(saidas),saldo:formatEuro(entradas-saidas)};
++}
++function agruparFinanceiro(lista,chaveFn){
++  const mapa={};
++  lista.forEach(l=>{const chave=chaveFn(l)||'Não identificado';if(!mapa[chave])mapa[chave]={quantidade:0,total:0};mapa[chave].quantidade++;mapa[chave].total+=parseValorEuro(l.valor);});
++  return Object.entries(mapa).sort((a,b)=>b[1].total-a[1].total);
++}
+ function getReportData(){
+   const tipo = document.getElementById('rel-tipo').value;
+   const deptSel = document.getElementById('rel-dept') ? document.getElementById('rel-dept').value : null;
+@@ -5966,31 +6044,71 @@ function getReportData(){
+     cats.forEach(c=> PESSOAS[c].forEach(p=> rows.push([p.nome, p.contacto, p.desde, p.dept, c])));
+     return {title:'Relatório de Recursos Humanos', headers:['Nome','Contacto','Desde','Departamento','Categoria'], rows};
+   }
++  if(tipo==='pessoas-gestao'){
++    const membros=PESSOAS.membros||[],congregados=PESSOAS.congregados||[],visitantes=PESSOAS.visitantes||[];
++    const ativos=membros.filter(p=>!p.estadoMembresia||String(p.estadoMembresia).toLowerCase()==='ativo').length;
++    const dizimistas=membros.filter(p=>p.dizimista).length;
++    const batizados=membros.filter(p=>p.batizadoAguas).length;
++    const comContacto=[...membros,...congregados,...visitantes].filter(p=>p.contacto||p.telefone||p.telemovel).length;
++    const rows=[
++      ['Membros cadastrados',membros.length,'Base central'],['Membros ativos',ativos,'Acompanhamento'],['Congregados',congregados.length,'Integração'],['Visitantes',visitantes.length,'Acolhimento'],['Dizimistas',dizimistas,'Generosidade'],['Batizados nas águas',batizados,'Formação espiritual'],['Pessoas com telemóvel',comContacto,'Comunicação']
++    ];
++    return {title:'Pessoas, Integração e Acompanhamento',headers:['Indicador','Quantidade','Área de gestão'],rows};
++  }
++  if(tipo==='frequencia-escalas'){
++    const depts=deptSel==='todos'?myEscalaDepts():[deptSel];
++    const mapa={};
++    depts.forEach(id=>estatisticasEscalaDept(id).forEach(s=>{const chave=`${id}::${s.nome}`;mapa[chave]={departamento:deptNome(id),...s};}));
++    const rows=Object.values(mapa).sort((a,b)=>b.escalas-a.escalas).map(s=>[s.departamento,s.nome,s.escalas,s.confirmadas,s.presencas,s.faltas,s.justificadas,s.escalas?`${((s.presencas/s.escalas)*100).toFixed(1)}%`:'0%']);
++    return {title:'Frequência e Escalas Ministeriais',headers:['Departamento','Participante','Escalado','Confirmou','Presenças','Faltas','Justificadas','Assiduidade'],rows};
++  }
+   if(tipo==='patrimonio'){
+     const cat = document.getElementById('rel-pat-cat').value;
+     const rows = PATRIMONIO.filter(p=>cat==='Todas'||p.categoria===cat).map(p=>[p.nome,p.categoria,p.valor,p.estado,p.local]);
+     return {title:'Relatório de Património', headers:['Bem','Categoria','Valor','Estado','Localização'], rows};
+   }
+   if(tipo==='financeiro'){
+-    const ft = document.getElementById('rel-fin-tipo').value;
+-    const ini = document.getElementById('rel-data-inicio').value;
+-    const fim = document.getElementById('rel-data-fim').value;
+-    const deptSelFin = document.getElementById('rel-dept').value;
+-    const lancamentos = FINANCEIRO.lancamentos.filter(l=>(ft==='Todos'||l.tipo===ft) && (deptSelFin==='todos'||l.departamento===deptSelFin) && dentroIntervalo(l.data, ini, fim));
+-    const totalEntradas = lancamentos.filter(l=>l.tipo==='Entrada').reduce((s,l)=>s+parseValorEuro(l.valor),0);
+-    const totalSaidas = lancamentos.filter(l=>l.tipo==='Saída').reduce((s,l)=>s+parseValorEuro(l.valor),0);
+-    const rows = lancamentos.map(l=>[l.data,entityDeptLabel(l.departamento),categoriaLancamento(l),l.desc,l.tipo,l.valor,l.paraPessoa?l.beneficiario:'']);
++    const lancamentos=lancamentosFinanceirosFiltrados();
++    const rows = lancamentos.map(l=>[l.data,entityDeptLabel(l.departamento),normalizarRubricaFinanceira(categoriaLancamento(l),l.tipo),l.fornecedor||l.beneficiario||'Não identificado',l.desc,l.tipo,l.valor]);
+     return {
+-      title:'Relatório Financeiro',
+-      headers:['Data','Departamento','Categoria','Descrição','Tipo','Valor','Beneficiário'],
++      title:'Razão Financeiro Detalhado',
++      headers:['Data','Departamento','Rubrica / categoria','Entidade','Descrição','Tipo','Valor'],
+       rows,
+-      summary:{
+-        entradas:formatEuro(totalEntradas),
+-        saidas:formatEuro(totalSaidas),
+-        saldo:formatEuro(totalEntradas-totalSaidas)
+-      }
++      summary:resumoLancamentosFinanceiros(lancamentos)
+     };
+   }
++  if(tipo==='financeiro-rubricas'){
++    const lancamentos=lancamentosFinanceirosFiltrados().filter(l=>l.tipo==='Entrada');
++    const total=lancamentos.reduce((s,l)=>s+parseValorEuro(l.valor),0);
++    const rows=agruparFinanceiro(lancamentos,l=>normalizarRubricaFinanceira(categoriaLancamento(l),'Entrada')).map(([rubrica,d])=>[rubrica,d.quantidade,formatEuro(d.total),total?`${((d.total/total)*100).toFixed(1)}%`:'0%']);
++    return {title:'Receitas por Rubrica',headers:['Rubrica','Lançamentos','Total','Participação'],rows,summary:resumoLancamentosFinanceiros(lancamentos)};
++  }
++  if(tipo==='saidas-nominais'){
++    const lancamentos=lancamentosFinanceirosFiltrados().filter(l=>l.tipo==='Saída');
++    const total=lancamentos.reduce((s,l)=>s+parseValorEuro(l.valor),0);
++    const rows=agruparFinanceiro(lancamentos,l=>`${normalizarRubricaFinanceira(categoriaLancamento(l),'Saída')} — ${l.fornecedor||l.beneficiario||'Não identificado'}`).map(([nome,d])=>{const partes=nome.split(' — ');return [partes.shift(),partes.join(' — '),d.quantidade,formatEuro(d.total),total?`${((d.total/total)*100).toFixed(1)}%`:'0%'];});
++    return {title:'Saídas Nominais por Categoria e Entidade',headers:['Categoria','Fornecedor / beneficiário','Lançamentos','Total','Participação'],rows,summary:resumoLancamentosFinanceiros(lancamentos)};
++  }
++  if(tipo==='fluxo-caixa'){
++    const lancamentos=lancamentosFinanceirosFiltrados();
++    const meses={};
++    lancamentos.forEach(l=>{const [d,m,y]=l.data.split('/');const chave=`${y}-${m}`;if(!meses[chave])meses[chave]={entrada:0,saida:0};meses[chave][l.tipo==='Entrada'?'entrada':'saida']+=parseValorEuro(l.valor);});
++    let acumulado=0;
++    const rows=Object.keys(meses).sort().map(chave=>{const item=meses[chave];acumulado+=item.entrada-item.saida;return [mesLabel(chave),formatEuro(item.entrada),formatEuro(item.saida),formatEuro(item.entrada-item.saida),formatEuro(acumulado)];});
++    return {title:'Fluxo de Caixa Mensal',headers:['Período','Entradas','Saídas','Resultado','Saldo acumulado'],rows,summary:resumoLancamentosFinanceiros(lancamentos)};
++  }
++  if(tipo==='orcamento-gestao'){
++    const ano=new Date().getFullYear(),orcado=ORCAMENTOS[ano]||{};
++    const depts=deptSel==='todos'?DEPARTMENTS.filter(d=>d.id!=='pastoral'):DEPARTMENTS.filter(d=>d.id===deptSel);
++    const rows=depts.map(d=>{const previsto=Number(orcado[d.id]||0);const realizado=FINANCEIRO.lancamentos.filter(l=>l.tipo==='Saída'&&l.departamento===d.id&&String(l.data).endsWith(String(ano))).reduce((s,l)=>s+parseValorEuro(l.valor),0);const desvio=previsto-realizado;return [d.nome,formatEuro(previsto),formatEuro(realizado),formatEuro(desvio),previsto?`${((realizado/previsto)*100).toFixed(1)}%`:'—',realizado>previsto?'Excedido':'Dentro do orçamento'];});
++    return {title:`Orçamento vs. Realizado — ${ano}`,headers:['Departamento','Orçamentado','Realizado','Disponível / desvio','Execução','Situação'],rows};
++  }
++  if(tipo==='contribuicoes'){
++    const aceites=new Set(['Dízimos','Ofertas','Votos','Doações','Campanhas','Missões','Ação Social']);
++    const lancamentos=lancamentosFinanceirosFiltrados().filter(l=>l.tipo==='Entrada'&&aceites.has(normalizarRubricaFinanceira(categoriaLancamento(l),'Entrada')));
++    const rows=agruparFinanceiro(lancamentos,l=>normalizarRubricaFinanceira(categoriaLancamento(l),'Entrada')).map(([rubrica,d])=>[rubrica,d.quantidade,formatEuro(d.total),formatEuro(d.quantidade?d.total/d.quantidade:0)]);
++    return {title:'Contribuições e Generosidade',headers:['Rubrica','Contribuições','Total','Valor médio'],rows,summary:resumoLancamentosFinanceiros(lancamentos)};
++  }
+   if(tipo==='departamentos'){
+     const depts = deptSel==='todos' ? deptsParaRelatorio() : deptsParaRelatorio().filter(d=>d.id===deptSel);
+     const rows = depts.map(d=>{
+-- 
+2.51.1
+
