@@ -16,15 +16,22 @@ INSTALAÇÃO — ORDEM OBRIGATÓRIA
 1. No Supabase, abra SQL Editor > New query.
 2. Abra o ficheiro EXECUTAR-NO-SUPABASE-v90.sql, copie TODO o conteúdo e cole no editor.
 3. Clique em Run e confirme “Success”. Não cole apenas o nome ou caminho do ficheiro.
-4. No Supabase, abra Edge Functions e crie a função com o nome exato: gestao-acessos
-5. Substitua o conteúdo da função pelo ficheiro supabase/functions/gestao-acessos/index.ts.
-6. Faça Deploy da função mantendo a verificação JWT ativa.
-7. Em Authentication > URL Configuration, confirme:
+4. No Supabase, abra Edge Functions e crie a função com o nome exato: gerir-solicitacoes-acesso
+5. Substitua o conteúdo da função pelo ficheiro supabase/functions/gerir-solicitacoes-acesso/index.ts.
+6. Desative a opção “Verify JWT with legacy secret” desta função. A função valida a sessão real com auth.getUser().
+7. Faça Deploy da função.
+8. Em Authentication > URL Configuration, confirme:
    Site URL: https://adms-braga.vercel.app
    Redirect URLs: https://adms-braga.vercel.app/**
-8. Configure um SMTP próprio em Authentication > SMTP para entrega confiável dos convites.
-9. Publique a pasta completa da v90 no projeto Vercel.
-10. Aceda a /sistema?v=90 numa janela anónima.
+9. Configure um SMTP próprio em Authentication > SMTP para entrega confiável dos convites.
+10. Publique a pasta completa da v90 no projeto Vercel.
+11. Aceda a /sistema?v=90 numa janela anónima.
+
+CHAVES ATUAIS DO SUPABASE
+
+- Em Settings > API Keys, confirme que existem as chaves Publishable e Secret com o nome default.
+- Se o projeto ainda mostrar apenas anon e service_role, clique em Create new API keys.
+- Não copie a chave Secret para o código: a função lê automaticamente SUPABASE_SECRET_KEYS.
 
 TESTE CONTROLADO
 
@@ -38,6 +45,6 @@ TESTE CONTROLADO
 
 SEGURANÇA
 
-- Nunca coloque SUPABASE_SERVICE_ROLE_KEY no sistema.html, no GitHub ou na Vercel.
-- A chave service role fica somente nos segredos internos do Supabase Edge Functions.
+- Nunca coloque uma chave Secret no sistema.html, no GitHub ou na Vercel.
+- A chave Secret fica somente nos segredos internos do Supabase Edge Functions.
 - Não aprove solicitações sem confirmar pessoalmente a identidade e o e-mail.

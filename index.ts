@@ -1,5 +1,23 @@
 import { createClient } from 'npm:@supabase/supabase-js@2.57.4'
 
+function defaultApiKey(
+  variable: 'SUPABASE_PUBLISHABLE_KEYS' | 'SUPABASE_SECRET_KEYS',
+  legacyVariable: 'SUPABASE_ANON_KEY' | 'SUPABASE_SERVICE_ROLE_KEY',
+) {
+  const raw = Deno.env.get(variable)
+  if (raw) {
+    try {
+      const keys = JSON.parse(raw) as Record<string, string>
+      if (keys.default) return keys.default
+    } catch {
+      if (raw.startsWith('sb_') || raw.startsWith('eyJ')) return raw
+    }
+  }
+  const legacy = Deno.env.get(legacyVariable)
+  if (legacy) return legacy
+  throw new Error(`${variable} e ${legacyVariable} não estão disponíveis.`)
+}
+
 const allowedOrigins = new Set([
   'https://adms-braga.vercel.app',
   'https://adms-braga-site.vercel.app',
@@ -8,12 +26,10 @@ const allowedOrigins = new Set([
 ])
 
 function cors(origin: string | null) {
-  const allowed = origin && (allowedOrigins.has(origin) || /^http:\/\/localhost:\d+$/.test(origin)) ? origin : 'https://adms-braga.vercel.app'
   return {
-    'Access-Control-Allow-Origin': allowed,
+    'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Vary': 'Origin',
   }
 }
 
@@ -39,13 +55,13 @@ Deno.serve(async (req) => {
 
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')
-    const anonKey = Deno.env.get('SUPABASE_ANON_KEY')
-    const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+    const publishableKey = defaultApiKey('SUPABASE_PUBLISHABLE_KEYS', 'SUPABASE_ANON_KEY')
+    const secretKey = defaultApiKey('SUPABASE_SECRET_KEYS', 'SUPABASE_SERVICE_ROLE_KEY')
     const authorization = req.headers.get('Authorization')
-    if (!supabaseUrl || !anonKey || !serviceKey || !authorization) return json(origin, { ok: false, error: 'Sessão administrativa inválida.' }, 401)
+    if (!supabaseUrl || !authorization) return json(origin, { ok: false, error: 'Sessão administrativa inválida.' }, 401)
 
-    const callerClient = createClient(supabaseUrl, anonKey, { global: { headers: { Authorization: authorization } } })
-    const admin = createClient(supabaseUrl, serviceKey, { auth: { autoRefreshToken: false, persistSession: false } })
+    const callerClient = createClient(supabaseUrl, publishableKey, { global: { headers: { Authorization: authorization } }, auth: { autoRefreshToken: false, persistSession: false } })
+    const admin = createClient(supabaseUrl, secretKey, { auth: { autoRefreshToken: false, persistSession: false } })
     const { data: userData, error: userError } = await callerClient.auth.getUser()
     if (userError || !userData.user) return json(origin, { ok: false, error: 'Sessão expirada. Entre novamente.' }, 401)
 
@@ -120,7 +136,7 @@ Deno.serve(async (req) => {
     await admin.from('registo_atividade').insert({ utilizador: callerProfile.nome || 'Administração', perfil: callerProfile.role, modulo: 'acesso', acao: 'Acesso aprovado', detalhes: `${accessRequest.nome_completo} · ${requestedRole} · ${deptIds.join(', ') || 'sem departamento específico'}` })
     return json(origin, { ok: true, message: invited ? 'Acesso aprovado. O convite foi enviado por e-mail.' : 'Acesso atualizado. O utilizador já possuía uma conta e pode entrar ou recuperar a palavra-passe.' })
   } catch (error) {
-    console.error('gestao-acessos:', error)
+    console.error('gerir-solicitacoes-acesso:', error)
     return json(origin, { ok: false, error: 'Não foi possível concluir a operação. Consulte os registos da função.' }, 500)
   }
 })

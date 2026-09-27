@@ -1,0 +1,2 @@
+[functions.gerir-solicitacoes-acesso]
+verify_jwt = false

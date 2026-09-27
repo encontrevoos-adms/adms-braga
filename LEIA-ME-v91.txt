@@ -1,0 +1,14 @@
+ADMS BRAGA — CORREÇÃO DA GESTÃO DE ACESSOS v91
+
+Esta versão substitui a chamada automática da biblioteca pela chamada HTTPS explícita,
+enviando o token real da sessão do Usuário Master. Também melhora a mensagem de erro,
+libera corretamente o CORS e aceita as chaves modernas ou legadas do Supabase.
+
+PASSOS:
+1. No Supabase, atualize e publique a função gerir-solicitacoes-acesso usando o ficheiro:
+   supabase/functions/gerir-solicitacoes-acesso/index.ts
+2. Em Settings, mantenha Verify JWT with legacy secret DESATIVADO.
+3. Publique esta pasta completa no projeto adms-braga da Vercel.
+4. Entre novamente no Portal e teste Aprovar e convidar.
+
+Não é necessário executar novamente o SQL da versão 90.

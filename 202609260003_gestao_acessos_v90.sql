@@ -1,5 +1,5 @@
 -- ADMS Braga v90 — fluxo seguro de aprovação de acessos
--- Execute pelo SQL Editor antes de publicar a função gestao-acessos.
+-- Execute pelo SQL Editor antes de publicar a função gerir-solicitacoes-acesso.
 
 begin;
 

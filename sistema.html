@@ -6629,8 +6629,11 @@ async function admsDecidirSolicitacao(id,acao,botao){
  const botoes=[...document.querySelectorAll(`[data-request-id="${id}"] button`)];botoes.forEach(b=>b.disabled=true);
  feedback.className='access-request-feedback';feedback.style.display='block';feedback.textContent=acao==='aprovar'?'A aprovar e enviar o convite…':'A registar a rejeição…';
  try{
-  const {data,error}=await admsSupabase.functions.invoke('gestao-acessos',{body:{action:acao,requestId:id,profileRole:perfil,deptIds,motivo,redirectTo:`${location.origin}/sistema?v=90`}});
-  if(error)throw error;if(!data?.ok)throw new Error(data?.error||'Não foi possível concluir a operação.');
+  const {data:{session:cloudSession},error:sessionError}=await admsSupabase.auth.getSession();
+  if(sessionError||!cloudSession?.access_token)throw new Error('Sessão expirada. Termine a sessão e entre novamente.');
+  const resposta=await fetch(`${ADMS_CLOUD.url}/functions/v1/gerir-solicitacoes-acesso`,{method:'POST',headers:{'Content-Type':'application/json','apikey':ADMS_CLOUD.publishableKey,'Authorization':`Bearer ${cloudSession.access_token}`},body:JSON.stringify({action:acao,requestId:id,profileRole:perfil,deptIds,motivo,redirectTo:`${location.origin}/sistema?v=91`})});
+  const texto=await resposta.text();let data={};try{data=texto?JSON.parse(texto):{}}catch{throw new Error(`A função respondeu com conteúdo inválido (HTTP ${resposta.status}).`)}
+  if(!resposta.ok||!data?.ok)throw new Error(data?.error||`Não foi possível concluir a operação (HTTP ${resposta.status}).`);
   feedback.className='access-request-feedback success';feedback.textContent=data.message||'Operação concluída.';
   await logAction('acesso',acao==='aprovar'?'Acesso aprovado':'Acesso rejeitado',`${id} · perfil ${perfil}.`);
   setTimeout(renderSolicitacoesAcesso,900);
@@ -6807,7 +6810,7 @@ async function exportarBackupCloudV88(){
   await logAction('sistema','Backup cloud exportado',`${Object.keys(dados).length} tabela(s); ${falhas.length} falha(s).`);
   if(status)status.textContent=falhas.length?`Backup concluído com ${falhas.length} tabela(s) indisponível(is).`:'Backup concluído sem falhas.';if(button){button.disabled=false;button.textContent='Descarregar backup'}localStorage.setItem('adms_ultimo_backup_cloud',new Date().toISOString());atualizarLembreteBackupV89();showToast('Cópia de segurança descarregada.');
 }
-function exportarDiagnosticoV88(){if(!window.admsUltimoDiagnostico)return showToast('Execute primeiro o diagnóstico.');descarregarJsonV88(`diagnostico-adms-v90-${new Date().toISOString().slice(0,10)}.json`,window.admsUltimoDiagnostico);logAction('sistema','Diagnóstico exportado','Relatório técnico v90 descarregado.')}
+function exportarDiagnosticoV88(){if(!window.admsUltimoDiagnostico)return showToast('Execute primeiro o diagnóstico.');descarregarJsonV88(`diagnostico-adms-v91-${new Date().toISOString().slice(0,10)}.json`,window.admsUltimoDiagnostico);logAction('sistema','Diagnóstico exportado','Relatório técnico v91 descarregado.')}
 async function instalarPortalV88(){if(!admsInstallPrompt){showToast('Use o menu do navegador e escolha “Instalar aplicação” ou “Adicionar ao ecrã principal”.');return}admsInstallPrompt.prompt();await admsInstallPrompt.userChoice;admsInstallPrompt=null;const button=document.getElementById('adms-install-button');if(button)button.disabled=true}
 
 async function comprimirImagemV88(file){
@@ -6818,14 +6821,14 @@ async function comprimirImagemV88(file){
 cmsUpload=async function(file,type){if(!file)return'';const permitidos={'image/jpeg':'jpg','image/png':'png','image/webp':'webp','application/pdf':'pdf'};if(file.size>10*1024*1024)throw new Error('O ficheiro não pode ultrapassar 10 MB.');if(!permitidos[file.type])throw new Error('Tipo de ficheiro não permitido.');const preparado=await comprimirImagemV88(file),ext=permitidos[preparado.type]||'webp',pasta=String(type).replace(/[^a-zA-Z0-9_-]/g,''),path=`${pasta}/${Date.now()}-${crypto.randomUUID()}.${ext}`;const{error}=await admsSupabase.storage.from('site-media').upload(path,preparado,{cacheControl:'3600',upsert:false,contentType:preparado.type});if(error)throw error;return admsSupabase.storage.from('site-media').getPublicUrl(path).data.publicUrl};
 </script>
 <script>
-/* Preparação para produção v90 — acessibilidade, conectividade e erros seguros. */
+/* Preparação para produção v91 — acessibilidade, conectividade e erros seguros. */
 window.admsErrosTecnicos=[];
 let admsErroEmRegisto=false,admsUltimoErroRegistado=0;
 function admsTextoErroSeguro(value){return String(value||'Erro desconhecido').replace(/(access_token|refresh_token|apikey|password|senha)\s*[:=]\s*[^\s,;]+/gi,'$1=[oculto]').replace(/https?:\/\/[^\s]+/g,'[endereço]').slice(0,300)}
 function admsCapturarErroV89(tipo,mensagem,origem=''){
   const item={tipo,mensagem:admsTextoErroSeguro(mensagem),origem:admsTextoErroSeguro(origem),em:new Date().toISOString(),modulo:currentModule||'inicialização'};
   window.admsErrosTecnicos.unshift(item);window.admsErrosTecnicos=window.admsErrosTecnicos.slice(0,10);
-  if(session&&!admsErroEmRegisto&&Date.now()-admsUltimoErroRegistado>60000){admsErroEmRegisto=true;admsUltimoErroRegistado=Date.now();Promise.resolve(logAction('sistema','Erro técnico detetado',`Módulo: ${item.modulo}. Consulte o diagnóstico v90.`)).finally(()=>{admsErroEmRegisto=false})}
+  if(session&&!admsErroEmRegisto&&Date.now()-admsUltimoErroRegistado>60000){admsErroEmRegisto=true;admsUltimoErroRegistado=Date.now();Promise.resolve(logAction('sistema','Erro técnico detetado',`Módulo: ${item.modulo}. Consulte o diagnóstico v91.`)).finally(()=>{admsErroEmRegisto=false})}
 }
 window.addEventListener('error',event=>admsCapturarErroV89('javascript',event.message,event.filename));
 window.addEventListener('unhandledrejection',event=>admsCapturarErroV89('promessa',event.reason?.message||event.reason||'Falha assíncrona'));
