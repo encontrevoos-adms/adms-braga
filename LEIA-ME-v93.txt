@@ -1,0 +1,39 @@
+ADMS BRAGA — VERSÃO 93
+======================
+
+NOVIDADES
+1. O relógio de “Próximo encontro” usa sempre o fuso Europe/Lisbon.
+   O equipamento do visitante pode estar em qualquer país ou fuso horário.
+   A mudança entre horário de verão e horário de inverno é considerada.
+
+2. ADMS Store no site público:
+   - catálogo por categorias;
+   - preço e disponibilidade;
+   - carrinho guardado no dispositivo;
+   - pedido de encomenda com levantamento na igreja ou entrega a combinar;
+   - cálculo do total validado no servidor.
+
+3. Gestão da Store no Portal:
+   - cadastrar e publicar produtos;
+   - retirar produtos da loja;
+   - atualizar stock;
+   - consultar encomendas e alterar o respetivo estado.
+
+INSTALAÇÃO
+1. Execute EXECUTAR-NO-SUPABASE-v93.sql no SQL Editor.
+2. Crie a Edge Function “public-store-order” com o conteúdo de:
+   supabase/functions/public-store-order/index.ts
+3. Faça Deploy da função com Verify JWT desativado.
+4. Publique adms-braga-site-portal-v93.zip na Vercel.
+5. Teste o catálogo, o carrinho e uma encomenda de teste.
+
+SEGURANÇA
+- O navegador nunca define o valor final da encomenda.
+- A Edge Function consulta os preços e o stock diretamente no Supabase.
+- Clientes públicos não recebem acesso à tabela de encomendas.
+- Apenas perfis administrativos autorizados consultam dados dos clientes.
+
+PAGAMENTOS
+Esta fase regista pedidos de encomenda. Pagamento online não foi ativado.
+Transferência, MB WAY ou pagamento presencial devem ser confirmados pela
+administração antes de marcar a encomenda como paga.

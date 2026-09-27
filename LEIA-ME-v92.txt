@@ -1,0 +1,36 @@
+ADMS BRAGA — VERSÃO 92
+======================
+
+NOVIDADES
+1. O Versículo do Dia agora muda automaticamente a cada data.
+   A leitura é feita a partir da Bíblia local do projeto e não depende de API externa.
+
+2. Cada membro autenticado pode abrir o seu próprio cartão em:
+   Meu Cartão de Membro > Ver o meu cartão de membro.
+
+3. O vínculo entre a conta e o cadastro de membro é seguro:
+   - o e-mail da conta deve ser igual ao e-mail no cadastro do membro;
+   - cada utilizador comum recebe apenas o seu próprio registro;
+   - pastores, secretaria e demais perfis mantêm as permissões já existentes.
+
+ORDEM DE INSTALAÇÃO
+1. No Supabase > SQL Editor, execute todo o conteúdo de:
+   EXECUTAR-NO-SUPABASE-v92.sql
+
+2. No Supabase > Edge Functions > gerir-solicitacoes-acesso,
+   substitua o código pelo conteúdo atualizado de:
+   supabase/functions/gerir-solicitacoes-acesso/index.ts
+   Faça Deploy e mantenha Verify JWT desativado, como na v91.
+
+3. Publique o pacote adms-braga-site-portal-v92.zip na Vercel.
+
+4. Abra uma janela anónima e teste:
+   - Versículo do Dia;
+   - entrada de um membro cuja conta e cadastro tenham o mesmo e-mail;
+   - menu Meu Cartão de Membro;
+   - logout e novo login.
+
+OBSERVAÇÃO IMPORTANTE
+O SQL vincula automaticamente contas já existentes. Para novos convites, a Edge
+Function cria o vínculo no momento da aprovação. Se o membro não possuir e-mail
+no cadastro, ou usar outro e-mail para entrar, corrija o cadastro antes do convite.

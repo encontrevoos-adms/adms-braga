@@ -529,6 +529,7 @@ function membroDaNuvem(r){
   const p={...(r.payload||{})};
   return {
     ...p,
+    _cloudId: r.id,
     id: p.id || r.legacy_id || r.id,
     numeroMembro: r.numero_membro || p.numeroMembro || p.numero_membro || '',
     nome: r.nome || p.nome || '',
@@ -542,7 +543,14 @@ function membroDaNuvem(r){
 }
 
 async function admsCarregarMembrosCloud(){
-  if(session && typeof hasFullConfidentialAccess==='function' && !hasFullConfidentialAccess()){ if(window.PESSOAS) PESSOAS.membros=[]; return {ok:true,restricted:true}; }
+  if(session && typeof hasFullConfidentialAccess==='function' && !hasFullConfidentialAccess()){
+    if(!session.membroCloudId){if(window.PESSOAS)PESSOAS.membros=[];return {ok:true,restricted:true};}
+    const {data,error}=await admsSupabase.from('membros').select('*').eq('id',session.membroCloudId).maybeSingle();
+    if(error)return {ok:false,error};
+    PESSOAS.membros=data?[membroDaNuvem(data)]:[];
+    session.membroId=PESSOAS.membros[0]?.id||null;
+    return {ok:true,restricted:true,count:PESSOAS.membros.length};
+  }
   const sess=await admsCloudSession();
   if(!sess) return {ok:false, reason:'no_session'};
   const membrosLocais=window.PESSOAS&&Array.isArray(PESSOAS.membros)?PESSOAS.membros.filter(m=>m?.nome):[];
@@ -565,6 +573,7 @@ async function admsCarregarMembrosCloud(){
   }
   if(window.PESSOAS){
     PESSOAS.membros=(data||[]).map(membroDaNuvem);
+    if(session?.membroCloudId)session.membroId=PESSOAS.membros.find(m=>m._cloudId===session.membroCloudId)?.id||null;
     if(typeof buildLoginOptions==='function') buildLoginOptions();
     if(typeof renderModule==='function' && session && currentModule!=='relatorios' && admsPodeAtualizarInterfaceRealtime()) renderModule();
   }
@@ -2361,6 +2370,7 @@ function renderShell(){
   let nav='<div class="nav-search"><label class="nav-search-field" aria-label="Pesquisar no menu"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg><input type="search" placeholder="Pesquisar função…" autocomplete="off" oninput="filtrarMenuPortal(this.value)"></label></div><div id="nav-empty-search" class="nav-empty-search">Nenhuma função encontrada.</div><div class="nav-group-label">Visão Geral</div>';
   nav+=navItem('home','dashboard','Página Inicial',true);
   nav+=navItem('pesquisa','search','Pesquisar',true);
+  if(session.membroId)nav+=navItem('meu-perfil','crown','Meu Cartão de Membro',true);
   nav+=navItem('notificacoes','bell','Notificações',true);
 
   if(membro){
@@ -2408,6 +2418,7 @@ function renderShell(){
     nav+=navItem('avisos','megaphone','Avisos e Comunicados',true);
     nav+=navItem('gabinete','rh',session.tipo==='pastor'?'Gabinete Pastoral':'Solicitar Reunião com o Pastor',true);
     nav+=navItem('site-publico','megaphone','Conteúdo do Site',true);
+    nav+=navItem('adms-store','financeiro','ADMS Store',permPode('store'));
     if(canAccessPrayerRequests()) nav+=navItem('pedidos-oracao','bible','Pedidos de Oração',true);
     nav+=navItem('novos-contactos','rh','Novos Contactos',true);
     if(canAccessGestaoAcessos()){
@@ -2553,6 +2564,7 @@ function renderModule(){
   }
   if(currentModule==='avisos') return el.innerHTML = permPode('avisos')?viewAvisos():viewLocked('Avisos');
   if(currentModule==='site-publico'){ if(!permPode('site-publico')) return el.innerHTML=viewLocked('Conteúdo do Site'); el.innerHTML='<div class="card">A carregar conteúdos do site...</div>'; renderSitePublico(); return; }
+  if(currentModule==='adms-store'){ if(!permPode('store')) return el.innerHTML=viewLocked('ADMS Store'); el.innerHTML='<div class="card">A carregar a loja...</div>'; renderAdmsStore(); return; }
   if(currentModule==='pedidos-oracao'){ el.innerHTML='<div class="card">A carregar pedidos de oração...</div>'; renderPedidosOracao(); return; }
   if(currentModule==='novos-contactos'){ el.innerHTML='<div class="card">A carregar novos contactos...</div>'; renderNovosContactos(); return; }
   if(currentModule==='relatorios'){
@@ -2849,7 +2861,31 @@ async function atualizarVideoPortal(){
  link.textContent='Abrir no YouTube ↗';
 }
 
+let admsBibliaVersiculoCache=null;
+async function carregarVersiculoDoDia(){
+ const texto=document.getElementById('versiculo-dia-texto'),referencia=document.getElementById('versiculo-dia-referencia');
+ if(!texto||!referencia)return;
+ try{
+  if(!admsBibliaVersiculoCache){
+   const resposta=await fetch('/biblia-local.json?v=93');
+   if(!resposta.ok)throw new Error('Bíblia local indisponível');
+   const biblia=await resposta.json();
+   admsBibliaVersiculoCache=[];
+   (biblia.books||[]).forEach(livro=>(livro.chapters||[]).forEach(capitulo=>(capitulo.verses||[]).forEach(versiculo=>admsBibliaVersiculoCache.push({texto:versiculo.t,referencia:`${livro.name} ${capitulo.n}:${versiculo.n}`}))));
+  }
+  if(!admsBibliaVersiculoCache.length)throw new Error('Nenhum versículo disponível');
+  const hoje=new Date(),dia=Math.floor(Date.UTC(hoje.getFullYear(),hoje.getMonth(),hoje.getDate())/86400000);
+  const item=admsBibliaVersiculoCache[(dia*7919)%admsBibliaVersiculoCache.length];
+  texto.textContent=`“${item.texto}”`;
+  referencia.textContent=item.referencia;
+ }catch(error){
+  texto.textContent='“Este é o dia que fez o Senhor; regozijemo-nos e alegremo-nos nele.”';
+  referencia.textContent='Salmos 118:24';
+ }
+}
+
 function viewChurchHome(){
+ setTimeout(carregarVersiculoDoDia,0);
  const nome=((session&&session.label)||'').trim().split(/\s+/)[0]||'Irmão(ã)';
  const hoje=new Date(), dd=String(hoje.getDate()).padStart(2,'0'), mm=String(hoje.getMonth()+1).padStart(2,'0');
  const dataExtensa=new Intl.DateTimeFormat('pt-PT',{weekday:'long',day:'numeric',month:'long'}).format(hoje);
@@ -2886,7 +2922,7 @@ function viewChurchHome(){
   </article>
  </div>
  <div class="portal-home-grid">
-  <article class="card portal-panel portal-mini"><div class="panel-kicker">Meditação</div><h2>Versículo do Dia</h2><p>“Este é o dia que fez o Senhor; regozijemo-nos e alegremo-nos nele.”</p><p style="margin-top:8px;font-weight:800;color:#9b771c">Salmos 118:24</p><button class="portal-card-link" onclick="goTo('ebd')">Continuar na Palavra <span>→</span></button></article>
+  <article class="card portal-panel portal-mini"><div class="panel-kicker">Meditação</div><h2>Versículo do Dia</h2><p id="versiculo-dia-texto">A preparar a Palavra para hoje…</p><p id="versiculo-dia-referencia" style="margin-top:8px;font-weight:800;color:#9b771c">Bíblia Sagrada</p><button class="portal-card-link" onclick="goTo('ebd')">Continuar na Palavra <span>→</span></button></article>
   <article class="card portal-panel portal-mini"><div class="panel-kicker">Próximos encontros</div><h2>Agenda da Semana</h2><div class="portal-agenda-list"><div class="portal-agenda-item"><span></span><strong>Segunda</strong> 20h</div><div class="portal-agenda-item"><span></span><strong>Quarta</strong> 20h</div><div class="portal-agenda-item"><span></span><strong>Sexta</strong> 20h</div><div class="portal-agenda-item"><span></span><strong>Domingo</strong> 10h30 · 18h30</div></div><button class="portal-card-link" onclick="goTo('eventos')">Ver agenda completa <span>→</span></button></article>
   <article class="card portal-panel portal-mini"><div class="panel-kicker">Nossa família</div><h2>Aniversariante do Dia</h2>${anivers.length?anivers.map(p=>`<p><strong style="color:#07194f">${p.nome}</strong><br>Celebramos esta vida com gratidão a Deus.</p>`).join(''):'<p>Nenhum aniversariante registado para hoje.</p>'}<button class="portal-card-link" onclick="goTo('avisos')">Ver comunicados <span>→</span></button></article>
  </div>`;
@@ -6371,7 +6407,7 @@ async function admsPerfilAtual(){
   const {data:{user}, error:userError} = await admsSupabase.auth.getUser();
   if(userError || !user) return null;
   const {data:profile, error} = await admsSupabase.from('profiles')
-    .select('id,nome,role,ativo,cargo,dept_ids,rgpd_accepted_at,must_set_password')
+    .select('id,nome,role,ativo,cargo,dept_ids,membro_id,rgpd_accepted_at,must_set_password')
     .eq('id', user.id).single();
   if(error || !profile || !profile.ativo) return null;
   return {user, profile};
@@ -6380,18 +6416,19 @@ async function admsPerfilAtual(){
 function admsSessaoDoPerfil(profile){
   const role = profile.role;
   const depts = Array.isArray(profile.dept_ids) ? profile.dept_ids : [];
+  const memberLink={membroCloudId:profile.membro_id||null,membroId:null};
   if(role==='master'){
     const cargo=(profile.cargo||'').toLowerCase();
-    if(/secretar/.test(cargo)) return {tipo:'secretaria',entityKey:'master_secretaria',label:profile.nome||'Secretaria',deptIds:depts,liderId:null,cloud:true};
-    if(/tesour/.test(cargo)) return {tipo:'tesoureiro',entityKey:'master_tesoureiro',label:profile.nome||'Tesouraria',deptIds:depts,liderId:null,cloud:true};
-    if(/pastor/.test(cargo)) return {tipo:'pastor',entityKey:'master_pastor',label:profile.nome||'Pastoral',deptIds:depts,liderId:null,cloud:true};
-    return {tipo:'secretaria',entityKey:'master_secretaria',label:profile.nome||'Administração',deptIds:depts,liderId:null,cloud:true};
+    if(/secretar/.test(cargo)) return {tipo:'secretaria',entityKey:'master_secretaria',label:profile.nome||'Secretaria',deptIds:depts,liderId:null,cloud:true,...memberLink};
+    if(/tesour/.test(cargo)) return {tipo:'tesoureiro',entityKey:'master_tesoureiro',label:profile.nome||'Tesouraria',deptIds:depts,liderId:null,cloud:true,...memberLink};
+    if(/pastor/.test(cargo)) return {tipo:'pastor',entityKey:'master_pastor',label:profile.nome||'Pastoral',deptIds:depts,liderId:null,cloud:true,...memberLink};
+    return {tipo:'secretaria',entityKey:'master_secretaria',label:profile.nome||'Administração',deptIds:depts,liderId:null,cloud:true,...memberLink};
   }
-  if(role==='pastor') return {tipo:'pastor',entityKey:'master_pastor',label:profile.nome||'Pastoral',deptIds:depts,liderId:null,cloud:true};
-  if(role==='tesouraria') return {tipo:'tesoureiro',entityKey:'master_tesoureiro',label:profile.nome||'Tesouraria',deptIds:depts,liderId:null,cloud:true};
-  if(role==='secretaria') return {tipo:'secretaria',entityKey:'master_secretaria',label:profile.nome||'Secretaria',deptIds:depts,liderId:null,cloud:true};
-  if(role==='lider') return {tipo:'lider',entityKey:depts[0]||'lider',label:profile.nome||'Liderança',deptIds:depts,liderId:null,cloud:true};
-  return {tipo:'consulta',entityKey:'consulta',label:profile.nome||'Consulta',deptIds:depts,liderId:null,cloud:true};
+  if(role==='pastor') return {tipo:'pastor',entityKey:'master_pastor',label:profile.nome||'Pastoral',deptIds:depts,liderId:null,cloud:true,...memberLink};
+  if(role==='tesouraria') return {tipo:'tesoureiro',entityKey:'master_tesoureiro',label:profile.nome||'Tesouraria',deptIds:depts,liderId:null,cloud:true,...memberLink};
+  if(role==='secretaria') return {tipo:'secretaria',entityKey:'master_secretaria',label:profile.nome||'Secretaria',deptIds:depts,liderId:null,cloud:true,...memberLink};
+  if(role==='lider') return {tipo:'lider',entityKey:depts[0]||'lider',label:profile.nome||'Liderança',deptIds:depts,liderId:null,cloud:true,...memberLink};
+  return {tipo:'consulta',entityKey:'consulta',label:profile.nome||'Consulta',deptIds:depts,liderId:null,cloud:true,...memberLink};
 }
 
 async function attemptLoginUnificado(){
@@ -6502,7 +6539,7 @@ async function handleLogout(){
   document.body.classList.remove('portal-active');
   session=null; admsCloudProfile=null; pendingLoginKey=null; pendingLoginLeaderId=null; currentProfileRef=null;
   try{ localStorage.removeItem(SESSAO_KEY);localStorage.removeItem(ESTADO_KEY); }catch(e){}
-  location.replace('/sistema?v=90');
+  location.replace('/sistema?v=93');
 }
 
 admsSupabase?.auth.onAuthStateChange((event)=>{
@@ -6631,7 +6668,7 @@ async function admsDecidirSolicitacao(id,acao,botao){
  try{
   const {data:{session:cloudSession},error:sessionError}=await admsSupabase.auth.getSession();
   if(sessionError||!cloudSession?.access_token)throw new Error('Sessão expirada. Termine a sessão e entre novamente.');
-  const resposta=await fetch(`${ADMS_CLOUD.url}/functions/v1/gerir-solicitacoes-acesso`,{method:'POST',headers:{'Content-Type':'application/json','apikey':ADMS_CLOUD.publishableKey,'Authorization':`Bearer ${cloudSession.access_token}`},body:JSON.stringify({action:acao,requestId:id,profileRole:perfil,deptIds,motivo,redirectTo:`${location.origin}/sistema?v=91`})});
+  const resposta=await fetch(`${ADMS_CLOUD.url}/functions/v1/gerir-solicitacoes-acesso`,{method:'POST',headers:{'Content-Type':'application/json','apikey':ADMS_CLOUD.publishableKey,'Authorization':`Bearer ${cloudSession.access_token}`},body:JSON.stringify({action:acao,requestId:id,profileRole:perfil,deptIds,motivo,redirectTo:`${location.origin}/sistema?v=93`})});
   const texto=await resposta.text();let data={};try{data=texto?JSON.parse(texto):{}}catch{throw new Error(`A função respondeu com conteúdo inválido (HTTP ${resposta.status}).`)}
   if(!resposta.ok||!data?.ok)throw new Error(data?.error||`Não foi possível concluir a operação (HTTP ${resposta.status}).`);
   feedback.className='access-request-feedback success';feedback.textContent=data.message||'Operação concluída.';
@@ -6763,7 +6800,14 @@ async function cmsDuplicar(key){if(!exigirPermissao('site-publico','inserir'))re
 </script>
 <script>
 /* Segurança operacional v88 — diagnóstico, backup cloud, PWA e imagens otimizadas. */
-const ADMS_BACKUP_TABLES=['adms_module_state','departamentos','escala_respostas','gabinete_pastoral','membro_liderancas','membros','notificacoes_internas','novos_contactos','pedidos_oracao','permissoes_perfis','planeamentos_culto','profiles','registo_atividade','site_conteudos','site_conteudos_historico','solicitacoes_acesso'];
+function storeEuro(value){return new Intl.NumberFormat('pt-PT',{style:'currency',currency:'EUR'}).format(Number(value)||0)}
+async function renderAdmsStore(){const el=document.getElementById('main-content');try{const[{data:products,error:productError},{data:orders,error:orderError}]=await Promise.all([admsSupabase.from('store_products').select('*').order('ordem').order('nome'),admsSupabase.from('store_orders').select('*,store_order_items(*)').order('created_at',{ascending:false}).limit(100)]);if(productError)throw productError;if(orderError)throw orderError;const ativos=(products||[]).filter(x=>x.ativo).length,novos=(orders||[]).filter(x=>x.estado==='novo').length,total=(orders||[]).filter(x=>!['cancelado'].includes(x.estado)).reduce((sum,x)=>sum+Number(x.total||0),0);el.innerHTML=`<div class="topbar"><div><div class="breadcrumb">Site público · Comércio</div><h1>ADMS Store</h1></div><a class="access-pill" href="/#store" target="_blank" rel="noopener">Abrir loja ↗</a></div>${ruleDivider()}<div class="kpi-grid"><div class="kpi"><span>Produtos ativos</span><strong>${ativos}</strong></div><div class="kpi"><span>Novas encomendas</span><strong>${novos}</strong></div><div class="kpi"><span>Valor encomendado</span><strong>${storeEuro(total)}</strong></div></div><article class="card" style="margin:20px 0"><h2>Novo produto</h2><div class="form-row"><div><label>Nome</label><input id="store-admin-name" maxlength="120"></div><div><label>Categoria</label><input id="store-admin-category" value="Artigos cristãos" maxlength="80"></div></div><label>Descrição</label><textarea id="store-admin-description" rows="3" maxlength="1000"></textarea><div class="form-row"><div><label>Preço (€)</label><input id="store-admin-price" type="number" min="0" step="0.01"></div><div><label>Stock</label><input id="store-admin-stock" type="number" min="0" step="1" value="0"></div></div><label>URL da imagem</label><input id="store-admin-image" type="url" placeholder="https://..."><button class="btn btn-primary" style="width:auto;margin-top:14px" onclick="storeGuardarProduto()">Adicionar produto</button></article><h2>Produtos</h2><div class="grid3">${(products||[]).map(p=>`<article class="card"><div class="breadcrumb">${admsEsc(p.categoria||'Produto')}</div><h3>${admsEsc(p.nome)}</h3><p>${admsEsc(p.descricao||'')}</p><p><b>${storeEuro(p.preco)}</b> · Stock: ${Number(p.stock)||0}</p><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-outline" style="width:auto" onclick="storeAlterarStock('${p.id}',${Number(p.stock)||0})">Ajustar stock</button><button class="btn btn-outline" style="width:auto" onclick="storeAlternarProduto('${p.id}',${p.ativo?'false':'true'})">${p.ativo?'Retirar':'Publicar'}</button></div></article>`).join('')||'<div class="card">Nenhum produto.</div>'}</div><h2 style="margin-top:28px">Encomendas</h2><div class="card" style="overflow:auto"><table><thead><tr><th>Referência</th><th>Cliente</th><th>Itens</th><th>Total</th><th>Estado</th><th>Data</th></tr></thead><tbody>${(orders||[]).map(o=>`<tr><td><b>${admsEsc(o.referencia)}</b></td><td>${admsEsc(o.cliente_nome)}<br><small>${admsEsc(o.cliente_telefone)} · ${admsEsc(o.cliente_email||'')}</small></td><td>${(o.store_order_items||[]).map(i=>`${Number(i.quantidade)}× ${admsEsc(i.produto_nome)}`).join('<br>')}</td><td>${storeEuro(o.total)}</td><td><select onchange="storeMudarEstado('${o.id}',this.value)">${['novo','confirmado','pago','preparacao','concluido','cancelado'].map(s=>`<option value="${s}" ${o.estado===s?'selected':''}>${s}</option>`).join('')}</select></td><td>${new Date(o.created_at).toLocaleString('pt-PT',{timeZone:'Europe/Lisbon'})}</td></tr>`).join('')||'<tr><td colspan="6">Nenhuma encomenda.</td></tr>'}</tbody></table></div>`}catch(error){console.error(error);el.innerHTML=`<div class="card"><h2>ADMS Store indisponível</h2><p>Execute o SQL da versão 93 e tente novamente.</p></div>`}}
+async function storeGuardarProduto(){if(!exigirPermissao('store','inserir'))return;const nome=document.getElementById('store-admin-name').value.trim(),preco=Number(document.getElementById('store-admin-price').value),stock=Math.floor(Number(document.getElementById('store-admin-stock').value));if(nome.length<2||preco<0||stock<0)return showToast('Preencha nome, preço e stock corretamente.');const row={nome,descricao:document.getElementById('store-admin-description').value.trim()||null,categoria:document.getElementById('store-admin-category').value.trim()||'Artigos cristãos',preco,stock,imagem_url:document.getElementById('store-admin-image').value.trim()||null,ativo:true,updated_at:new Date().toISOString()};const{error}=await admsSupabase.from('store_products').insert(row);if(error)return showToast('Não foi possível guardar o produto.');await logAction('store','Produto criado',nome);showToast('Produto publicado na ADMS Store.');renderAdmsStore()}
+async function storeAlterarStock(id,current){if(!exigirPermissao('store','editar'))return;const value=prompt('Novo stock disponível:',String(current));if(value===null)return;const stock=Math.floor(Number(value));if(!Number.isFinite(stock)||stock<0)return showToast('Stock inválido.');const{error}=await admsSupabase.from('store_products').update({stock,updated_at:new Date().toISOString()}).eq('id',id);if(error)return showToast('Não foi possível atualizar o stock.');showToast('Stock atualizado.');renderAdmsStore()}
+async function storeAlternarProduto(id,ativo){if(!exigirPermissao('store','editar'))return;const{error}=await admsSupabase.from('store_products').update({ativo,updated_at:new Date().toISOString()}).eq('id',id);if(error)return showToast('Não foi possível alterar o produto.');showToast(ativo?'Produto publicado.':'Produto retirado da loja.');renderAdmsStore()}
+async function storeMudarEstado(id,estado){if(!exigirPermissao('store','editar'))return;const{error}=await admsSupabase.from('store_orders').update({estado,updated_at:new Date().toISOString()}).eq('id',id);if(error)return showToast('Não foi possível atualizar a encomenda.');showToast('Estado da encomenda atualizado.');renderAdmsStore()}
+
+const ADMS_BACKUP_TABLES=['adms_module_state','departamentos','escala_respostas','gabinete_pastoral','membro_liderancas','membros','notificacoes_internas','novos_contactos','pedidos_oracao','permissoes_perfis','planeamentos_culto','profiles','registo_atividade','site_conteudos','site_conteudos_historico','solicitacoes_acesso','store_products','store_orders','store_order_items'];
 let admsInstallPrompt=null;
 window.addEventListener('beforeinstallprompt',event=>{event.preventDefault();admsInstallPrompt=event;const button=document.getElementById('adms-install-button');if(button)button.disabled=false});
 window.addEventListener('appinstalled',()=>{admsInstallPrompt=null;showToast('Portal instalado neste dispositivo.')});
@@ -6810,7 +6854,7 @@ async function exportarBackupCloudV88(){
   await logAction('sistema','Backup cloud exportado',`${Object.keys(dados).length} tabela(s); ${falhas.length} falha(s).`);
   if(status)status.textContent=falhas.length?`Backup concluído com ${falhas.length} tabela(s) indisponível(is).`:'Backup concluído sem falhas.';if(button){button.disabled=false;button.textContent='Descarregar backup'}localStorage.setItem('adms_ultimo_backup_cloud',new Date().toISOString());atualizarLembreteBackupV89();showToast('Cópia de segurança descarregada.');
 }
-function exportarDiagnosticoV88(){if(!window.admsUltimoDiagnostico)return showToast('Execute primeiro o diagnóstico.');descarregarJsonV88(`diagnostico-adms-v91-${new Date().toISOString().slice(0,10)}.json`,window.admsUltimoDiagnostico);logAction('sistema','Diagnóstico exportado','Relatório técnico v91 descarregado.')}
+function exportarDiagnosticoV88(){if(!window.admsUltimoDiagnostico)return showToast('Execute primeiro o diagnóstico.');descarregarJsonV88(`diagnostico-adms-v93-${new Date().toISOString().slice(0,10)}.json`,window.admsUltimoDiagnostico);logAction('sistema','Diagnóstico exportado','Relatório técnico v93 descarregado.')}
 async function instalarPortalV88(){if(!admsInstallPrompt){showToast('Use o menu do navegador e escolha “Instalar aplicação” ou “Adicionar ao ecrã principal”.');return}admsInstallPrompt.prompt();await admsInstallPrompt.userChoice;admsInstallPrompt=null;const button=document.getElementById('adms-install-button');if(button)button.disabled=true}
 
 async function comprimirImagemV88(file){
@@ -6821,14 +6865,14 @@ async function comprimirImagemV88(file){
 cmsUpload=async function(file,type){if(!file)return'';const permitidos={'image/jpeg':'jpg','image/png':'png','image/webp':'webp','application/pdf':'pdf'};if(file.size>10*1024*1024)throw new Error('O ficheiro não pode ultrapassar 10 MB.');if(!permitidos[file.type])throw new Error('Tipo de ficheiro não permitido.');const preparado=await comprimirImagemV88(file),ext=permitidos[preparado.type]||'webp',pasta=String(type).replace(/[^a-zA-Z0-9_-]/g,''),path=`${pasta}/${Date.now()}-${crypto.randomUUID()}.${ext}`;const{error}=await admsSupabase.storage.from('site-media').upload(path,preparado,{cacheControl:'3600',upsert:false,contentType:preparado.type});if(error)throw error;return admsSupabase.storage.from('site-media').getPublicUrl(path).data.publicUrl};
 </script>
 <script>
-/* Preparação para produção v91 — acessibilidade, conectividade e erros seguros. */
+/* Preparação para produção v93 — acessibilidade, conectividade e erros seguros. */
 window.admsErrosTecnicos=[];
 let admsErroEmRegisto=false,admsUltimoErroRegistado=0;
 function admsTextoErroSeguro(value){return String(value||'Erro desconhecido').replace(/(access_token|refresh_token|apikey|password|senha)\s*[:=]\s*[^\s,;]+/gi,'$1=[oculto]').replace(/https?:\/\/[^\s]+/g,'[endereço]').slice(0,300)}
 function admsCapturarErroV89(tipo,mensagem,origem=''){
   const item={tipo,mensagem:admsTextoErroSeguro(mensagem),origem:admsTextoErroSeguro(origem),em:new Date().toISOString(),modulo:currentModule||'inicialização'};
   window.admsErrosTecnicos.unshift(item);window.admsErrosTecnicos=window.admsErrosTecnicos.slice(0,10);
-  if(session&&!admsErroEmRegisto&&Date.now()-admsUltimoErroRegistado>60000){admsErroEmRegisto=true;admsUltimoErroRegistado=Date.now();Promise.resolve(logAction('sistema','Erro técnico detetado',`Módulo: ${item.modulo}. Consulte o diagnóstico v91.`)).finally(()=>{admsErroEmRegisto=false})}
+  if(session&&!admsErroEmRegisto&&Date.now()-admsUltimoErroRegistado>60000){admsErroEmRegisto=true;admsUltimoErroRegistado=Date.now();Promise.resolve(logAction('sistema','Erro técnico detetado',`Módulo: ${item.modulo}. Consulte o diagnóstico v93.`)).finally(()=>{admsErroEmRegisto=false})}
 }
 window.addEventListener('error',event=>admsCapturarErroV89('javascript',event.message,event.filename));
 window.addEventListener('unhandledrejection',event=>admsCapturarErroV89('promessa',event.reason?.message||event.reason||'Falha assíncrona'));
