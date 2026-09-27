@@ -1,0 +1,39 @@
+ADMS BRAGA — VERSÃO 94
+=======================
+
+CONTEÚDO DESTA VERSÃO
+
+1. PAINEL DE INDICADORES
+   - Despesas nominais e quantidade de lançamentos.
+   - Maiores despesas por fornecedor ou beneficiário.
+   - Dízimos recebidos e quantidade de dizimistas cadastrados.
+   - Novos convertidos, visitantes e atendimentos pastorais.
+   - Cultos, evangelismos, ações sociais, discipulados e batismos.
+   - Filtros por período e departamento.
+   - Área de Indicadores Ministeriais para registo dos totais.
+
+2. ESCOLA BÍBLICA
+   - Matrícula com nome e data.
+   - Prevenção de matrícula duplicada.
+   - Chamada por data.
+   - Estados: presente, falta e falta justificada.
+   - Correção posterior dos registos.
+   - Totais por turma e período.
+
+3. INSTALAÇÃO DO BANCO DE DADOS
+   - Abra o painel do projeto no Supabase.
+   - Aceda a SQL Editor e escolha New query.
+   - Abra o arquivo EXECUTAR-NO-SUPABASE-v94.sql.
+   - Copie todo o conteúdo, cole no editor e clique em Run.
+   - Confirme que a execução terminou sem erros.
+
+4. PUBLICAÇÃO DO SITE E PORTAL
+   - Utilize o pacote completo da versão 94 no projeto correto da Vercel.
+   - Publique o portal em adms-braga.vercel.app.
+   - Publique o site público em adms-braga-site.vercel.app.
+   - Depois da publicação, valide em janela anónima.
+
+IMPORTANTE
+O SQL deste conjunto adiciona a tabela de indicadores ministeriais e as
+respetivas permissões. O pacote completo do site/portal contém a interface,
+os dashboards e as rotinas da Escola Bíblica.
