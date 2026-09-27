@@ -1,0 +1,47 @@
+ADMS BRAGA — VERSÃO 95
+=======================
+
+CENTRO DE RELATÓRIOS E INTELIGÊNCIA DE GESTÃO
+
+1. FINANCEIRO
+   - Razão financeiro detalhado.
+   - Receitas agrupadas por rubrica.
+   - Saídas nominais por categoria, fornecedor ou beneficiário.
+   - Fluxo de caixa mensal e saldo acumulado.
+   - Orçamento versus realizado por departamento.
+   - Contribuições e generosidade.
+   - Filtros por período, departamento, tipo, rubrica e entidade.
+   - Totais de entradas, saídas e saldo a transportar.
+   - Exportação para Excel e visualização para impressão/PDF.
+
+2. NOVAS RUBRICAS DE ENTRADA
+   Dízimos, Ofertas, Votos, Doações, Campanhas, Missões,
+   Ação Social, Eventos e Outras Receitas.
+
+3. NOVAS CATEGORIAS NOMINAIS DE SAÍDA
+   Arrendamento, Água, Energia, Telecomunicações, Manutenção e
+   Reparações, Equipamentos, Material de Culto, Material de Escritório,
+   Limpeza e Higiene, Ação Social, Missões e Evangelismo, Eventos,
+   Transporte e Deslocações, Formação, Honorários e Serviços,
+   Seguros e Taxas, Apoio Pastoral e Outras Despesas.
+
+4. GESTÃO MINISTERIAL
+   - Relatório de pessoas, integração e acompanhamento.
+   - Relatório de frequência e escalas ministeriais.
+   - Indicadores de membros, congregados, visitantes, dizimistas,
+     batizados e pessoas com contacto telefónico.
+
+5. DASHBOARD
+   - Receitas por rubrica.
+   - Maiores despesas por fornecedor ou beneficiário.
+   - Acesso direto aos relatórios analíticos.
+
+INSTALAÇÃO
+Esta versão não exige novo SQL. Os relatórios utilizam os lançamentos,
+orçamentos, pessoas, contas e escalas já persistidos pelo portal.
+
+Depois de publicar, valide numa janela anónima:
+  a) crie uma entrada e uma saída com as novas categorias;
+  b) abra Relatórios e teste os filtros;
+  c) exporte um relatório para Excel;
+  d) confirme a persistência depois de terminar e reiniciar a sessão.
