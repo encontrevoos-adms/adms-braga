@@ -1,0 +1,49 @@
+ADMS BRAGA — VERSÃO 96
+=======================
+
+VÍNCULO OBRIGATÓRIO ENTRE MEMBRO E CONTA DO PORTAL
+
+O que mudou
+1. O pré-cadastro enviado pela Secretaria fica pendente até ser conferido em RH.
+2. Na aprovação do cadastro, o sistema ativa o membro e gera o número ADMSBRG####.
+3. A solicitação de acesso ao portal exige número de membro, nome, e-mail,
+   telemóvel e data de nascimento iguais aos dados aprovados em RH.
+4. A validação é feita no Supabase por uma função controlada, sem expor a lista
+   de membros ao visitante.
+5. A aprovação do acesso recusa pedidos antigos sem membro vinculado.
+6. O perfil criado recebe membro_id obrigatório, permitindo Cartão de Membro e
+   Minhas Escalas com a mesma identidade institucional.
+7. Uma conta não pode ser ligada a mais de um membro, nem um membro a duas contas.
+
+ORDEM DE INSTALAÇÃO
+
+1. No Supabase > SQL Editor, execute todo o conteúdo de:
+   EXECUTAR-NO-SUPABASE-v96.sql
+   O resultado final mostra contas ativas ainda sem membro. Essa lista deve
+   ficar vazia antes de publicar o portal. Cadastre cada pessoa em RH e ligue
+   o respetivo profiles.membro_id; inclua também as contas administrativas.
+
+2. No Supabase > Edge Functions > gerir-solicitacoes-acesso, substitua todo o
+   código pelo conteúdo de:
+   EDGE-FUNCTION-v96.ts
+   Depois clique em Deploy.
+
+3. Publique os ficheiros da versão 96 na Vercel.
+
+4. Termine a sessão e teste numa janela anónima.
+
+TESTE RECOMENDADO
+
+A. Em Recursos Humanos, copie o link de pré-cadastro.
+B. Preencha o pré-cadastro e envie o código à Secretaria.
+C. Importe e aprove em RH; confirme que foi gerado ADMSBRG####.
+D. Na página de login, clique em “Solicitar acesso ao sistema”.
+E. Preencha os cinco dados exatamente como constam em RH.
+F. Em Gestão de Acessos, confirme o número e aprove o convite.
+G. Entre com a nova conta e confira Cartão de Membro e Minhas Escalas.
+
+CONTAS ANTIGAS SEM MEMBRO
+
+Contas sem profiles.membro_id deixam de passar pela validação do portal. Antes de
+reativá-las, cadastre a pessoa em RH e ligue o respetivo membro_id ao perfil. Os
+pedidos antigos aparecem como “Sem vínculo de membro” e não podem ser aprovados.

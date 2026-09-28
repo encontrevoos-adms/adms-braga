@@ -6264,12 +6264,12 @@ function showToast(msg){
    dados central partilhada entre o telemóvel do membro e o computador do
    Tesoureiro. O fluxo funciona assim: o membro preenche o formulário, o
    sistema gera um código com os dados, o membro envia esse código ao
-   Tesoureiro (email/WhatsApp), e o Tesoureiro importa-o em RH > Importar Cadastro.
+   Secretaria (email/WhatsApp), e a Secretaria importa-o em RH > Importar Cadastro.
 ========================================================= */
 function renderCadastroForm(){
   const area = document.getElementById('cadastro-form-area');
   area.innerHTML = `
-    <p style="font-size:12.5px; color:var(--ink-soft); margin:0 0 4px 0;">Preencha os seus dados com atenção. No final vai receber um código para enviar ao Tesoureiro — é assim que o seu cadastro entra no sistema da igreja.</p>
+    <p style="font-size:12.5px; color:var(--ink-soft); margin:0 0 4px 0;">Preencha os seus dados com atenção. No final vai receber um código para enviar à Secretaria. O número de membro será criado apenas depois da conferência e aprovação.</p>
 
     <div class="signature-rule" style="margin:16px 0 10px 0;"><span style="font-size:11.5px; font-weight:700; color:var(--royal-dark); text-transform:uppercase; letter-spacing:.5px;">Dados pessoais</span><div class="bar"></div></div>
     <label>Nome completo *</label><input id="reg-nome" placeholder="Nome completo">
@@ -6327,7 +6327,7 @@ function renderCadastroForm(){
     <label>Notas / algo mais que queira partilhar (opcional)</label><input id="reg-notas" placeholder="Observações">
 
     <div id="reg-error" class="denied-box"></div>
-    <button class="btn btn-primary" onclick="submitCadastroMembro()">Concluir cadastro</button>
+    <button class="btn btn-primary" onclick="submitCadastroMembro()">Enviar cadastro para aprovação</button>
   `;
 }
 
@@ -6367,7 +6367,7 @@ function submitCadastroMembro(){
     batizadoMinisterio: batizado ? document.getElementById('reg-batismo-ministerio').value.trim() : '',
     batizadoEspiritoSanto: document.getElementById('reg-batizado-es').value==='sim',
     temFilhos, numFilhos: temFilhos ? (parseInt(document.getElementById('reg-num-filhos').value,10)||0) : 0,
-    estadoMembresia: 'Ativo',
+    estadoMembresia: 'Pendente',
     dizimista: document.getElementById('reg-dizimista').value==='sim',
     notas: document.getElementById('reg-notas').value.trim(),
     ...lerCamposMembroExtra('reg'),
@@ -6386,8 +6386,8 @@ function mostrarCodigoCadastro(codigo, nome){
   area.innerHTML = `
     <div style="text-align:center; padding:10px 0 4px 0;">
       <div style="width:56px; height:56px; border-radius:50%; background:#E4F5EC; color:var(--ok); display:flex; align-items:center; justify-content:center; margin:0 auto 14px auto; font-size:26px;">✓</div>
-      <h3 style="margin:0 0 6px 0; color:var(--royal-deep);">Cadastro concluído!</h3>
-      <p style="font-size:13px; color:var(--ink-soft); margin:0 0 20px 0;">Envie o código abaixo ao Tesoureiro (email ou WhatsApp) para que o seu cadastro seja adicionado ao sistema da igreja.</p>
+      <h3 style="margin:0 0 6px 0; color:var(--royal-deep);">Pedido de cadastro preparado!</h3>
+      <p style="font-size:13px; color:var(--ink-soft); margin:0 0 20px 0;">Envie o código abaixo à Secretaria. Após a conferência e aprovação, será criado o seu número de membro ADMSBRG.</p>
     </div>
     <label>O seu código de cadastro</label>
     <textarea id="codigo-gerado" class="codigo-box" readonly>${codigo}</textarea>
@@ -6402,14 +6402,14 @@ function copiarCodigoCadastro(){
   box.select();
   try{
     navigator.clipboard.writeText(box.value);
-    showToast('Código copiado. Envie-o ao Tesoureiro.');
+    showToast('Código copiado. Envie-o à Secretaria.');
   }catch(e){
     document.execCommand('copy');
-    showToast('Código copiado. Envie-o ao Tesoureiro.');
+    showToast('Código copiado. Envie-o à Secretaria.');
   }
 }
 
-/* ---- Importação do código pelo Tesoureiro (em RH) ---- */
+/* ---- Aprovação do cadastro pela Secretaria (em RH) ---- */
 async function importarCadastro(){
   const input = document.getElementById('import-codigo').value.trim();
   const err = document.getElementById('import-error');
@@ -6429,6 +6429,7 @@ async function importarCadastro(){
     return;
   }
   membro.id = 'mb'+Date.now()+Math.random().toString(36).slice(2,6);
+  membro.estadoMembresia = 'Ativo';
   membro.login = {ativo:false, senha:SENHA_PADRAO, senhaAlterada:false, pendingSenha:null, rgpdAceite:false};
   membro.importadoEm = new Date().toISOString().split('T')[0];
   membro.importadoPor = session.label;
@@ -6445,13 +6446,14 @@ async function importarCadastro(){
   logAction('acesso', 'Cadastro de membro importado', `${membro.nome} — cadastro recebido via link e importado por ${session.label}.`);
   salvarEstado();
   document.getElementById('import-codigo').value = '';
-  showToast('Cadastro de ' + membro.nome + ' importado com sucesso.');
+  const aprovado=PESSOAS.membros.find(x=>x._cloudId===cloudImport.data?.id||x.id===membro.id);
+  showToast('Membro aprovado: ' + membro.nome + ' · ' + (aprovado?.numeroMembro||cloudImport.data?.numero_membro||'numeração gerada') + '.');
   renderModule();
 }
 function copiarLinkCadastro(){
   const url = window.location.href.split('?')[0] + '?form=cadastro';
   try{ navigator.clipboard.writeText(url); }catch(e){}
-  showToast('Link copiado. Só funciona se este ficheiro estiver alojado online (ex: no seu site ou numa partilha pública) — se estiver só no seu computador, envie o ficheiro diretamente.');
+  showToast('Link de pré-cadastro copiado. Envie-o à pessoa que será cadastrada como membro.');
 }
 
 
@@ -6527,7 +6529,7 @@ async function admsPerfilAtual(){
   const {data:profile, error} = await admsSupabase.from('profiles')
     .select('id,nome,role,ativo,cargo,dept_ids,membro_id,rgpd_accepted_at,must_set_password')
     .eq('id', user.id).single();
-  if(error || !profile || !profile.ativo) return null;
+  if(error || !profile || !profile.ativo || !profile.membro_id) return null;
   return {user, profile};
 }
 
@@ -6657,7 +6659,7 @@ async function handleLogout(){
   document.body.classList.remove('portal-active');
   session=null; admsCloudProfile=null; pendingLoginKey=null; pendingLoginLeaderId=null; currentProfileRef=null;
   try{ localStorage.removeItem(SESSAO_KEY);localStorage.removeItem(ESTADO_KEY); }catch(e){}
-  location.replace('/sistema?v=93');
+  location.replace('/sistema?v=96');
 }
 
 admsSupabase?.auth.onAuthStateChange((event)=>{
@@ -6769,7 +6771,8 @@ async function renderSolicitacoesAcesso(){
   const perfil=x.perfil_atribuido||'consulta',depts=Array.isArray(x.dept_ids)?x.dept_ids:[];
   const opcoesPerfil=[['pastor','Pastoral'],['secretaria','Secretaria — Usuário Master'],['tesouraria','Tesouraria'],['lider','Liderança de departamento'],['consulta','Consulta']].map(([v,l])=>`<option value="${v}" ${perfil===v?'selected':''}>${l}</option>`).join('');
   const opcoesDept=deptOptions.replace(/<option value="([^"]+)"/g,(m,id)=>`<option value="${id}" ${depts.includes(id)?'selected':''}`);
-  return `<article class="access-request-card" data-request-id="${admsEsc(x.id)}"><div class="access-request-head"><div><h4>${admsEsc(x.nome_completo)}</h4><div class="access-request-meta">${admsEsc(x.email)} · ${admsEsc(x.contacto)}<br>Nascimento: ${formatDate(x.data_nascimento)} · Pedido: ${x.created_at?new Date(x.created_at).toLocaleString('pt-PT'):'—'}${x.decidido_em?`<br>Decisão: ${new Date(x.decidido_em).toLocaleString('pt-PT')}`:''}</div></div><span class="access-request-status ${status}">${admsEsc(status)}</span></div>${finalizado?`<div class="access-request-meta" style="margin-top:12px"><strong>Perfil atribuído:</strong> ${admsEsc(perfil)}${depts.length?` · ${depts.map(deptNome).join(', ')}`:''}${x.motivo_rejeicao?`<br><strong>Motivo:</strong> ${admsEsc(x.motivo_rejeicao)}`:''}</div>`:`<div class="access-request-controls"><label>Perfil<select id="acc-role-${admsEsc(x.id)}">${opcoesPerfil}</select></label><label>Departamento(s)<select id="acc-depts-${admsEsc(x.id)}" multiple size="3">${opcoesDept}</select></label><div class="access-request-actions"><button class="btn btn-primary" onclick="admsDecidirSolicitacao('${admsEsc(x.id)}','aprovar',this)">Aprovar e convidar</button><button class="btn btn-outline" onclick="admsDecidirSolicitacao('${admsEsc(x.id)}','rejeitar',this)">Rejeitar</button></div></div><div class="access-request-feedback" id="acc-feedback-${admsEsc(x.id)}" role="status"></div>`}</article>`;
+  const vinculado=!!x.membro_id&&/^ADMSBRG\d{4,}$/.test(String(x.numero_membro||''));
+  return `<article class="access-request-card" data-request-id="${admsEsc(x.id)}"><div class="access-request-head"><div><h4>${admsEsc(x.nome_completo)}</h4><div class="access-request-meta"><strong>${vinculado?admsEsc(x.numero_membro):'Sem vínculo de membro'}</strong> · ${admsEsc(x.email)} · ${admsEsc(x.contacto)}<br>Nascimento: ${formatDate(x.data_nascimento)} · Pedido: ${x.created_at?new Date(x.created_at).toLocaleString('pt-PT'):'—'}${x.decidido_em?`<br>Decisão: ${new Date(x.decidido_em).toLocaleString('pt-PT')}`:''}</div></div><span class="access-request-status ${status}">${admsEsc(status)}</span></div>${finalizado?`<div class="access-request-meta" style="margin-top:12px"><strong>Perfil atribuído:</strong> ${admsEsc(perfil)}${depts.length?` · ${depts.map(deptNome).join(', ')}`:''}${x.motivo_rejeicao?`<br><strong>Motivo:</strong> ${admsEsc(x.motivo_rejeicao)}`:''}</div>`:`${!vinculado?'<div class="access-request-feedback error" style="display:block">Pedido antigo sem membro validado. Cadastre ou regularize a pessoa em Recursos Humanos antes de conceder acesso.</div>':''}<div class="access-request-controls"><label>Perfil<select id="acc-role-${admsEsc(x.id)}">${opcoesPerfil}</select></label><label>Departamento(s)<select id="acc-depts-${admsEsc(x.id)}" multiple size="3">${opcoesDept}</select></label><div class="access-request-actions"><button class="btn btn-primary" ${vinculado?'':'disabled'} onclick="admsDecidirSolicitacao('${admsEsc(x.id)}','aprovar',this)">Aprovar e convidar</button><button class="btn btn-outline" onclick="admsDecidirSolicitacao('${admsEsc(x.id)}','rejeitar',this)">Rejeitar</button></div></div><div class="access-request-feedback" id="acc-feedback-${admsEsc(x.id)}" role="status"></div>`}</article>`;
  }).join('');
  box.innerHTML=`<div class="access-requests-toolbar"><div class="access-requests-summary"><span>${pendentes} pendente(s)</span><span>${pedidos.length} pedido(s) no total</span></div><button class="btn btn-outline" onclick="renderSolicitacoesAcesso()">Atualizar</button></div><div class="access-request-list">${cards||'<p>Nenhuma solicitação.</p>'}</div>`;
 }
@@ -6786,7 +6789,7 @@ async function admsDecidirSolicitacao(id,acao,botao){
  try{
   const {data:{session:cloudSession},error:sessionError}=await admsSupabase.auth.getSession();
   if(sessionError||!cloudSession?.access_token)throw new Error('Sessão expirada. Termine a sessão e entre novamente.');
-  const resposta=await fetch(`${ADMS_CLOUD.url}/functions/v1/gerir-solicitacoes-acesso`,{method:'POST',headers:{'Content-Type':'application/json','apikey':ADMS_CLOUD.publishableKey,'Authorization':`Bearer ${cloudSession.access_token}`},body:JSON.stringify({action:acao,requestId:id,profileRole:perfil,deptIds,motivo,redirectTo:`${location.origin}/sistema?v=93`})});
+  const resposta=await fetch(`${ADMS_CLOUD.url}/functions/v1/gerir-solicitacoes-acesso`,{method:'POST',headers:{'Content-Type':'application/json','apikey':ADMS_CLOUD.publishableKey,'Authorization':`Bearer ${cloudSession.access_token}`},body:JSON.stringify({action:acao,requestId:id,profileRole:perfil,deptIds,motivo,redirectTo:`${location.origin}/sistema?v=96`})});
   const texto=await resposta.text();let data={};try{data=texto?JSON.parse(texto):{}}catch{throw new Error(`A função respondeu com conteúdo inválido (HTTP ${resposta.status}).`)}
   if(!resposta.ok||!data?.ok)throw new Error(data?.error||`Não foi possível concluir a operação (HTTP ${resposta.status}).`);
   feedback.className='access-request-feedback success';feedback.textContent=data.message||'Operação concluída.';
@@ -6797,7 +6800,8 @@ async function admsDecidirSolicitacao(id,acao,botao){
 
 </script>
 
-<div id="adms-access-modal"><div class="adms-access-card"><h2>Solicitar acesso ao sistema</h2><p>Preencha os seus dados. A solicitação será encaminhada ao Usuário Master, responsável por definir o nível de acesso.</p>
+<div id="adms-access-modal"><div class="adms-access-card"><h2>Solicitar acesso ao sistema</h2><p>O acesso é exclusivo para membros ativos. Os dados abaixo devem coincidir com o cadastro aprovado em Recursos Humanos.</p>
+<label>N.º de membro</label><input id="acc-numero" inputmode="text" maxlength="20" placeholder="ADMSBRG0001" autocomplete="off">
 <label>Nome completo</label><input id="acc-nome">
 <label>E-mail</label><input id="acc-email" type="email">
 <label>Contacto</label><input id="acc-contacto">
@@ -6816,11 +6820,12 @@ function admsPrepararLoginV4(){
 }
 function admsFecharSolicitacao(){document.getElementById('adms-access-modal').classList.remove('open')}
 async function admsEnviarSolicitacao(){
- const nome=document.getElementById('acc-nome').value.trim(),email=document.getElementById('acc-email').value.trim(),contacto=document.getElementById('acc-contacto').value.trim(),data_nascimento=document.getElementById('acc-nascimento').value,msg=document.getElementById('acc-msg');
- if(nome.length<2||!email||contacto.length<5||!data_nascimento){msg.textContent='Preencha todos os campos.';return}
- const {error}=await admsSupabase.from('solicitacoes_acesso').insert({nome_completo:nome,email,contacto,data_nascimento});
- if(error){msg.textContent='Não foi possível enviar a solicitação agora.';return}
- msg.textContent='Solicitação enviada ao Usuário Master.';
+ const numero=document.getElementById('acc-numero').value.trim().toUpperCase().replace(/[^A-Z0-9]/g,''),nome=document.getElementById('acc-nome').value.trim(),email=document.getElementById('acc-email').value.trim().toLowerCase(),contacto=document.getElementById('acc-contacto').value.trim(),data_nascimento=document.getElementById('acc-nascimento').value,msg=document.getElementById('acc-msg');
+ if(!/^ADMSBRG\d{4,}$/.test(numero)||nome.length<3||!emailValido(email)||contacto.length<9||!data_nascimento){msg.textContent='Preencha todos os campos e confirme o número ADMSBRG.';return}
+ msg.textContent='A validar o cadastro de membro…';
+ const {data,error}=await admsSupabase.rpc('solicitar_acesso_membro_v96',{p_numero_membro:numero,p_nome:nome,p_email:email,p_contacto:contacto,p_data_nascimento:data_nascimento});
+ if(error||!data?.ok){msg.textContent=data?.error||'Não foi possível validar o cadastro. Confirme os dados com a Secretaria.';return}
+ msg.textContent=data.message||'Solicitação enviada à Secretaria.';
  setTimeout(admsFecharSolicitacao,1600);
 }
 function admsComTimeout(promise,ms=20000){
