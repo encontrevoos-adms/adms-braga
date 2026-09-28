@@ -1,4 +1,4 @@
-// ADMS Braga v93: relógio Lisboa e ADMS Store.
+// ADMS Braga v96: cadastro de membro e acesso ao portal vinculados.
 self.addEventListener('install',()=>self.skipWaiting());
 self.addEventListener('activate',event=>{
   event.waitUntil(
