@@ -1,4 +1,4 @@
-// ADMS Braga v96: cadastro de membro e acesso ao portal vinculados.
+// ADMS Braga v98: CAPTCHA e reforço do acesso.
 self.addEventListener('install',()=>self.skipWaiting());
 self.addEventListener('activate',event=>{
   event.waitUntil(
