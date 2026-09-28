@@ -1,2 +1,8 @@
 [functions.gerir-solicitacoes-acesso]
 verify_jwt = false
+
+[functions.solicitar-acesso]
+verify_jwt = false
+
+[functions.login-master]
+verify_jwt = false

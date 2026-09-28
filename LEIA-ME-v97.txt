@@ -1,0 +1,27 @@
+ADMS BRAGA — VERSÃO 97
+=======================
+
+LIMITE DE TENTATIVAS
+
+1. Solicitação de acesso
+   - Máximo de 5 validações falhadas em 15 minutos por cliente.
+   - O bloqueio acontece no Supabase, não apenas no navegador.
+   - O endereço de rede não é armazenado diretamente; é utilizado um identificador derivado.
+   - Tentativas antigas são eliminadas automaticamente após 24 horas.
+
+2. Login
+   - O portal aplica espera local após 5 credenciais inválidas em 15 minutos.
+   - O Supabase Auth mantém os seus próprios limites no servidor.
+   - Um login correto limpa as falhas locais.
+
+3. Usuário Master
+   - A recuperação introduzida na v96.1 foi preservada.
+   - A conta institucional Master não exige cartão de membro.
+
+INSTALAÇÃO
+
+1. Execute EXECUTAR-NO-SUPABASE-v97.sql no SQL Editor.
+2. Publique o pacote v97 na Vercel.
+3. Teste numa janela anónima em /sistema?v=97.
+
+Não é necessário alterar a Edge Function da aprovação de acessos nesta versão.

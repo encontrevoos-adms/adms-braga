@@ -1,0 +1,61 @@
+ADMS BRAGA — VERSÃO 98
+=======================
+
+SEGURANÇA IMPLEMENTADA
+
+1. Cloudflare Turnstile no login do portal.
+2. Turnstile na recuperação de palavra-passe.
+3. Turnstile na solicitação pública de acesso.
+4. Validação do CAPTCHA no servidor, nunca apenas no navegador.
+5. A função de validação de membro deixa de ser executável diretamente pelo público.
+6. Limite de cinco tentativas falhadas em quinze minutos preservado.
+7. Respostas genéricas na solicitação para reduzir enumeração de membros.
+8. CSP da Vercel autorizada apenas para o domínio oficial do Turnstile.
+9. Conta institucional Usuário Master preservada sem obrigatoriedade de cartão.
+
+ORDEM OBRIGATÓRIA DE INSTALAÇÃO
+
+Não termine a sessão administrativa antes de concluir os passos 1 a 4.
+
+1. SUPABASE — EDGE FUNCTION login-master
+   - Abra Edge Functions > login-master.
+   - Substitua todo o código por:
+     supabase/functions/login-master/index.ts
+   - Publique com Deploy.
+
+2. SUPABASE — EDGE FUNCTION solicitar-acesso
+   - Crie a função com o nome exato: solicitar-acesso
+   - Cole o conteúdo de:
+     supabase/functions/solicitar-acesso/index.ts
+   - Desative Verify JWT para esta função pública.
+   - Publique com Deploy.
+
+3. SUPABASE — SQL EDITOR
+   - Execute uma única vez o ficheiro:
+     EXECUTAR-NO-SUPABASE-v98.sql
+   - O resultado esperado é Success.
+
+4. VERCEL
+   - Publique a pasta completa da versão 98 no projeto adms-braga.
+   - Aguarde Ready — Production.
+
+5. TESTE ANÓNIMO
+   - Abra uma janela anónima.
+   - Aceda a https://adms-braga.vercel.app/sistema?v=98
+   - Confirme que o Turnstile aparece.
+   - Teste primeiro o login do Usuário Master.
+   - Teste depois uma solicitação de acesso com um membro de teste.
+
+CONFIGURAÇÃO JÁ REALIZADA
+
+- Site Key pública integrada: 0x4AAAAAAFH4QL5bCu840KoG
+- A Secret Key deve permanecer apenas no Supabase.
+- CAPTCHA do Supabase Auth deve permanecer ativo com Cloudflare Turnstile.
+
+RECUPERAÇÃO SEGURA
+
+Se o CAPTCHA não aparecer, não tente várias palavras-passe. Confirme primeiro:
+- se as duas Edge Functions foram publicadas;
+- se TURNSTILE_SECRET_KEY existe em Edge Function Secrets;
+- se a Vercel publicou a pasta completa da v98;
+- se o endereço aberto termina em /sistema?v=98.
