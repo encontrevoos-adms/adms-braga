@@ -1,0 +1,26 @@
+ADMS BRAGA — VERSÃO 100
+
+CORREÇÃO PRINCIPAL
+- O link de recuperação de palavra-passe passa a abrir diretamente o formulário
+  "Definir nova palavra-passe" no portal.
+- O portal reconhece links de recuperação durante a inicialização e também quando
+  o evento PASSWORD_RECOVERY chega depois do carregamento da página.
+- Mantém a conta e o perfil institucional Master existentes; não cria outro usuário.
+
+INSTALAÇÃO
+1. Envie a pasta completa desta versão para o projeto adms-braga na Vercel.
+2. Aguarde o estado Ready — Production.
+3. No Supabase, mantenha em Authentication → URL Configuration:
+   Site URL: https://adms-braga.vercel.app/sistema
+   Redirect URL: https://adms-braga.vercel.app/**
+4. Solicite um NOVO e-mail de recuperação no portal.
+5. Abra somente o link do novo e-mail.
+
+TESTE
+- Aceda a https://adms-braga.vercel.app/sistema?v=100
+- Introduza secretariaadmsbraga@gmail.com e conclua o CAPTCHA.
+- Clique em "Esqueci a palavra-passe".
+- O novo link recebido deve abrir o formulário de nova palavra-passe.
+
+SQL
+- Esta versão não exige execução de SQL.

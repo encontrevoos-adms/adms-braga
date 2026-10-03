@@ -1,0 +1,39 @@
+ADMS BRAGA — VERSÃO 99
+=======================
+
+OBJETIVO
+
+Esta versão não altera a base de dados. Ela corrige o diagnóstico do acesso
+Master e da recuperação de palavra-passe, separando com segurança:
+
+- CAPTCHA recusado pelo Supabase;
+- palavra-passe incorreta;
+- conta não confirmada ou bloqueada;
+- limite temporário de tentativas/e-mails;
+- falha de rede.
+
+INSTALAÇÃO
+
+1. SUPABASE — EDGE FUNCTION login-master
+   - Abra Edge Functions > login-master.
+   - Substitua todo o código pelo conteúdo de:
+     supabase/functions/login-master/index.ts
+   - Clique em Deploy.
+
+2. VERCEL
+   - Publique a pasta completa desta versão no projeto adms-braga.
+   - Aguarde Ready — Production.
+
+3. TESTE
+   - Abra uma janela anónima.
+   - Aceda a https://adms-braga.vercel.app/sistema?v=99
+   - Resolva o CAPTCHA e tente entrar com UsuárioMaster.
+   - A mensagem apresentada identificará a causa exata e segura.
+
+NÃO É NECESSÁRIO
+
+- executar SQL;
+- alterar a função solicitar-acesso;
+- eliminar ou recriar o utilizador Master;
+- divulgar palavras-passe ou a Secret Key do Turnstile.
+

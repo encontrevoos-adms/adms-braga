@@ -26,8 +26,8 @@ function json(origin: string | null, body: Record<string, unknown>, status = 200
   })
 }
 
-function defaultKey(variable: 'SUPABASE_PUBLISHABLE_KEYS' | 'SUPABASE_SECRET_KEYS', legacy: string) {
-  const raw = Deno.env.get(variable)
+function defaultSecretKey() {
+  const raw = Deno.env.get('SUPABASE_SECRET_KEYS')
   if (raw) {
     try {
       const parsed = JSON.parse(raw) as Record<string, string>
@@ -36,9 +36,26 @@ function defaultKey(variable: 'SUPABASE_PUBLISHABLE_KEYS' | 'SUPABASE_SECRET_KEY
       if (raw.startsWith('sb_') || raw.startsWith('eyJ')) return raw
     }
   }
-  const fallback = Deno.env.get(legacy)
-  if (fallback) return fallback
-  throw new Error(`${variable} não está disponível.`)
+  const legacy = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+  if (legacy) return legacy
+  throw new Error('A chave de servidor do Supabase não está disponível.')
+}
+
+async function verifyTurnstile(token: string, remoteIp: string) {
+  const secret = Deno.env.get('TURNSTILE_SECRET_KEY')
+  if (!secret) throw new Error('TURNSTILE_SECRET_KEY não está configurada.')
+  const form = new URLSearchParams({ secret, response: token })
+  if (remoteIp) form.set('remoteip', remoteIp)
+  const response = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: form,
+  })
+  if (!response.ok) return false
+  const result = await response.json() as { success?: boolean; hostname?: string }
+  const hostname = String(result.hostname || '').toLowerCase()
+  const trustedHost = hostname === 'localhost' || allowedOrigins.has(`https://${hostname}`)
+  return result.success === true && trustedHost
 }
 
 Deno.serve(async (req) => {
@@ -51,54 +68,46 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json()
-    const usuario = String(body.usuario || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-    const password = String(body.password || '')
     const captchaToken = String(body.captchaToken || '')
-    if (usuario !== 'usuariomaster' || !password || !captchaToken) {
-      return json(origin, { ok: false, error: 'Credenciais ou validação de segurança inválidas.' }, 401)
+    const remoteIp = String(req.headers.get('cf-connecting-ip') || req.headers.get('x-forwarded-for') || '').split(',')[0].trim()
+    if (!captchaToken || !(await verifyTurnstile(captchaToken, remoteIp))) {
+      return json(origin, { ok: false, error: 'A validação de segurança expirou ou não foi aceite. Tente novamente.' }, 400)
+    }
+
+    const numero = String(body.numero || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '')
+    const nome = String(body.nome || '').trim().slice(0, 160)
+    const email = String(body.email || '').trim().toLowerCase().slice(0, 254)
+    const contacto = String(body.contacto || '').trim().slice(0, 40)
+    const dataNascimento = String(body.data_nascimento || '')
+    if (!/^ADMSBRG\d{4,}$/.test(numero) || nome.length < 3 || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email) || contacto.length < 9 || !/^\d{4}-\d{2}-\d{2}$/.test(dataNascimento)) {
+      return json(origin, { ok: false, error: 'Não foi possível validar os dados apresentados.' }, 400)
     }
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')
     if (!supabaseUrl) throw new Error('SUPABASE_URL não está disponível.')
-    const publishableKey = defaultKey('SUPABASE_PUBLISHABLE_KEYS', 'SUPABASE_ANON_KEY')
-    const secretKey = defaultKey('SUPABASE_SECRET_KEYS', 'SUPABASE_SERVICE_ROLE_KEY')
-    const admin = createClient(supabaseUrl, secretKey, { auth: { autoRefreshToken: false, persistSession: false } })
-
-    const { data: profiles, error: profileError } = await admin
-      .from('profiles')
-      .select('id,nome,cargo,role,ativo')
-      .eq('role', 'master')
-      .eq('ativo', true)
-      .limit(20)
-    if (profileError) throw profileError
-    const candidates = (profiles || []).sort((a, b) => {
-      const score = (p: typeof a) => /usu[aá]rio\s*master/i.test(String(p.nome || '')) ? 0 : /secretar/i.test(String(p.cargo || '')) ? 1 : 2
-      return score(a) - score(b)
+    const admin = createClient(supabaseUrl, defaultSecretKey(), {
+      global: { headers: { 'x-forwarded-for': remoteIp || 'desconhecido', 'user-agent': req.headers.get('user-agent') || 'sem-agente' } },
+      auth: { autoRefreshToken: false, persistSession: false },
     })
-    const institutional = candidates[0]
-    if (!institutional) return json(origin, { ok: false, error: 'Credenciais ou validação de segurança inválidas.' }, 401)
-
-    const { data: authData, error: authLookupError } = await admin.auth.admin.getUserById(institutional.id)
-    if (authLookupError || !authData.user?.email) throw authLookupError || new Error('Conta Master sem e-mail de autenticação.')
-
-    const authClient = createClient(supabaseUrl, publishableKey, { auth: { autoRefreshToken: false, persistSession: false } })
-    const { data: sessionData, error: signInError } = await authClient.auth.signInWithPassword({
-      email: authData.user.email,
-      password,
-      options: { captchaToken },
+    const { data, error } = await admin.rpc('solicitar_acesso_membro_v96', {
+      p_numero_membro: numero,
+      p_nome: nome,
+      p_email: email,
+      p_contacto: contacto,
+      p_data_nascimento: dataNascimento,
     })
-    if (signInError || !sessionData.session) {
-      return json(origin, { ok: false, error: 'Credenciais ou validação de segurança inválidas.' }, 401)
+    if (error) throw error
+
+    if (data?.rate_limited) return json(origin, data, 429)
+    if (!data?.ok) {
+      return json(origin, { ok: false, error: 'Não foi possível validar os dados apresentados. Confirme-os com a Secretaria.' }, 400)
     }
-
     return json(origin, {
       ok: true,
-      access_token: sessionData.session.access_token,
-      refresh_token: sessionData.session.refresh_token,
-      expires_at: sessionData.session.expires_at,
+      message: 'Se os dados forem elegíveis, a solicitação será analisada pela Secretaria.',
     })
   } catch (error) {
-    console.error('login-master:', error)
-    return json(origin, { ok: false, error: 'Não foi possível concluir o acesso agora.' }, 500)
+    console.error('solicitar-acesso:', error)
+    return json(origin, { ok: false, error: 'Não foi possível concluir a solicitação agora.' }, 500)
   }
 })
