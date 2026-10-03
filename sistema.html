@@ -498,6 +498,14 @@ const ADMS_CLOUD = {
 const admsSupabase = window.supabase?.createClient(ADMS_CLOUD.url, ADMS_CLOUD.publishableKey, {
   auth:{persistSession:true, autoRefreshToken:true, detectSessionInUrl:true}
 });
+const ADMS_RECOVERY_HINT = (()=>{
+  try{
+    const query=new URLSearchParams(window.location.search);
+    const hash=new URLSearchParams(window.location.hash.replace(/^#/,''));
+    return query.get('type')==='recovery' || hash.get('type')==='recovery';
+  }catch{return false;}
+})();
+let admsRecoveryEvent=false;
 
 async function admsCloudSession(){
   if(!admsSupabase) return null;
@@ -6667,10 +6675,23 @@ async function handleLogout(){
   document.body.classList.remove('portal-active');
   session=null; admsCloudProfile=null; pendingLoginKey=null; pendingLoginLeaderId=null; currentProfileRef=null;
   try{ localStorage.removeItem(SESSAO_KEY);localStorage.removeItem(ESTADO_KEY); }catch(e){}
-  location.replace('/sistema?v=98');
+  location.replace('/sistema?v=100');
 }
 
 admsSupabase?.auth.onAuthStateChange((event)=>{
+  if(event==='PASSWORD_RECOVERY'){
+    admsRecoveryEvent=true;
+    document.body.classList.remove('portal-active');
+    const login=document.getElementById('login-screen');
+    const app=document.getElementById('app-screen');
+    const form=document.getElementById('step-forcepw');
+    if(login && app && form){
+      app.style.display='none';
+      login.style.display='flex';
+      hideAllLoginSteps();
+      form.style.display='block';
+    }
+  }
   if(event==='SIGNED_OUT' && session){ session=null; }
 });
 
@@ -6704,7 +6725,16 @@ if(paramsUrl.get('form') === 'cadastro'){
     let restaurada=false;
     try{
       const {data}=await admsSupabase.auth.getSession();
-      if(data?.session) restaurada=await tentarRestaurarSessao();
+      if(data?.session && (ADMS_RECOVERY_HINT || admsRecoveryEvent)){
+        document.body.classList.remove('portal-active');
+        document.getElementById('app-screen').style.display='none';
+        document.getElementById('login-screen').style.display='flex';
+        hideAllLoginSteps();
+        document.getElementById('step-forcepw').style.display='block';
+        restaurada=true;
+      }else if(data?.session){
+        restaurada=await tentarRestaurarSessao();
+      }
     }catch(e){ console.warn('Não foi possível restaurar a sessão.',e); }
     if(!restaurada){
       session=null; admsCloudProfile=null;
@@ -6718,7 +6748,7 @@ if(paramsUrl.get('form') === 'cadastro'){
 
 // Mantém a instalação como aplicação sem guardar páginas ou dados sensíveis em cache.
 if('serviceWorker' in navigator){
-  window.addEventListener('load',()=>navigator.serviceWorker.register('/sw-sistema.js?v=98').catch(()=>{}));
+  window.addEventListener('load',()=>navigator.serviceWorker.register('/sw-sistema.js?v=100').catch(()=>{}));
 }
 if(window.caches){
   caches.keys().then(keys=>Promise.all(keys.map(key=>caches.delete(key)))).catch(()=>{});
@@ -6797,7 +6827,7 @@ async function admsDecidirSolicitacao(id,acao,botao){
  try{
   const {data:{session:cloudSession},error:sessionError}=await admsSupabase.auth.getSession();
   if(sessionError||!cloudSession?.access_token)throw new Error('Sessão expirada. Termine a sessão e entre novamente.');
-  const resposta=await fetch(`${ADMS_CLOUD.url}/functions/v1/gerir-solicitacoes-acesso`,{method:'POST',headers:{'Content-Type':'application/json','apikey':ADMS_CLOUD.publishableKey,'Authorization':`Bearer ${cloudSession.access_token}`},body:JSON.stringify({action:acao,requestId:id,profileRole:perfil,deptIds,motivo,redirectTo:`${location.origin}/sistema?v=98`})});
+  const resposta=await fetch(`${ADMS_CLOUD.url}/functions/v1/gerir-solicitacoes-acesso`,{method:'POST',headers:{'Content-Type':'application/json','apikey':ADMS_CLOUD.publishableKey,'Authorization':`Bearer ${cloudSession.access_token}`},body:JSON.stringify({action:acao,requestId:id,profileRole:perfil,deptIds,motivo,redirectTo:`${location.origin}/sistema?v=100`})});
   const texto=await resposta.text();let data={};try{data=texto?JSON.parse(texto):{}}catch{throw new Error(`A função respondeu com conteúdo inválido (HTTP ${resposta.status}).`)}
   if(!resposta.ok||!data?.ok)throw new Error(data?.error||`Não foi possível concluir a operação (HTTP ${resposta.status}).`);
   feedback.className='access-request-feedback success';feedback.textContent=data.message||'Operação concluída.';
@@ -6885,8 +6915,24 @@ async function admsRecuperarSenha(){
  const email=(document.getElementById('login-email')?.value||'').trim().toLowerCase();
  if(!email||!emailValido(email)||['usuáriomaster','usuariomaster'].includes(email)){showLoginError('Introduza primeiro o e-mail da sua conta.');return}
  if(!admsCaptchaLoginToken){showLoginError('Confirme a validação de segurança antes de recuperar a palavra-passe.');return}
- const {error}=await admsSupabase.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname,captchaToken:admsCaptchaLoginToken});
- if(error){showLoginError('Não foi possível enviar a recuperação agora.');admsResetCaptcha('login');return}
+ let error=null;
+ try{
+  ({error}=await admsSupabase.auth.resetPasswordForEmail(email,{redirectTo:`${location.origin}/sistema?v=100`,captchaToken:admsCaptchaLoginToken}));
+ }catch(e){
+  console.error('recuperação de palavra-passe:',e);
+  showLoginError('Falha de rede ao contactar o Supabase. Confirme a ligação e tente novamente.');
+  admsResetCaptcha('login');return;
+ }
+ if(error){
+  console.error('recuperação de palavra-passe:',{code:error.code,status:error.status,message:error.message});
+  const codigo=String(error.code||'').toLowerCase(),mensagem=String(error.message||'').toLowerCase();
+  const texto=(codigo==='captcha_failed'||mensagem.includes('captcha'))
+   ?'O Supabase recusou o CAPTCHA. Confirme a Secret Key do Turnstile em Authentication → Attack Protection.'
+   :(codigo.includes('rate')||mensagem.includes('rate limit')||error.status===429)
+    ?'Limite de e-mails atingido. Aguarde alguns minutos antes de tentar novamente.'
+    :`Não foi possível enviar a recuperação (${codigo||'erro de autenticação'}).`;
+  showLoginError(texto);admsResetCaptcha('login');return
+ }
  admsResetCaptcha('login');
  showToast('Enviámos as instruções de recuperação para o seu e-mail.');
 }
