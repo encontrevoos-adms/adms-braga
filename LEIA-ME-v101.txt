@@ -1,0 +1,27 @@
+ADMS BRAGA — VERSÃO 101
+
+CORREÇÃO DOS ESTUDOS
+- Estudos escritos diretamente no Portal agora abrem numa janela de leitura no site público.
+- PDFs enviados pelo Gestor Editorial agora apresentam o botão "Abrir PDF".
+- Links externos continuam acessíveis pelo botão "Abrir material completo".
+- O estudo mais recente publicado aparece na área Estudos Bíblicos.
+- A janela funciona em computador, tablet e telemóvel e pode ser fechada pelo botão, pelo fundo ou pela tecla Escape.
+
+SEGURANÇA
+- O Cloudflare Turnstile CAPTCHA foi mantido.
+- Login comum, Usuário Master, recuperação da palavra-passe e solicitação de acesso continuam protegidos.
+
+PUBLICAÇÃO
+1. Publique o pacote completo no projeto correto da Vercel.
+2. Não é necessário executar SQL.
+3. Não é necessário alterar ou republicar Edge Functions.
+4. Depois da publicação, abra:
+   https://adms-braga-site.vercel.app/?v=101#estudos
+5. Atualize a página com Ctrl+F5 ou teste numa janela anónima.
+
+ESTUDO CONFIRMADO NA BASE DE DADOS
+- Título: Laodicéia
+- Estado: publicado
+- Ativo: sim
+- Formato: PDF no Storage do Supabase
+- O problema anterior era apenas a ausência de ligação entre o PDF e o botão do site público.

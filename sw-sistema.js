@@ -1,4 +1,4 @@
-// ADMS Braga v100: recuperação de palavra-passe reconhecida durante a inicialização.
+// ADMS Braga v101: estudos públicos acessíveis, mantendo a proteção CAPTCHA.
 self.addEventListener('install',()=>self.skipWaiting());
 self.addEventListener('activate',event=>{
   event.waitUntil(
