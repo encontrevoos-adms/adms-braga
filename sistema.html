@@ -608,7 +608,7 @@ async function admsIniciarRealtime(){
 }
 
 // Fase 9 — estado multiutilizador centralizado no Supabase
-const ADMS_CLOUD_MODULE_KEYS = ['pessoas','financeiro','contas','recibos','fornecedores','escalas','avisos','patrimonio','orcamentos','celulas','kids','ebd','eventos'];
+const ADMS_CLOUD_MODULE_KEYS = ['pessoas','financeiro','fechamentos','contas','recibos','fornecedores','escalas','avisos','patrimonio','orcamentos','celulas','kids','ebd','eventos'];
 let admsStateRealtimeChannel=null;
 let admsAplicandoEstadoCloud=false;
 let admsCloudSaveQueue=Promise.resolve({ok:true});
@@ -649,6 +649,7 @@ function admsEstadoCloudSnapshot(){
   return {
     pessoas:{congregados:PESSOAS?.congregados||[], visitantes:PESSOAS?.visitantes||[]},
     financeiro:{lancamentos:FINANCEIRO?.lancamentos||[]},
+    fechamentos:{itens:FECHAMENTOS_FINANCEIROS||[]},
     contas:{pagar:CONTAS_PAGAR||[], receber:CONTAS_RECEBER||[]},
     recibos:{itens:RECIBOS||[]},
     fornecedores:{manuais:FORNECEDORES_MANUAIS||[]},
@@ -668,6 +669,7 @@ function admsAplicarModuloCloud(key,p){
   switch(key){
     case 'pessoas': PESSOAS.congregados=p.congregados||[]; PESSOAS.visitantes=p.visitantes||[]; break;
     case 'financeiro': FINANCEIRO.lancamentos=p.lancamentos||[]; break;
+    case 'fechamentos': FECHAMENTOS_FINANCEIROS=p.itens||[]; break;
     case 'contas': CONTAS_PAGAR=p.pagar||[]; CONTAS_RECEBER=p.receber||[]; break;
     case 'recibos': RECIBOS=p.itens||[]; break;
     case 'fornecedores': FORNECEDORES_MANUAIS=p.manuais||[]; break;
@@ -1581,6 +1583,7 @@ const PESSOAS = {
 const FINANCEIRO = {
   lancamentos:[]
 };
+let FECHAMENTOS_FINANCEIROS = [];
 // saldo, entradas e saídas nunca são valores fixos — são sempre calculados a partir dos lançamentos (como num razão contabilístico)
 function calcularSaldo(){
   const entradas = FINANCEIRO.lancamentos.filter(l=>l.tipo==='Entrada').reduce((s,l)=>s+parseValorEuro(l.valor),0);
@@ -1689,7 +1692,7 @@ function salvarEstado(modulosCloud=null){
     const estado = {
       v:1, guardadoEm: new Date().toISOString(),
       MASTERS, LEADERS, AUTH, ESCALAS, ESCALA_INDISPONIBILIDADES, AVISOS, AUDIT_LOG,
-      PATRIMONIO, PESSOAS, FINANCEIRO, RECIBOS, CONTAS_PAGAR, CONTAS_RECEBER, FORNECEDORES_MANUAIS, ORCAMENTOS, CELULAS, KIDS_CRIANCAS, KIDS_CHECKINS, EBD_TURMAS, EVENTOS,
+      PATRIMONIO, PESSOAS, FINANCEIRO, FECHAMENTOS_FINANCEIROS, RECIBOS, CONTAS_PAGAR, CONTAS_RECEBER, FORNECEDORES_MANUAIS, ORCAMENTOS, CELULAS, KIDS_CRIANCAS, KIDS_CHECKINS, EBD_TURMAS, EVENTOS,
       DEPARTMENTS_MEMBROS: DEPARTMENTS.map(d=>({id:d.id, membros:d.membros}))
     };
     localStorage.setItem(ESTADO_KEY, JSON.stringify(estado));
@@ -1749,6 +1752,7 @@ function aplicarEstado(estado){
   if(estado.FINANCEIRO){
     FINANCEIRO.lancamentos = estado.FINANCEIRO.lancamentos || [];
   }
+  if(estado.FECHAMENTOS_FINANCEIROS) FECHAMENTOS_FINANCEIROS = estado.FECHAMENTOS_FINANCEIROS;
   if(estado.DEPARTMENTS_MEMBROS){
     estado.DEPARTMENTS_MEMBROS.forEach(dm=>{ const d = DEPARTMENTS.find(x=>x.id===dm.id); if(d) d.membros = dm.membros; });
   }
@@ -1765,7 +1769,7 @@ function exportarTudo(){
   const estado = {
     v:1, guardadoEm: new Date().toISOString(),
     MASTERS, LEADERS, AUTH, ESCALAS, AVISOS, AUDIT_LOG,
-    PATRIMONIO, PESSOAS, FINANCEIRO, RECIBOS, CONTAS_PAGAR, CONTAS_RECEBER, FORNECEDORES_MANUAIS, ORCAMENTOS, CELULAS, KIDS_CRIANCAS, KIDS_CHECKINS, EBD_TURMAS, EVENTOS,
+    PATRIMONIO, PESSOAS, FINANCEIRO, FECHAMENTOS_FINANCEIROS, RECIBOS, CONTAS_PAGAR, CONTAS_RECEBER, FORNECEDORES_MANUAIS, ORCAMENTOS, CELULAS, KIDS_CRIANCAS, KIDS_CHECKINS, EBD_TURMAS, EVENTOS,
     DEPARTMENTS_MEMBROS: DEPARTMENTS.map(d=>({id:d.id, membros:d.membros}))
   };
   const blob = new Blob([JSON.stringify(estado, null, 2)], {type:'application/json'});
@@ -3913,6 +3917,83 @@ function atualizarCategoriasFinanceiras(){
 function emailValido(v){ return !v || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v); }
 function telemovelValido(v){ return !v || /^[0-9+\s()-]{6,20}$/.test(v); }
 
+function mesFinanceiroDaData(data){
+  const valor=String(data||'');
+  if(/^\d{4}-\d{2}/.test(valor)) return valor.slice(0,7);
+  const partes=valor.split('/');
+  return partes.length===3?`${partes[2]}-${partes[1]}`:'';
+}
+function mesAtualLisboa(){
+  const partes=new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Lisbon',year:'numeric',month:'2-digit'}).formatToParts(new Date());
+  return `${partes.find(p=>p.type==='year').value}-${partes.find(p=>p.type==='month').value}`;
+}
+function dataHojeLisboa(){
+  const partes=new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Lisbon',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());
+  return `${partes.find(p=>p.type==='year').value}-${partes.find(p=>p.type==='month').value}-${partes.find(p=>p.type==='day').value}`;
+}
+function rotuloMesFinanceiro(mes){
+  if(!/^\d{4}-\d{2}$/.test(mes||''))return mes||'—';
+  return new Intl.DateTimeFormat('pt-PT',{month:'long',year:'numeric',timeZone:'Europe/Lisbon'}).format(new Date(`${mes}-15T12:00:00Z`));
+}
+function fechamentoFinanceiro(mes){return FECHAMENTOS_FINANCEIROS.find(f=>f.mes===mes&&f.status==='Fechado');}
+function ultimoMesFinanceiroFechado(){return FECHAMENTOS_FINANCEIROS.filter(f=>f.status==='Fechado').map(f=>f.mes).sort().pop()||'';}
+function mesFinanceiroFechado(mes){const ultimo=ultimoMesFinanceiroFechado();return !!ultimo&&mes<=ultimo;}
+function garantirPeriodoFinanceiroAberto(data,acao='realizar esta operação'){
+  const mes=mesFinanceiroDaData(data);
+  if(mes&&mesFinanceiroFechado(mes)){showToast(`O movimento de ${rotuloMesFinanceiro(mes)} está encerrado. Não é possível ${acao}.`);return false;}
+  return true;
+}
+function movimentoFinanceiroMes(mes){
+  const movimentos=FINANCEIRO.lancamentos.filter(l=>mesFinanceiroDaData(l.data)===mes);
+  const anteriores=FINANCEIRO.lancamentos.filter(l=>mesFinanceiroDaData(l.data)<mes);
+  const soma=lista=>({
+    entradas:lista.filter(l=>l.tipo==='Entrada').reduce((s,l)=>s+parseValorEuro(l.valor),0),
+    saidas:lista.filter(l=>l.tipo==='Saída').reduce((s,l)=>s+parseValorEuro(l.valor),0)
+  });
+  const antes=soma(anteriores), atual=soma(movimentos);
+  const saldoAbertura=antes.entradas-antes.saidas;
+  return {mes,movimentos,saldoAbertura,entradas:atual.entradas,saidas:atual.saidas,saldoEncerramento:saldoAbertura+atual.entradas-atual.saidas};
+}
+function mesesFinanceirosDisponiveis(){
+  const meses=new Set(FINANCEIRO.lancamentos.map(l=>mesFinanceiroDaData(l.data)).filter(Boolean));
+  const agora=new Date();
+  for(let i=0;i<18;i++){const d=new Date(Date.UTC(agora.getUTCFullYear(),agora.getUTCMonth()-i,1));meses.add(`${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}`);}
+  return [...meses].sort().reverse();
+}
+function mesFinanceiroPadrao(){
+  const atual=mesAtualLisboa();
+  return mesesFinanceirosDisponiveis().find(m=>m<atual)||atual;
+}
+function blocoFechamentoFinanceiro(mes=window.ADMS_MES_FINANCEIRO||mesFinanceiroPadrao()){
+  window.ADMS_MES_FINANCEIRO=mes;
+  const info=movimentoFinanceiroMes(mes),fechado=fechamentoFinanceiro(mes),bloqueado=mesFinanceiroFechado(mes);
+  return `<div class="card" id="fechamento-financeiro" style="margin-top:16px;border-color:${bloqueado?'#b8dfcc':'var(--gold-soft)'};">
+    <div class="section-title" style="margin:0 0 14px;"><div><div class="breadcrumb">Ciclo mensal</div><h2 style="font-size:22px;">Fecho do movimento financeiro</h2></div><span class="tag ${bloqueado?'tag-green':'tag-gold'}">${bloqueado?'Encerrado':'Aberto'}</span></div>
+    <div class="form-row"><div><label>Mês do movimento</label><select onchange="selecionarMesFinanceiro(this.value)">${mesesFinanceirosDisponiveis().map(m=>`<option value="${m}" ${m===mes?'selected':''}>${rotuloMesFinanceiro(m)}</option>`).join('')}</select></div><div style="display:flex;align-items:flex-end;gap:9px;flex-wrap:wrap"><button class="btn btn-outline" style="width:auto" onclick="abrirRelatorioMensal('${mes}')">Conferir / emitir relatório</button>${!bloqueado?`<button class="btn btn-red" style="width:auto" onclick="fecharMovimentoFinanceiro('${mes}')">Encerrar movimento</button>`:''}</div></div>
+    <div class="grid grid-4" style="margin-top:14px;"><div class="stat-card"><div class="num" style="font-size:21px">${formatEuro(info.saldoAbertura)}</div><div class="label">Saldo transportado</div></div><div class="stat-card"><div class="num" style="font-size:21px;color:var(--ok)">${formatEuro(info.entradas)}</div><div class="label">Entradas do mês</div></div><div class="stat-card"><div class="num" style="font-size:21px;color:var(--red-dark)">${formatEuro(info.saidas)}</div><div class="label">Saídas do mês</div></div><div class="stat-card"><div class="num" style="font-size:21px">${formatEuro(info.saldoEncerramento)}</div><div class="label">Saldo a transportar</div></div></div>
+    <p style="margin:12px 0 0;color:var(--ink-soft);font-size:12px;">${fechado?`Encerrado definitivamente em ${new Date(fechado.fechadoEm).toLocaleString('pt-PT')} por ${admsEsc(fechado.fechadoPor||'—')}. ${fechado.quantidadeLancamentos} lançamento(s) conferido(s).`:bloqueado?'Período consolidado por um encerramento posterior. Não admite novas operações.':'Após o encerramento, este mês e todos os períodos anteriores ficam bloqueados definitivamente.'}</p>
+  </div>`;
+}
+function selecionarMesFinanceiro(mes){window.ADMS_MES_FINANCEIRO=mes;const el=document.getElementById('fechamento-financeiro');if(el)el.outerHTML=blocoFechamentoFinanceiro(mes);}
+function abrirRelatorioMensal(mes){
+  RELATORIO_FILTROS.tipo='movimento-mensal';RELATORIO_FILTROS.financeiroMes=mes;RELATORIO_FILTROS.departamento='todos';goTo('relatorios');
+  const select=document.getElementById('rel-tipo');if(select){select.value='movimento-mensal';renderRelFilters();}
+}
+async function fecharMovimentoFinanceiro(mes){
+  if(!exigirPermissao('financeiro','editar'))return;
+  if(mes>=mesAtualLisboa()){showToast('Só é possível encerrar um mês já terminado, segundo o horário de Lisboa.');return;}
+  if(mesFinanceiroFechado(mes)){showToast('Este movimento já está encerrado.');return;}
+  const info=movimentoFinanceiroMes(mes);
+  const confirmacao=prompt(`Encerramento definitivo de ${rotuloMesFinanceiro(mes)}.\n\nSaldo a transportar: ${formatEuro(info.saldoEncerramento)}\n\nEscreva ENCERRAR para confirmar.`);
+  if(confirmacao!=='ENCERRAR'){showToast('Encerramento cancelado.');return;}
+  const registo={id:`fec${Date.now()}`,mes,status:'Fechado',saldoAbertura:info.saldoAbertura,entradas:info.entradas,saidas:info.saidas,saldoEncerramento:info.saldoEncerramento,quantidadeLancamentos:info.movimentos.length,lancamentoIds:info.movimentos.map(l=>l.id),fechadoEm:new Date().toISOString(),fechadoPor:session.label};
+  FECHAMENTOS_FINANCEIROS.push(registo);
+  const guardado=await salvarEstado(['fechamentos']);
+  if(!guardado?.ok){FECHAMENTOS_FINANCEIROS=FECHAMENTOS_FINANCEIROS.filter(f=>f.id!==registo.id);showToast('Não foi possível confirmar o encerramento na nuvem. O mês permanece aberto.');return;}
+  await logAction('financeiro','Movimento mensal encerrado',`${rotuloMesFinanceiro(mes)} · saldo inicial ${formatEuro(info.saldoAbertura)} · entradas ${formatEuro(info.entradas)} · saídas ${formatEuro(info.saidas)} · saldo transportado ${formatEuro(info.saldoEncerramento)}`);
+  showToast(`Movimento de ${rotuloMesFinanceiro(mes)} encerrado definitivamente.`);renderModule();
+}
+
 function viewFinanceiro(){
   const saldoInfo = calcularSaldo();
   const totalEntradas = saldoInfo.entradas;
@@ -3930,7 +4011,7 @@ function viewFinanceiro(){
   return `
     <div class="topbar">
       <div><div class="breadcrumb">Gestão da Igreja</div><h1>Financeiro</h1></div>
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="btn btn-outline" onclick="abrirRelatorioTipo('financeiro')">Imprimir relatório</button><span class="access-pill">${ICON.financeiro} Restrito · Pastor Sénior / Tesoureiro</span></div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="btn btn-outline" onclick="abrirExtratoEntidade('Pr Adonias Alves da Silva')">Extrato Pr. Adonias</button><button class="btn btn-outline" onclick="abrirRelatorioTipo('financeiro')">Imprimir relatório</button><span class="access-pill">${ICON.financeiro} Restrito · Pastor Sénior / Tesoureiro</span></div>
     </div>
     ${ruleDivider()}
     <div class="grid grid-3">
@@ -3938,6 +4019,7 @@ function viewFinanceiro(){
       <div class="card stat-card"><div class="icon-badge" style="background:#E4F5EC;color:var(--ok);">${ICON.financeiro}</div><div class="num">${formatEuro(totalEntradas)}</div><div class="label">Entradas registadas</div></div>
       <div class="card stat-card"><div class="icon-badge" style="background:#FBE7E9;color:var(--red-dark);">${ICON.financeiro}</div><div class="num">${formatEuro(totalSaidas)}</div><div class="label">Saídas registadas</div></div>
     </div>
+    ${blocoFechamentoFinanceiro()}
     <div class="grid grid-2" style="margin-top:16px;">
       <div class="card stat-card"><div class="icon-badge" style="background:#FBF1DC;color:#8A6B1F;">${ICON.payable}</div><div class="num">${formatEuro(totalPagarPendente)}</div><div class="label">Contas a Pagar pendentes</div><div class="delta warn" style="cursor:pointer;" onclick="goTo('contas-pagar')">Ver Contas a Pagar →</div></div>
       <div class="card stat-card"><div class="icon-badge" style="background:#E7ECFB;color:var(--royal-dark);">${ICON.receivable}</div><div class="num">${formatEuro(previsaoDizimos)}</div><div class="label">Previsão de dízimos e ofertas (estimativa)</div><div class="delta up">${dizimistas} membro(s) dizimista(s) cadastrado(s)</div></div>
@@ -4020,7 +4102,7 @@ function renderLancamentosTable(){
               <td class="mono" style="font-weight:700;">${l.valor}</td>
               <td style="font-size:11.5px; color:var(--ink-soft);">${l.criadoPor||'—'}${l.corrigido?` <span class="tag tag-gold" style="margin-left:4px;">Corrigido</span>`:''}</td>
               <td style="display:flex; gap:12px; align-items:center;">
-                <span style="color:var(--royal-dark); font-weight:700; cursor:pointer; font-size:12px; display:flex; align-items:center; gap:4px;" onclick="openCorrectionModal('${l.id}')">${ICON.edit} Corrigir</span>
+                ${mesFinanceiroFechado(mesFinanceiroDaData(l.data))?'<span class="tag tag-green">🔒 Fechado</span>':`<span style="color:var(--royal-dark); font-weight:700; cursor:pointer; font-size:12px; display:flex; align-items:center; gap:4px;" onclick="openCorrectionModal('${l.id}')">${ICON.edit} Corrigir</span>`}
                 ${l.reciboId ? `<span style="color:var(--red-dark); font-weight:700; cursor:pointer; font-size:12px;" onclick="verRecibo('${l.reciboId}')">Recibo</span>` : ''}
               </td>
             </tr>`).join('')}
@@ -4042,6 +4124,7 @@ async function admsAdicionarLancamento(){
   const desc = document.getElementById('fin-desc').value.trim();
   const valor = parseFloat(document.getElementById('fin-valor').value);
   if(!data || !fornecedor || !desc || !valor){ showToast('Preencha data, fornecedor/pagador, descrição e valor.'); return; }
+  if(!garantirPeriodoFinanceiroAberto(data,'registar um lançamento'))return;
 
   const paraPessoa = tipo==='Saída' && document.getElementById('fin-para-pessoa').value==='sim';
   const beneficiario = paraPessoa ? document.getElementById('fin-beneficiario').value.trim() : '';
@@ -4062,7 +4145,7 @@ async function admsAdicionarLancamento(){
   if(!guardado?.ok){
     FINANCEIRO.lancamentos=FINANCEIRO.lancamentos.filter(item=>item.id!==id);
     if(lancamento.reciboId) RECIBOS=RECIBOS.filter(item=>item.id!==lancamento.reciboId);
-    try{ localStorage.setItem(ESTADO_KEY,JSON.stringify({v:1,guardadoEm:new Date().toISOString(),MASTERS,LEADERS,AUTH,ESCALAS,AVISOS,AUDIT_LOG,PATRIMONIO,PESSOAS,FINANCEIRO,RECIBOS,CONTAS_PAGAR,CONTAS_RECEBER,FORNECEDORES_MANUAIS,ORCAMENTOS,CELULAS,KIDS_CRIANCAS,KIDS_CHECKINS,EBD_TURMAS,EVENTOS,DEPARTMENTS_MEMBROS:DEPARTMENTS.map(d=>({id:d.id,membros:d.membros}))})) }catch(e){}
+    try{ localStorage.setItem(ESTADO_KEY,JSON.stringify({v:1,guardadoEm:new Date().toISOString(),MASTERS,LEADERS,AUTH,ESCALAS,AVISOS,AUDIT_LOG,PATRIMONIO,PESSOAS,FINANCEIRO,FECHAMENTOS_FINANCEIROS,RECIBOS,CONTAS_PAGAR,CONTAS_RECEBER,FORNECEDORES_MANUAIS,ORCAMENTOS,CELULAS,KIDS_CRIANCAS,KIDS_CHECKINS,EBD_TURMAS,EVENTOS,DEPARTMENTS_MEMBROS:DEPARTMENTS.map(d=>({id:d.id,membros:d.membros}))})) }catch(e){}
     showToast('Não foi possível gravar o lançamento na nuvem. Tente novamente.');
     renderModule();
     return;
@@ -4173,6 +4256,7 @@ async function addContaPagar(){
   const valor = parseFloat(document.getElementById('cp-valor').value);
   const vencimento = document.getElementById('cp-vencimento').value;
   if(!fornecedor || !desc || !valor || !vencimento){ showToast('Preencha todos os campos.'); return; }
+  if(!garantirPeriodoFinanceiroAberto(vencimento,'registar uma conta a pagar'))return;
   const id = 'cp'+Date.now();
   CONTAS_PAGAR.push({id, fornecedor, departamento, desc, valor, vencimento, status:'Pendente', dataPagamento:null, lancamentoId:null, criadoPor:session.label});
   const guardado=await salvarEstado(['contas']);
@@ -4185,10 +4269,12 @@ async function pagarConta(id){
   if(!exigirPermissao('financeiro','editar')) return;
   const c = CONTAS_PAGAR.find(x=>x.id===id);
   if(!c) return;
-  const hoje = new Date();
-  const dataFmt = hoje.toLocaleDateString('pt-PT');
+  const hoje = dataHojeLisboa();
+  if(!garantirPeriodoFinanceiroAberto(hoje,'registar o pagamento'))return;
+  const [anoHoje,mesHoje,diaHoje]=hoje.split('-');
+  const dataFmt = `${diaHoje}/${mesHoje}/${anoHoje}`;
   c.status = 'Pago';
-  c.dataPagamento = hoje.toISOString().split('T')[0];
+  c.dataPagamento = hoje;
   const lancId = 'fin'+Date.now();
   c.lancamentoId = lancId;
   FINANCEIRO.lancamentos.unshift({id:lancId, data:dataFmt, desc:'Pagamento — ' + c.desc + ' (' + c.fornecedor + ')', tipo:'Saída', categoria:'Outros', departamento:c.departamento, fornecedor:c.fornecedor, valor:formatEuro(c.valor), criadoPor:session.label, corrigido:false, paraPessoa:false, beneficiario:'', reciboId:null});
@@ -4294,6 +4380,7 @@ async function addContaReceber(){
   const valor = parseFloat(document.getElementById('cr-valor').value);
   const vencimento = document.getElementById('cr-vencimento').value;
   if(!origem || !desc || !valor || !vencimento){ showToast('Preencha todos os campos.'); return; }
+  if(!garantirPeriodoFinanceiroAberto(vencimento,'registar uma conta a receber'))return;
   const id = 'cr'+Date.now();
   CONTAS_RECEBER.push({id, fornecedor:origem, departamento, desc, valor, vencimento, status:'Pendente', dataPagamento:null, lancamentoId:null, criadoPor:session.label});
   const guardado=await salvarEstado(['contas']);
@@ -4306,10 +4393,12 @@ async function receberConta(id){
   if(!exigirPermissao('financeiro','editar')) return;
   const c = CONTAS_RECEBER.find(x=>x.id===id);
   if(!c) return;
-  const hoje = new Date();
-  const dataFmt = hoje.toLocaleDateString('pt-PT');
+  const hoje = dataHojeLisboa();
+  if(!garantirPeriodoFinanceiroAberto(hoje,'registar o recebimento'))return;
+  const [anoHoje,mesHoje,diaHoje]=hoje.split('-');
+  const dataFmt = `${diaHoje}/${mesHoje}/${anoHoje}`;
   c.status = 'Recebido';
-  c.dataPagamento = hoje.toISOString().split('T')[0];
+  c.dataPagamento = hoje;
   const lancId = 'fin'+Date.now();
   c.lancamentoId = lancId;
   FINANCEIRO.lancamentos.unshift({id:lancId, data:dataFmt, desc:'Recebimento — ' + c.desc + ' (' + c.fornecedor + ')', tipo:'Entrada', categoria:'Outros', departamento:c.departamento, fornecedor:c.fornecedor, valor:formatEuro(c.valor), criadoPor:session.label, corrigido:false, paraPessoa:false, beneficiario:'', reciboId:null});
@@ -5078,6 +5167,7 @@ let correctionTargetId = null;
 function openCorrectionModal(id){
   const l = FINANCEIRO.lancamentos.find(x=>x.id===id);
   if(!l) return;
+  if(!garantirPeriodoFinanceiroAberto(l.data,'corrigir este lançamento'))return;
   correctionTargetId = id;
   const [d,m,y] = l.data.split('/');
   document.getElementById('corr-data').value = `${y}-${m}-${d}`;
@@ -5105,6 +5195,7 @@ function submitCorrection(){
 
   const l = FINANCEIRO.lancamentos.find(x=>x.id===correctionTargetId);
   if(!l) return;
+  if(!garantirPeriodoFinanceiroAberto(l.data,'corrigir este lançamento')||!garantirPeriodoFinanceiroAberto(data,'mover o lançamento para este período'))return;
   const antes = `${l.data} · ${l.desc} · ${l.tipo} · ${l.valor}`;
   const [y,m,d] = data.split('-');
   l.data = `${d}/${m}/${y}`; l.desc = desc; l.tipo = tipo; l.valor = formatEuro(valor);
@@ -5175,7 +5266,7 @@ function admsAssinaturasFinanceiras(incluirRecebedor,recebedor){
   itens.push(['1.º Tesoureiro',tes[0]?.nome||''],['2.º Tesoureiro',tes[1]?.nome||''],['Pr. Sénior',pastor?.nome||'']);
   return `<div class="print-sign-row" style="flex-wrap:wrap;">${itens.map(([cargo,nome])=>`<div class="print-sign" style="min-width:180px;"><div class="line"></div><div class="label">${cargo}${nome?' — '+nome:''}</div></div>`).join('')}</div>`;
 }
-function admsRelatorioFinanceiro(tipo){return ['financeiro','financeiro-rubricas','saidas-nominais','fluxo-caixa','orcamento-gestao','contribuicoes','contas-pagar','contas-receber'].includes(tipo);}
+function admsRelatorioFinanceiro(tipo){return ['financeiro','movimento-mensal','extrato-entidade','financeiro-rubricas','saidas-nominais','fluxo-caixa','orcamento-gestao','contribuicoes','contas-pagar','contas-receber'].includes(tipo);}
 
 function verRecibo(reciboId){
   const r = RECIBOS.find(x=>x.id===reciboId);
@@ -5753,7 +5844,7 @@ function viewAuditoria(){
 }
 
 /* ================= RELATÓRIOS (PDF / EXCEL) ================= */
-const RELATORIO_FILTROS={tipo:'',departamento:'',financeiroTipo:'Todos',financeiroRubrica:'Todas',financeiroEntidade:'Todas',inicio:'',fim:'',rhTipo:'todos',patCategoria:'Todas',contaStatus:'todos'};
+const RELATORIO_FILTROS={tipo:'',departamento:'',financeiroTipo:'Todos',financeiroRubrica:'Todas',financeiroEntidade:'Todas',financeiroMes:'',inicio:'',fim:'',rhTipo:'todos',patCategoria:'Todas',contaStatus:'todos'};
 
 function guardarFiltrosRelatorio(){
   const valor=id=>document.getElementById(id)?.value;
@@ -5767,6 +5858,8 @@ function guardarFiltrosRelatorio(){
   if(financeiroRubrica!==undefined) RELATORIO_FILTROS.financeiroRubrica=financeiroRubrica;
   const financeiroEntidade=valor('rel-fin-entidade');
   if(financeiroEntidade!==undefined) RELATORIO_FILTROS.financeiroEntidade=financeiroEntidade;
+  const financeiroMes=valor('rel-fin-mes');
+  if(financeiroMes!==undefined) RELATORIO_FILTROS.financeiroMes=financeiroMes;
   const inicio=valor('rel-data-inicio');
   if(inicio!==undefined) RELATORIO_FILTROS.inicio=inicio;
   const fim=valor('rel-data-fim');
@@ -5786,6 +5879,8 @@ function tiposRelatorioDisponiveis(){
     tipos.push({v:'rh', t:'Recursos Humanos'});
     tipos.push({v:'patrimonio', t:'Património'});
     tipos.push({v:'financeiro', t:'Financeiro — Razão detalhado'});
+    tipos.push({v:'movimento-mensal', t:'Financeiro — Movimento mensal e encerramento'});
+    tipos.push({v:'extrato-entidade', t:'Financeiro — Extrato detalhado por entidade'});
     tipos.push({v:'financeiro-rubricas', t:'Financeiro — Receitas por rubrica'});
     tipos.push({v:'saidas-nominais', t:'Financeiro — Saídas nominais'});
     tipos.push({v:'fluxo-caixa', t:'Financeiro — Fluxo de caixa'});
@@ -5838,6 +5933,21 @@ function abrirRelatorioTipo(tipo){
   const select=document.getElementById('rel-tipo');
   if(!select)return;
   select.value=tipo;
+  renderRelFilters();
+  document.getElementById('rel-extra-filters')?.scrollIntoView({behavior:'smooth',block:'center'});
+}
+function abrirExtratoEntidade(nome){
+  RELATORIO_FILTROS.tipo='extrato-entidade';
+  RELATORIO_FILTROS.departamento='todos';
+  RELATORIO_FILTROS.financeiroTipo='Todos';
+  RELATORIO_FILTROS.financeiroRubrica='Todas';
+  RELATORIO_FILTROS.financeiroEntidade=nome;
+  RELATORIO_FILTROS.inicio='';
+  RELATORIO_FILTROS.fim='';
+  goTo('relatorios');
+  const select=document.getElementById('rel-tipo');
+  if(!select)return;
+  select.value='extrato-entidade';
   renderRelFilters();
   document.getElementById('rel-extra-filters')?.scrollIntoView({behavior:'smooth',block:'center'});
 }
@@ -5960,7 +6070,7 @@ function renderRelFilters(){
   const extra = document.getElementById('rel-extra-filters');
   const depts = tipo==='escalas' ? deptsParaRelatorio().filter(d=>ESCALA_DEPTS.includes(d.id)) : deptsParaRelatorio();
 
-  if(tipo==='rh' || tipo==='pessoas-gestao'){
+  if(tipo==='rh' || tipo==='pessoas-gestao' || tipo==='movimento-mensal'){
     deptWrap.style.display='none';
   } else {
     deptWrap.style.display='block';
@@ -5973,15 +6083,18 @@ function renderRelFilters(){
     deptSelect.onchange=atualizarFiltrosRelatorio;
   }
 
-  if(tipo==='rh'){
+  if(tipo==='movimento-mensal'){
+    if(!RELATORIO_FILTROS.financeiroMes)RELATORIO_FILTROS.financeiroMes=mesFinanceiroPadrao();
+    extra.innerHTML=`<div class="form-row" style="margin-top:12px;"><div><label>Mês do movimento</label><select id="rel-fin-mes" onchange="atualizarFiltrosRelatorio()">${mesesFinanceirosDisponiveis().map(m=>`<option value="${m}" ${RELATORIO_FILTROS.financeiroMes===m?'selected':''}>${rotuloMesFinanceiro(m)}${mesFinanceiroFechado(m)?' — encerrado':''}</option>`).join('')}</select></div></div>`;
+  } else if(tipo==='rh'){
     extra.innerHTML = `<div class="form-row" style="margin-top:12px;"><div><label>Categoria</label><select id="rel-rh-tipo" onchange="guardarFiltrosRelatorio()"><option value="todos" ${RELATORIO_FILTROS.rhTipo==='todos'?'selected':''}>Todos</option><option value="membros" ${RELATORIO_FILTROS.rhTipo==='membros'?'selected':''}>Membros</option><option value="congregados" ${RELATORIO_FILTROS.rhTipo==='congregados'?'selected':''}>Congregados</option><option value="visitantes" ${RELATORIO_FILTROS.rhTipo==='visitantes'?'selected':''}>Visitantes</option></select></div></div>`;
   } else if(tipo==='patrimonio'){
     const cats = ['Todas', ...new Set(PATRIMONIO.map(p=>p.categoria))];
     if(!cats.includes(RELATORIO_FILTROS.patCategoria)) RELATORIO_FILTROS.patCategoria='Todas';
     extra.innerHTML = `<div class="form-row" style="margin-top:12px;"><div><label>Categoria</label><select id="rel-pat-cat" onchange="guardarFiltrosRelatorio()">${cats.map(c=>`<option ${RELATORIO_FILTROS.patCategoria===c?'selected':''}>${c}</option>`).join('')}</select></div></div>`;
-  } else if(['financeiro','financeiro-rubricas','saidas-nominais','fluxo-caixa','contribuicoes'].includes(tipo)){
+  } else if(['financeiro','extrato-entidade','financeiro-rubricas','saidas-nominais','fluxo-caixa','contribuicoes'].includes(tipo)){
     const categorias=[...new Set(FINANCEIRO.lancamentos.map(l=>normalizarRubricaFinanceira(categoriaLancamento(l),l.tipo)).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-PT'));
-    const entidades=[...new Set(FINANCEIRO.lancamentos.map(l=>l.fornecedor||l.beneficiario).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-PT'));
+    const entidades=[...new Set([...fornecedoresDisponiveis(),...FINANCEIRO.lancamentos.flatMap(l=>[l.fornecedor,l.beneficiario]).filter(Boolean)])].sort((a,b)=>a.localeCompare(b,'pt-PT'));
     extra.innerHTML = `<div class="form-row" style="margin-top:12px;">
       <div><label>Tipo</label><select id="rel-fin-tipo" onchange="atualizarFiltrosRelatorio()"><option value="Todos" ${RELATORIO_FILTROS.financeiroTipo==='Todos'?'selected':''}>Todos</option><option ${RELATORIO_FILTROS.financeiroTipo==='Entrada'?'selected':''}>Entrada</option><option ${RELATORIO_FILTROS.financeiroTipo==='Saída'?'selected':''}>Saída</option></select></div>
       <div><label>Rubrica / categoria</label><select id="rel-fin-rubrica" onchange="atualizarFiltrosRelatorio()"><option value="Todas">Todas</option>${categorias.map(c=>`<option value="${admsEsc(c)}" ${RELATORIO_FILTROS.financeiroRubrica===c?'selected':''}>${admsEsc(c)}</option>`).join('')}</select></div>
@@ -6007,10 +6120,11 @@ function renderRelFilters(){
 function renderResumoFinanceiroRelatorio(){
   const el=document.getElementById('rel-resumo-financeiro');
   if(!el)return;
-  if(!['financeiro','financeiro-rubricas','saidas-nominais','fluxo-caixa','orcamento-gestao','contribuicoes'].includes(document.getElementById('rel-tipo')?.value)){el.innerHTML='';return;}
+  if(!['financeiro','movimento-mensal','extrato-entidade','financeiro-rubricas','saidas-nominais','fluxo-caixa','orcamento-gestao','contribuicoes'].includes(document.getElementById('rel-tipo')?.value)){el.innerHTML='';return;}
   const dados=getReportData();
   const resumo=dados.summary||{entradas:formatEuro(0),saidas:formatEuro(0),saldo:formatEuro(0)};
-  el.innerHTML=`<div class="grid grid-3" style="margin-top:18px;">
+  el.innerHTML=`<div class="grid ${resumo.saldoAbertura?'grid-4':'grid-3'}" style="margin-top:18px;">
+    ${resumo.saldoAbertura?`<div class="card stat-card" style="margin:0;background:#f8f6ef;"><div class="num" style="color:var(--royal-deep);">${resumo.saldoAbertura}</div><div class="label">Saldo transportado inicial</div></div>`:''}
     <div class="card stat-card" style="margin:0;background:#f7f9fd;"><div class="num" style="color:var(--royal-dark);">${resumo.entradas}</div><div class="label">Valor total de entradas</div></div>
     <div class="card stat-card" style="margin:0;background:#fdf7f7;"><div class="num" style="color:var(--red-dark);">${resumo.saidas}</div><div class="label">Valor total de saídas</div></div>
     <div class="card stat-card" style="margin:0;background:#fffaf0;border-color:#d7ba55;"><div class="num" style="color:var(--royal-deep);">${resumo.saldo}</div><div class="label">Valor a transportar</div></div>
@@ -6024,6 +6138,9 @@ function dentroIntervalo(dataISOouBR, inicio, fim){
   if(fim && iso > fim) return false;
   return true;
 }
+function normalizarEntidadeFinanceira(valor){
+  return String(valor||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-PT').replace(/[^a-z0-9]/g,'');
+}
 function lancamentosFinanceirosFiltrados(){
   const ft=document.getElementById('rel-fin-tipo')?.value||'Todos';
   const rubrica=document.getElementById('rel-fin-rubrica')?.value||'Todas';
@@ -6033,9 +6150,10 @@ function lancamentosFinanceirosFiltrados(){
   const dept=document.getElementById('rel-dept')?.value||'todos';
   return FINANCEIRO.lancamentos.filter(l=>{
     const categoria=normalizarRubricaFinanceira(categoriaLancamento(l),l.tipo);
-    const nome=l.fornecedor||l.beneficiario||'Não identificado';
+    const entidadeNormalizada=normalizarEntidadeFinanceira(entidade);
+    const correspondeEntidade=entidade==='Todas'||normalizarEntidadeFinanceira(l.fornecedor)===entidadeNormalizada||normalizarEntidadeFinanceira(l.beneficiario)===entidadeNormalizada;
     return (ft==='Todos'||l.tipo===ft) && (rubrica==='Todas'||categoria===rubrica) &&
-      (entidade==='Todas'||nome===entidade) && (dept==='todos'||l.departamento===dept) && dentroIntervalo(l.data,ini,fim);
+      correspondeEntidade && (dept==='todos'||l.departamento===dept) && dentroIntervalo(l.data,ini,fim);
   });
 }
 function resumoLancamentosFinanceiros(lancamentos){
@@ -6088,6 +6206,37 @@ function getReportData(){
     return {
       title:'Razão Financeiro Detalhado',
       headers:['Data','Departamento','Rubrica / categoria','Entidade','Descrição','Tipo','Valor'],
+      rows,
+      summary:resumoLancamentosFinanceiros(lancamentos)
+    };
+  }
+  if(tipo==='movimento-mensal'){
+    const mes=document.getElementById('rel-fin-mes')?.value||RELATORIO_FILTROS.financeiroMes||mesFinanceiroPadrao();
+    const info=movimentoFinanceiroMes(mes),fechado=mesFinanceiroFechado(mes);
+    const movimentos=[...info.movimentos].sort((a,b)=>{const iso=l=>{const [d,m,y]=l.data.split('/');return `${y}-${m}-${d}`};return iso(a).localeCompare(iso(b));});
+    return {title:`Movimento Financeiro — ${rotuloMesFinanceiro(mes)}${fechado?' · ENCERRADO':' · EM CONFERÊNCIA'}`,headers:['Data','Departamento','Rubrica / categoria','Entidade','Descrição','Tipo','Valor'],rows:movimentos.map(l=>[l.data,entityDeptLabel(l.departamento),normalizarRubricaFinanceira(categoriaLancamento(l),l.tipo),l.fornecedor||l.beneficiario||'Não identificado',l.desc,l.tipo,l.valor]),summary:{saldoAbertura:formatEuro(info.saldoAbertura),entradas:formatEuro(info.entradas),saidas:formatEuro(info.saidas),saldo:formatEuro(info.saldoEncerramento)}};
+  }
+  if(tipo==='extrato-entidade'){
+    const entidade=document.getElementById('rel-fin-entidade')?.value||'Todas';
+    const lancamentos=lancamentosFinanceirosFiltrados().sort((a,b)=>{
+      const data=l=>{const [d,m,y]=String(l.data||'').split('/');return `${y||'0000'}-${m||'00'}-${d||'00'}`};
+      return data(a).localeCompare(data(b));
+    });
+    const rows=lancamentos.map(l=>[
+      l.data,
+      entityDeptLabel(l.departamento),
+      normalizarRubricaFinanceira(categoriaLancamento(l),l.tipo),
+      l.fornecedor||'—',
+      l.beneficiario||'—',
+      l.desc,
+      l.tipo,
+      l.valor,
+      l.reciboId||'—',
+      l.criadoPor||'—'
+    ]);
+    return {
+      title:entidade==='Todas'?'Extrato Financeiro Detalhado por Entidade':`Extrato Financeiro — ${entidade}`,
+      headers:['Data','Departamento','Rubrica / categoria','Fornecedor / pagador','Beneficiário','Descrição','Tipo','Valor','Recibo','Registado por'],
       rows,
       summary:resumoLancamentosFinanceiros(lancamentos)
     };
@@ -6181,10 +6330,10 @@ function carregarXLSX(){
 async function exportRelatorio(formato){
   if(!exigirPermissao('relatorios','exportar')) return;
   const {title, headers, rows, summary} = getReportData();
-  if(!rows.length){ showToast('Sem dados para os filtros selecionados.'); return; }
+  if(!rows.length && RELATORIO_FILTROS.tipo!=='movimento-mensal'){ showToast('Sem dados para os filtros selecionados.'); return; }
   const subtitle = 'Igreja Evangélica Assembleia de Deus Ministério de Santos — Congregação Braga · Gerado em ' + new Date().toLocaleDateString('pt-PT');
   try{ await carregarXLSX(); }catch(error){ showToast(error.message); return; }
-  const resumo = summary ? [[],['RESUMO FINANCEIRO'],['Valor total de entradas',summary.entradas],['Valor total de saídas',summary.saidas],['Valor a transportar',summary.saldo]] : [];
+  const resumo = summary ? [[],['RESUMO FINANCEIRO'],...(summary.saldoAbertura?[['Saldo transportado inicial',summary.saldoAbertura]]:[]),['Valor total de entradas',summary.entradas],['Valor total de saídas',summary.saidas],['Valor a transportar',summary.saldo]] : [];
   const ws = XLSX.utils.aoa_to_sheet([[title],[subtitle],[],headers, ...rows, ...resumo]);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Relatório');
@@ -6195,7 +6344,7 @@ async function exportRelatorio(formato){
 function verRelatorio(){
   const tipoRelatorio=document.getElementById('rel-tipo').value;
   const {title, headers, rows, summary} = getReportData();
-  if(!rows.length){ showToast('Sem dados para os filtros selecionados. Verifique se os filtros escolhidos correspondem a lançamentos existentes.'); return; }
+  if(!rows.length && tipoRelatorio!=='movimento-mensal'){ showToast('Sem dados para os filtros selecionados. Verifique se os filtros escolhidos correspondem a lançamentos existentes.'); return; }
   const logoSrc = document.querySelector('.side-brand img') ? document.querySelector('.side-brand img').src : '';
   const hoje = new Date().toLocaleString('pt-PT');
 
@@ -6217,7 +6366,8 @@ function verRelatorio(){
         ${rows.map(r=>`<tr>${r.map(c=>`<td>${c===undefined||c===''?'—':c}</td>`).join('')}</tr>`).join('')}
       </tbody>
     </table>
-    ${summary?`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:20px 0 8px;page-break-inside:avoid;">
+    ${summary?`<div style="display:grid;grid-template-columns:repeat(${summary.saldoAbertura?4:3},1fr);gap:10px;margin:20px 0 8px;page-break-inside:avoid;">
+      ${summary.saldoAbertura?`<div style="border:1px solid #ccd4e5;border-radius:8px;padding:12px;background:#f8f6ef;"><div style="font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:#4a5578;margin-bottom:5px;">Saldo transportado inicial</div><strong style="font-size:17px;color:#071b50;">${summary.saldoAbertura}</strong></div>`:''}
       <div style="border:1px solid #ccd4e5;border-radius:8px;padding:12px;background:#f7f9fd;"><div style="font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:#4a5578;margin-bottom:5px;">Valor total de entradas</div><strong style="font-size:17px;color:#153b97;">${summary.entradas}</strong></div>
       <div style="border:1px solid #ccd4e5;border-radius:8px;padding:12px;background:#fdf7f7;"><div style="font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:#4a5578;margin-bottom:5px;">Valor total de saídas</div><strong style="font-size:17px;color:#a7192e;">${summary.saidas}</strong></div>
       <div style="border:1px solid #d7ba55;border-radius:8px;padding:12px;background:#fffaf0;"><div style="font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:#4a5578;margin-bottom:5px;">Valor a transportar</div><strong style="font-size:17px;color:#071b50;">${summary.saldo}</strong></div>
@@ -7001,7 +7151,7 @@ async function cmsDuplicar(key){if(!exigirPermissao('site-publico','inserir'))re
 <script>
 /* Segurança operacional v88 — diagnóstico, backup cloud, PWA e imagens otimizadas. */
 function storeEuro(value){return new Intl.NumberFormat('pt-PT',{style:'currency',currency:'EUR'}).format(Number(value)||0)}
-async function renderAdmsStore(){const el=document.getElementById('main-content');try{const[{data:products,error:productError},{data:orders,error:orderError}]=await Promise.all([admsSupabase.from('store_products').select('*').order('ordem').order('nome'),admsSupabase.from('store_orders').select('*,store_order_items(*)').order('created_at',{ascending:false}).limit(100)]);if(productError)throw productError;if(orderError)throw orderError;const ativos=(products||[]).filter(x=>x.ativo).length,novos=(orders||[]).filter(x=>x.estado==='novo').length,total=(orders||[]).filter(x=>!['cancelado'].includes(x.estado)).reduce((sum,x)=>sum+Number(x.total||0),0);el.innerHTML=`<div class="topbar"><div><div class="breadcrumb">Site público · Comércio</div><h1>ADMS Store</h1></div><a class="access-pill" href="/#store" target="_blank" rel="noopener">Abrir loja ↗</a></div>${ruleDivider()}<div class="kpi-grid"><div class="kpi"><span>Produtos ativos</span><strong>${ativos}</strong></div><div class="kpi"><span>Novas encomendas</span><strong>${novos}</strong></div><div class="kpi"><span>Valor encomendado</span><strong>${storeEuro(total)}</strong></div></div><article class="card" style="margin:20px 0"><h2>Novo produto</h2><div class="form-row"><div><label>Nome</label><input id="store-admin-name" maxlength="120"></div><div><label>Categoria</label><input id="store-admin-category" value="Artigos cristãos" maxlength="80"></div></div><label>Descrição</label><textarea id="store-admin-description" rows="3" maxlength="1000"></textarea><div class="form-row"><div><label>Preço (€)</label><input id="store-admin-price" type="number" min="0" step="0.01"></div><div><label>Stock</label><input id="store-admin-stock" type="number" min="0" step="1" value="0"></div></div><label>URL da imagem</label><input id="store-admin-image" type="url" placeholder="https://..."><button class="btn btn-primary" style="width:auto;margin-top:14px" onclick="storeGuardarProduto()">Adicionar produto</button></article><h2>Produtos</h2><div class="grid3">${(products||[]).map(p=>`<article class="card"><div class="breadcrumb">${admsEsc(p.categoria||'Produto')}</div><h3>${admsEsc(p.nome)}</h3><p>${admsEsc(p.descricao||'')}</p><p><b>${storeEuro(p.preco)}</b> · Stock: ${Number(p.stock)||0}</p><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-outline" style="width:auto" onclick="storeAlterarStock('${p.id}',${Number(p.stock)||0})">Ajustar stock</button><button class="btn btn-outline" style="width:auto" onclick="storeAlternarProduto('${p.id}',${p.ativo?'false':'true'})">${p.ativo?'Retirar':'Publicar'}</button></div></article>`).join('')||'<div class="card">Nenhum produto.</div>'}</div><h2 style="margin-top:28px">Encomendas</h2><div class="card" style="overflow:auto"><table><thead><tr><th>Referência</th><th>Cliente</th><th>Itens</th><th>Total</th><th>Estado</th><th>Data</th></tr></thead><tbody>${(orders||[]).map(o=>`<tr><td><b>${admsEsc(o.referencia)}</b></td><td>${admsEsc(o.cliente_nome)}<br><small>${admsEsc(o.cliente_telefone)} · ${admsEsc(o.cliente_email||'')}</small></td><td>${(o.store_order_items||[]).map(i=>`${Number(i.quantidade)}× ${admsEsc(i.produto_nome)}`).join('<br>')}</td><td>${storeEuro(o.total)}</td><td><select onchange="storeMudarEstado('${o.id}',this.value)">${['novo','confirmado','pago','preparacao','concluido','cancelado'].map(s=>`<option value="${s}" ${o.estado===s?'selected':''}>${s}</option>`).join('')}</select></td><td>${new Date(o.created_at).toLocaleString('pt-PT',{timeZone:'Europe/Lisbon'})}</td></tr>`).join('')||'<tr><td colspan="6">Nenhuma encomenda.</td></tr>'}</tbody></table></div>`}catch(error){console.error(error);el.innerHTML=`<div class="card"><h2>ADMS Store indisponível</h2><p>Execute o SQL da versão 93 e tente novamente.</p></div>`}}
+async function renderAdmsStore(){const el=document.getElementById('main-content');try{const[{data:products,error:productError},{data:orders,error:orderError}]=await Promise.all([admsSupabase.from('store_products').select('*').order('ordem').order('nome'),admsSupabase.from('store_orders').select('*,store_order_items(*)').order('created_at',{ascending:false}).limit(100)]);if(productError)throw productError;if(orderError)throw orderError;const ativos=(products||[]).filter(x=>x.ativo).length,novos=(orders||[]).filter(x=>x.estado==='novo').length,total=(orders||[]).filter(x=>!['cancelado'].includes(x.estado)).reduce((sum,x)=>sum+Number(x.total||0),0);el.innerHTML=`<div class="topbar"><div><div class="breadcrumb">Site público · Comércio</div><h1>ADMS Store</h1></div><a class="access-pill" href="/store" target="_blank" rel="noopener">Abrir loja ↗</a></div>${ruleDivider()}<div class="kpi-grid"><div class="kpi"><span>Produtos ativos</span><strong>${ativos}</strong></div><div class="kpi"><span>Novas encomendas</span><strong>${novos}</strong></div><div class="kpi"><span>Valor encomendado</span><strong>${storeEuro(total)}</strong></div></div><article class="card" style="margin:20px 0"><h2>Novo produto</h2><div class="form-row"><div><label>Nome</label><input id="store-admin-name" maxlength="120"></div><div><label>Categoria</label><input id="store-admin-category" value="Artigos cristãos" maxlength="80"></div></div><label>Descrição</label><textarea id="store-admin-description" rows="3" maxlength="1000"></textarea><div class="form-row"><div><label>Preço (€)</label><input id="store-admin-price" type="number" min="0" step="0.01"></div><div><label>Stock</label><input id="store-admin-stock" type="number" min="0" step="1" value="0"></div></div><label>URL da imagem</label><input id="store-admin-image" type="url" placeholder="https://..."><button class="btn btn-primary" style="width:auto;margin-top:14px" onclick="storeGuardarProduto()">Adicionar produto</button></article><h2>Produtos</h2><div class="grid3">${(products||[]).map(p=>`<article class="card"><div class="breadcrumb">${admsEsc(p.categoria||'Produto')}</div><h3>${admsEsc(p.nome)}</h3><p>${admsEsc(p.descricao||'')}</p><p><b>${storeEuro(p.preco)}</b> · Stock: ${Number(p.stock)||0}</p><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-outline" style="width:auto" onclick="storeAlterarStock('${p.id}',${Number(p.stock)||0})">Ajustar stock</button><button class="btn btn-outline" style="width:auto" onclick="storeAlternarProduto('${p.id}',${p.ativo?'false':'true'})">${p.ativo?'Retirar':'Publicar'}</button></div></article>`).join('')||'<div class="card">Nenhum produto.</div>'}</div><h2 style="margin-top:28px">Encomendas</h2><div class="card" style="overflow:auto"><table><thead><tr><th>Referência</th><th>Cliente</th><th>Itens</th><th>Total</th><th>Estado</th><th>Data</th></tr></thead><tbody>${(orders||[]).map(o=>`<tr><td><b>${admsEsc(o.referencia)}</b></td><td>${admsEsc(o.cliente_nome)}<br><small>${admsEsc(o.cliente_telefone)} · ${admsEsc(o.cliente_email||'')}</small></td><td>${(o.store_order_items||[]).map(i=>`${Number(i.quantidade)}× ${admsEsc(i.produto_nome)}`).join('<br>')}</td><td>${storeEuro(o.total)}</td><td><select onchange="storeMudarEstado('${o.id}',this.value)">${['novo','confirmado','pago','preparacao','concluido','cancelado'].map(s=>`<option value="${s}" ${o.estado===s?'selected':''}>${s}</option>`).join('')}</select></td><td>${new Date(o.created_at).toLocaleString('pt-PT',{timeZone:'Europe/Lisbon'})}</td></tr>`).join('')||'<tr><td colspan="6">Nenhuma encomenda.</td></tr>'}</tbody></table></div>`}catch(error){console.error(error);el.innerHTML=`<div class="card"><h2>ADMS Store indisponível</h2><p>Execute o SQL da versão 93 e tente novamente.</p></div>`}}
 async function storeGuardarProduto(){if(!exigirPermissao('store','inserir'))return;const nome=document.getElementById('store-admin-name').value.trim(),preco=Number(document.getElementById('store-admin-price').value),stock=Math.floor(Number(document.getElementById('store-admin-stock').value));if(nome.length<2||preco<0||stock<0)return showToast('Preencha nome, preço e stock corretamente.');const row={nome,descricao:document.getElementById('store-admin-description').value.trim()||null,categoria:document.getElementById('store-admin-category').value.trim()||'Artigos cristãos',preco,stock,imagem_url:document.getElementById('store-admin-image').value.trim()||null,ativo:true,updated_at:new Date().toISOString()};const{error}=await admsSupabase.from('store_products').insert(row);if(error)return showToast('Não foi possível guardar o produto.');await logAction('store','Produto criado',nome);showToast('Produto publicado na ADMS Store.');renderAdmsStore()}
 async function storeAlterarStock(id,current){if(!exigirPermissao('store','editar'))return;const value=prompt('Novo stock disponível:',String(current));if(value===null)return;const stock=Math.floor(Number(value));if(!Number.isFinite(stock)||stock<0)return showToast('Stock inválido.');const{error}=await admsSupabase.from('store_products').update({stock,updated_at:new Date().toISOString()}).eq('id',id);if(error)return showToast('Não foi possível atualizar o stock.');showToast('Stock atualizado.');renderAdmsStore()}
 async function storeAlternarProduto(id,ativo){if(!exigirPermissao('store','editar'))return;const{error}=await admsSupabase.from('store_products').update({ativo,updated_at:new Date().toISOString()}).eq('id',id);if(error)return showToast('Não foi possível alterar o produto.');showToast(ativo?'Produto publicado.':'Produto retirado da loja.');renderAdmsStore()}

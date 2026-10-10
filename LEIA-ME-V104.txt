@@ -1,0 +1,51 @@
+ADMS BRAGA — VERSÃO 104
+========================
+
+NOVIDADE PRINCIPAL
+------------------
+O módulo Financeiro passa a trabalhar com movimentos mensais formais.
+
+FLUXO RECOMENDADO
+-----------------
+1. Entre em Financeiro.
+2. Na área "Fecho do movimento financeiro", escolha o mês terminado.
+3. Clique em "Conferir / emitir relatório".
+4. Confira lançamentos, entradas, saídas, saldo inicial e saldo a transportar.
+5. Exporte o Excel e/ou imprima o relatório para arquivo.
+6. Volte ao Financeiro e clique em "Encerrar movimento".
+7. Escreva ENCERRAR para confirmar a decisão definitiva.
+
+REGRAS IMPLEMENTADAS
+--------------------
+- Só é possível encerrar meses já terminados, segundo o horário de Lisboa.
+- O encerramento guarda o saldo inicial, entradas, saídas, saldo final,
+  quantidade e identificadores dos lançamentos, data e responsável.
+- O saldo final é transportado automaticamente como saldo inicial do mês seguinte.
+- O saldo transportado não é contabilizado como nova receita.
+- O mês encerrado e todos os períodos anteriores deixam de aceitar lançamentos,
+  correções, contas retroativas ou outras alterações financeiras pelo portal.
+- O encerramento não possui opção de reabertura na interface.
+- A ação fica registada no histórico de atividade.
+- O estado do encerramento é sincronizado no Supabase pelo módulo "fechamentos".
+
+RELATÓRIOS
+----------
+Foi adicionado "Financeiro — Movimento mensal e encerramento", com:
+- saldo transportado inicial;
+- total de entradas do mês;
+- total de saídas do mês;
+- saldo a transportar;
+- razão completa dos movimentos;
+- identificação de movimento encerrado ou em conferência;
+- exportação Excel, impressão e campos de assinatura.
+
+INSTALAÇÃO
+----------
+Publique a pasta completa na Vercel. Esta versão não exige novo SQL nem nova
+Edge Function. Depois do deploy, abra o portal numa janela anónima ou limpe o
+cache para garantir que a v104 foi carregada.
+
+ATENÇÃO
+-------
+Antes do primeiro encerramento real, faça uma cópia de segurança e confira o
+relatório mensal. O comando de encerramento foi concebido para ser definitivo.

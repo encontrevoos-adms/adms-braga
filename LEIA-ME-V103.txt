@@ -1,0 +1,37 @@
+ADMS BRAGA — VERSÃO 103
+========================
+
+RELATÓRIO FINANCEIRO POR ENTIDADE
+
+- Novo relatório: Financeiro — Extrato detalhado por entidade.
+- Atalho no módulo Financeiro: Extrato Pr. Adonias.
+- O atalho seleciona automaticamente Pr Adonias Alves da Silva.
+- O relatório pesquisa tanto o campo Fornecedor/Pagador como o campo Beneficiário.
+- A correção evita omitir valores cujo fornecedor e beneficiário sejam diferentes.
+
+INFORMAÇÕES APRESENTADAS
+
+- Data;
+- departamento;
+- rubrica ou categoria;
+- fornecedor ou pagador;
+- beneficiário;
+- descrição;
+- tipo de movimento;
+- valor;
+- número do recibo;
+- utilizador que efetuou o registo;
+- total de entradas, total de saídas e saldo.
+
+COMO EXTRAIR
+
+1. Abra o módulo Financeiro.
+2. Clique em Extrato Pr. Adonias.
+3. Confirme os filtros e, se necessário, indique o intervalo de datas.
+4. Utilize Visualizar / Imprimir para PDF ou Exportar Excel.
+
+PUBLICAÇÃO
+
+- Publique a pasta completa no projeto adms-braga da Vercel.
+- Não é necessário executar SQL.
+- Não é necessário alterar Edge Functions.

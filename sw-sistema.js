@@ -1,4 +1,4 @@
-// ADMS Braga v101: estudos públicos acessíveis, mantendo a proteção CAPTCHA.
+// ADMS Braga v104: encerramento mensal financeiro e períodos bloqueados.
 self.addEventListener('install',()=>self.skipWaiting());
 self.addEventListener('activate',event=>{
   event.waitUntil(
