@@ -1,0 +1,27 @@
+ADMS BRAGA — VERSÃO 102
+========================
+
+NOVIDADE PRINCIPAL
+- A ADMS Store passa a funcionar numa página exclusiva: /store
+- O menu e o rodapé do site levam diretamente à nova página.
+- A página inicial mantém apenas um convite visual para a loja.
+
+RECURSOS DA NOVA PÁGINA
+- Catálogo sincronizado com os produtos cadastrados no portal.
+- Pesquisa instantânea por nome, descrição ou categoria.
+- Filtro de categorias.
+- Carrinho persistente no navegador.
+- Formulário de pedido ligado ao fluxo public-store-order existente.
+- Layout responsivo para computador, tablet e telemóvel.
+- Acesso de retorno ao site público e ao portal.
+
+PUBLICAÇÃO
+1. Extraia o pacote completo.
+2. Publique todo o conteúdo no projeto do site público na Vercel.
+3. Aguarde Ready — Production.
+4. Abra /store numa janela anónima.
+
+BANCO DE DADOS
+- Não é necessário executar novo SQL.
+- Não é necessário substituir nenhuma Edge Function.
+- Os produtos continuam a ser cadastrados e geridos pelo portal.
