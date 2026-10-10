@@ -3971,6 +3971,12 @@ function movimentoFinanceiroMes(mes){
   const saldoAbertura=antes.entradas-antes.saidas;
   return {mes,movimentos,saldoAbertura,entradas:atual.entradas,saidas:atual.saidas,saldoEncerramento:saldoAbertura+atual.entradas-atual.saidas};
 }
+function totaisFinanceirosAcumuladosAte(mes){
+  const movimentos=FINANCEIRO.lancamentos.filter(l=>{const periodo=mesFinanceiroDaData(l.data);return periodo&&periodo<=mes;});
+  const entradas=movimentos.filter(l=>l.tipo==='Entrada').reduce((s,l)=>s+parseValorEuro(l.valor),0);
+  const saidas=movimentos.filter(l=>l.tipo==='Saída').reduce((s,l)=>s+parseValorEuro(l.valor),0);
+  return {entradas,saidas,saldo:entradas-saidas,quantidade:movimentos.length};
+}
 function mesesFinanceirosDisponiveis(){
   const meses=new Set(FINANCEIRO.lancamentos.map(l=>mesFinanceiroDaData(l.data)).filter(Boolean));
   const agora=new Date();
@@ -4013,11 +4019,9 @@ async function fecharMovimentoFinanceiro(mes){
 }
 
 function viewFinanceiro(){
-  const saldoInfo = calcularSaldo();
-  const totalEntradas = saldoInfo.entradas;
-  const totalSaidas = saldoInfo.saidas;
-  const total = totalEntradas + totalSaidas;
-  const inPct = total>0 ? Math.round((totalEntradas/total)*100) : 50;
+  const mesCorrente=mesAtualLisboa(),movimentoMes=movimentoFinanceiroMes(mesCorrente),acumulado=totaisFinanceirosAcumuladosAte(mesCorrente);
+  const totalEntradas=movimentoMes.entradas,totalSaidas=movimentoMes.saidas,total=totalEntradas+totalSaidas;
+  const inPct=total>0?Math.round((totalEntradas/total)*100):50;
   const deptsFin = DEPARTMENTS.filter(d=>d.id!=='pastoral');
 
   const totalPagarPendente = CONTAS_PAGAR.filter(c=>statusConta(c)!=='Pago').reduce((s,c)=>s+c.valor,0);
@@ -4032,10 +4036,12 @@ function viewFinanceiro(){
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="btn btn-outline" onclick="abrirExtratoEntidade('Pr Adonias Alves da Silva')">Extrato Pr. Adonias</button><button class="btn btn-outline" onclick="abrirRelatorioTipo('financeiro')">Imprimir relatório</button><span class="access-pill">${ICON.financeiro} Restrito · Pastor Sénior / Tesoureiro</span></div>
     </div>
     ${ruleDivider()}
-    <div class="grid grid-3">
-      <div class="card stat-card"><div class="icon-badge" style="background:#E7ECFB;color:var(--royal-dark);">${ICON.financeiro}</div><div class="num">${formatEuro(saldoInfo.saldo)}</div><div class="label">Saldo atual (calculado dos lançamentos)</div></div>
-      <div class="card stat-card"><div class="icon-badge" style="background:#E4F5EC;color:var(--ok);">${ICON.financeiro}</div><div class="num">${formatEuro(totalEntradas)}</div><div class="label">Entradas registadas</div></div>
-      <div class="card stat-card"><div class="icon-badge" style="background:#FBE7E9;color:var(--red-dark);">${ICON.financeiro}</div><div class="num">${formatEuro(totalSaidas)}</div><div class="label">Saídas registadas</div></div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(235px,1fr));gap:16px;">
+      <div class="card stat-card"><div class="icon-badge" style="background:#E7ECFB;color:var(--royal-dark);">${ICON.financeiro}</div><div class="num">${formatEuro(acumulado.saldo)}</div><div class="label">Saldo financeiro atual</div><div class="delta up">Inclui o saldo transportado dos meses encerrados</div></div>
+      <div class="card stat-card"><div class="icon-badge" style="background:#E4F5EC;color:var(--ok);">${ICON.financeiro}</div><div class="num">${formatEuro(totalEntradas)}</div><div class="label">Entradas de ${rotuloMesFinanceiro(mesCorrente)}</div></div>
+      <div class="card stat-card"><div class="icon-badge" style="background:#FBE7E9;color:var(--red-dark);">${ICON.financeiro}</div><div class="num">${formatEuro(totalSaidas)}</div><div class="label">Saídas de ${rotuloMesFinanceiro(mesCorrente)}</div></div>
+      <div class="card stat-card"><div class="icon-badge" style="background:#E4F5EC;color:var(--ok);">${ICON.receivable}</div><div class="num">${formatEuro(acumulado.entradas)}</div><div class="label">Entrada acumulada total</div><div class="delta up">Até ${rotuloMesFinanceiro(mesCorrente)}</div></div>
+      <div class="card stat-card"><div class="icon-badge" style="background:#FBE7E9;color:var(--red-dark);">${ICON.payable}</div><div class="num">${formatEuro(acumulado.saidas)}</div><div class="label">Saída acumulada total</div><div class="delta warn">Até ${rotuloMesFinanceiro(mesCorrente)}</div></div>
     </div>
     ${blocoFechamentoFinanceiro()}
     <div class="grid grid-2" style="margin-top:16px;">
@@ -4043,7 +4049,7 @@ function viewFinanceiro(){
       <div class="card stat-card"><div class="icon-badge" style="background:#E7ECFB;color:var(--royal-dark);">${ICON.receivable}</div><div class="num">${formatEuro(previsaoDizimos)}</div><div class="label">Previsão de dízimos e ofertas (estimativa)</div><div class="delta up">${dizimistas} membro(s) dizimista(s) cadastrado(s)</div></div>
     </div>
     <div class="card" style="margin-top:16px;">
-      <p style="margin:0 0 4px 0; font-size:12px; color:var(--ink-soft); font-weight:700; text-transform:uppercase; letter-spacing:.5px;">Entradas vs. saídas</p>
+      <p style="margin:0 0 4px 0; font-size:12px; color:var(--ink-soft); font-weight:700; text-transform:uppercase; letter-spacing:.5px;">Entradas vs. saídas — ${rotuloMesFinanceiro(mesCorrente)}</p>
       <div class="balance-bar"><div class="in" style="width:${inPct}%;"></div><div class="out" style="width:${100-inPct}%;"></div></div>
       <div style="display:flex; gap:16px; margin-top:8px; font-size:11.5px; color:var(--ink-soft);">
         <span>🔵 Entradas ${inPct}%</span><span>🔴 Saídas ${100-inPct}%</span>
@@ -6867,7 +6873,7 @@ async function admsTerminarSessaoAdministrativa(mensagem){
   session=null;admsCloudProfile=null;document.body.classList.remove('portal-active');
   try{localStorage.removeItem(SESSAO_KEY);localStorage.removeItem(ESTADO_KEY)}catch(e){}
   alert(mensagem||'Esta sessão foi encerrada pela administração.');
-  location.replace('/sistema?v=106');
+  location.replace('/sistema?v=107');
 }
 async function admsVerificarSessaoAdministrada(){
   if(admsSessionGuardBusy||!session?.cloud||!admsSupabase)return;
@@ -6909,7 +6915,7 @@ async function handleLogout(){
   document.body.classList.remove('portal-active');
   session=null; admsCloudProfile=null; pendingLoginKey=null; pendingLoginLeaderId=null; currentProfileRef=null;
   try{ localStorage.removeItem(SESSAO_KEY);localStorage.removeItem(ESTADO_KEY); }catch(e){}
-  location.replace('/sistema?v=106');
+  location.replace('/sistema?v=107');
 }
 
 admsSupabase?.auth.onAuthStateChange((event)=>{
@@ -6982,7 +6988,7 @@ if(paramsUrl.get('form') === 'cadastro'){
 
 // Mantém a instalação como aplicação sem guardar páginas ou dados sensíveis em cache.
 if('serviceWorker' in navigator){
-    window.addEventListener('load',()=>navigator.serviceWorker.register('/sw-sistema.js?v=106').catch(()=>{}));
+    window.addEventListener('load',()=>navigator.serviceWorker.register('/sw-sistema.js?v=107').catch(()=>{}));
 }
 if(window.caches){
   caches.keys().then(keys=>Promise.all(keys.map(key=>caches.delete(key)))).catch(()=>{});
@@ -7108,7 +7114,7 @@ async function admsDecidirSolicitacao(id,acao,botao){
  try{
   const {data:{session:cloudSession},error:sessionError}=await admsSupabase.auth.getSession();
   if(sessionError||!cloudSession?.access_token)throw new Error('Sessão expirada. Termine a sessão e entre novamente.');
-  const resposta=await fetch(`${ADMS_CLOUD.url}/functions/v1/gerir-solicitacoes-acesso`,{method:'POST',headers:{'Content-Type':'application/json','apikey':ADMS_CLOUD.publishableKey,'Authorization':`Bearer ${cloudSession.access_token}`},body:JSON.stringify({action:acao,requestId:id,profileRole:perfil,deptIds,motivo,redirectTo:`${location.origin}/sistema?v=106`})});
+  const resposta=await fetch(`${ADMS_CLOUD.url}/functions/v1/gerir-solicitacoes-acesso`,{method:'POST',headers:{'Content-Type':'application/json','apikey':ADMS_CLOUD.publishableKey,'Authorization':`Bearer ${cloudSession.access_token}`},body:JSON.stringify({action:acao,requestId:id,profileRole:perfil,deptIds,motivo,redirectTo:`${location.origin}/sistema?v=107`})});
   const texto=await resposta.text();let data={};try{data=texto?JSON.parse(texto):{}}catch{throw new Error(`A função respondeu com conteúdo inválido (HTTP ${resposta.status}).`)}
   if(!resposta.ok||!data?.ok)throw new Error(data?.error||`Não foi possível concluir a operação (HTTP ${resposta.status}).`);
   feedback.className='access-request-feedback success';feedback.textContent=data.message||'Operação concluída.';
@@ -7278,6 +7284,30 @@ function cmsPreviewNovoV87(){const file=document.getElementById('cms-new-file').
 async function cmsArquivar(key){if(!exigirPermissao('site-publico','arquivar')||!confirm('Arquivar este conteúdo e retirá-lo do site?'))return;const{error}=await admsSupabase.from('site_conteudos').update({status:'arquivado',ativo:false,editor_nome:session?.label||null,updated_at:new Date().toISOString()}).eq('chave',key);if(error)return showToast('Não foi possível arquivar.');showToast('Conteúdo arquivado.');renderSitePublico()}
 async function cmsDesarquivar(key){if(!exigirPermissao('site-publico','editar'))return;const{error}=await admsSupabase.from('site_conteudos').update({status:'rascunho',ativo:false,editor_nome:session?.label||null,updated_at:new Date().toISOString()}).eq('chave',key);if(error)return showToast('Não foi possível restaurar.');showToast('Conteúdo restaurado como rascunho.');renderSitePublico()}
 async function cmsDuplicar(key){if(!exigirPermissao('site-publico','inserir'))return;const{data,error}=await admsSupabase.from('site_conteudos').select('*').eq('chave',key).single();if(error||!data)return showToast('Conteúdo indisponível.');delete data.id;delete data.created_at;delete data.updated_by;delete data.created_by;data.chave=cmsNovaChave(cmsTypeFromKey(key));data.titulo=`${data.titulo||'Conteúdo'} — cópia`;data.status='rascunho';data.ativo=false;data.destaque=false;data.publicar_em=null;data.expirar_em=null;data.autor_nome=session?.label||null;data.editor_nome=session?.label||null;data.updated_at=new Date().toISOString();const result=await admsSupabase.from('site_conteudos').insert(data);if(result.error)return showToast('Não foi possível duplicar.');showToast('Cópia criada como rascunho.');renderSitePublico()}
+
+/* v107 — múltiplos materiais no Gestor Editorial. */
+const renderSitePublicoV106=renderSitePublico;
+renderSitePublico=async function(){
+ await renderSitePublicoV106();
+ const input=document.getElementById('cms-new-file');
+ if(input){input.multiple=true;input.setAttribute('aria-describedby','cms-new-file-help');const label=input.closest('div')?.querySelector('label');if(label)label.textContent='Arquivos (pode selecionar vários)';if(!document.getElementById('cms-new-file-help'))input.insertAdjacentHTML('afterend','<small id="cms-new-file-help" style="display:block;margin-top:6px;color:var(--ink-soft)">Cada arquivo será publicado como um material independente no menu escolhido.</small>')}
+};
+
+cmsCriarV87=async function(){
+ if(!exigirPermissao('site-publico','inserir'))return;
+ const type=document.getElementById('cms-new-type').value,files=[...(document.getElementById('cms-new-file').files||[])],status=document.getElementById('cms-new-status').value,url=document.getElementById('cms-new-url').value.trim(),tituloBase=document.getElementById('cms-new-titulo').value.trim();
+ try{
+  if(url&&!admsUrlSegura(url))throw new Error('O link deve começar por https:// ou http://');
+  const {data:{user}}=await admsSupabase.auth.getUser(),publicar_em=cmsValidarAgenda(status,document.getElementById('cms-new-publicar').value),expirar_em=cmsIso('cms-new-expirar'),ordemBase=Number(document.getElementById('cms-new-ordem').value)||0,destaque=document.getElementById('cms-new-destaque').checked,subtitulo=document.getElementById('cms-new-subtitulo').value.trim()||null,conteudo=document.getElementById('cms-new-conteudo').value.trim()||null;
+  const entradas=files.length?files:[null],rows=[];
+  for(let i=0;i<entradas.length;i++){
+   const file=entradas[i],imagem_url=file?await cmsUpload(file,type):null,nomeArquivo=file?file.name.replace(/\.[^.]+$/,'').replace(/[_-]+/g,' ').trim():'';
+   rows.push({chave:cmsNovaChave(type),titulo:(files.length>1?[tituloBase,nomeArquivo].filter(Boolean).join(' — '):tituloBase||nomeArquivo)||null,subtitulo,conteudo,url:i===0?(url||null):null,imagem_url, status,publicar_em,expirar_em,ordem:ordemBase+i,destaque:i===0&&destaque,ativo:status!=='rascunho',created_by:user?.id||null,updated_by:user?.id||null,autor_nome:session?.label||null,editor_nome:session?.label||null,updated_at:new Date().toISOString()});
+  }
+  const {error}=await admsSupabase.from('site_conteudos').insert(rows);if(error)throw error;
+  showToast(rows.length>1?`${rows.length} materiais guardados e organizados no menu.`:'Conteúdo guardado.');renderSitePublico();
+ }catch(error){console.error(error);showToast(error.message||'Não foi possível guardar os materiais.')}
+};
 </script>
 <script>
 /* Segurança operacional v88 — diagnóstico, backup cloud, PWA e imagens otimizadas. */

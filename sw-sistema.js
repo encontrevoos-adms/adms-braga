@@ -1,4 +1,4 @@
-// ADMS Braga v106: gestão centralizada de acessos e sessões dos membros.
+// ADMS Braga v108: indicadores financeiros mensais e acumulados.
 self.addEventListener('install',()=>self.skipWaiting());
 self.addEventListener('activate',event=>{
   event.waitUntil(

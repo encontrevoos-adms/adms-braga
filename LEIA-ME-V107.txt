@@ -1,0 +1,35 @@
+ADMS BRAGA — VERSÃO 107
+MÚLTIPLOS MATERIAIS NOS MENUS DO SITE
+
+MELHORIAS
+
+1. Os cartões Estudo, Devocional e Biblioteca agora são inteiramente clicáveis.
+   O cursor muda de aparência, o cartão ganha destaque e pode ser aberto por
+   clique, toque, tecla Enter ou barra de espaço.
+
+2. Cada cartão abre uma coleção com todos os materiais publicados naquela área,
+   em vez de abrir somente o conteúdo mais recente.
+
+3. No Portal > Gestor Editorial do Site, o campo Arquivos aceita seleção múltipla.
+   Cada arquivo selecionado gera um material independente no menu escolhido.
+
+4. Ao enviar vários arquivos de uma vez:
+   - o nome do arquivo ajuda a formar o título de cada material;
+   - a ordem é atribuída sequencialmente;
+   - todos mantêm o mesmo estado editorial e período de publicação;
+   - o primeiro pode permanecer como conteúdo em destaque.
+
+PUBLICAÇÃO
+
+Esta versão não exige novo SQL nem nova Edge Function.
+Publique a pasta completa no projeto do site/portal na Vercel e teste numa
+janela anónima após o estado Ready — Production.
+
+TESTE RECOMENDADO
+
+1. Aceda a Conteúdo do Site.
+2. Escolha Estudo bíblico, Devocional ou Biblioteca.
+3. Selecione dois ou mais PDFs/imagens no campo Arquivos.
+4. Publique o conteúdo.
+5. No site público, passe o cursor sobre o respetivo cartão e clique.
+6. Confirme que a lista apresenta todos os materiais enviados.

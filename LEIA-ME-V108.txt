@@ -1,0 +1,33 @@
+ADMS BRAGA — VERSÃO 108
+INDICADORES FINANCEIROS MENSAIS E ACUMULADOS
+
+ALTERAÇÕES
+
+1. O cabeçalho do Financeiro separa claramente o mês corrente do histórico.
+
+2. Indicadores operacionais do mês corrente:
+   - Entradas do mês;
+   - Saídas do mês;
+   - comparação Entradas vs. Saídas somente do mês corrente.
+
+3. Indicadores históricos:
+   - Saldo financeiro atual, incluindo os saldos transportados;
+   - Entrada acumulada total;
+   - Saída acumulada total.
+
+4. Após o encerramento mensal, a tabela continua automaticamente no mês
+   corrente. Os movimentos encerrados permanecem acessíveis pelos filtros e
+   relatórios, mas não contaminam os indicadores operacionais do novo mês.
+
+REGRAS DE CÁLCULO
+
+- Entradas e saídas mensais consideram apenas lançamentos cuja data pertence
+  ao mês corrente segundo o horário de Lisboa.
+- Totais acumulados consideram todos os movimentos até ao mês corrente.
+- Saldo atual = Entrada acumulada total - Saída acumulada total.
+- Lançamentos futuros não entram antecipadamente nos valores acumulados.
+
+PUBLICAÇÃO
+
+Não é necessário executar SQL nem atualizar Edge Functions.
+Publique a pasta completa da versão 108 na Vercel.
