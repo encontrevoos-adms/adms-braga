@@ -1,4 +1,4 @@
-// ADMS Braga v105: lançamentos do mês corrente e filtros por coluna.
+// ADMS Braga v106: gestão centralizada de acessos e sessões dos membros.
 self.addEventListener('install',()=>self.skipWaiting());
 self.addEventListener('activate',event=>{
   event.waitUntil(

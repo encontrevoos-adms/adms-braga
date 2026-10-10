@@ -2595,7 +2595,7 @@ function renderModule(){
     renderRelFilters();
     return;
   }
-  if(currentModule==='acessos'){ if(!canAccessGestaoAcessos()) return el.innerHTML=viewLocked('Gestão de Acessos'); el.innerHTML=viewAcessos(); setTimeout(renderSolicitacoesAcesso,0); return; }
+  if(currentModule==='acessos'){ if(!canAccessGestaoAcessos()) return el.innerHTML=viewLocked('Gestão de Acessos'); el.innerHTML=viewAcessos(); setTimeout(renderSolicitacoesAcesso,0); setTimeout(renderUtilizadoresAcesso,0); return; }
   if(currentModule==='permissoes'){ if(!canManagePermissions()) return el.innerHTML=viewLocked('Permissões por Perfil'); el.innerHTML=viewPermissoes(); return; }
   if(currentModule==='auditoria') return el.innerHTML = canAccessAuditoria()? viewAuditoria() : viewLocked('Registo de Atividade');
   if(currentModule==='seguranca-operacional'){ if(!isMaster()) return el.innerHTML=viewLocked('Segurança e Backup'); el.innerHTML=viewSegurancaOperacional(); setTimeout(()=>{executarDiagnosticoOperacional();atualizarLembreteBackupV89();},0); return; }
@@ -3783,7 +3783,7 @@ function renderRHTable(tab){
               <span style="color:var(--royal-dark);font-weight:700;cursor:pointer;font-size:12px;" onclick="openPessoaModal('${tab}',${i})">Ver perfil</span>
               <span style="color:var(--royal);font-weight:700;cursor:pointer;font-size:12px;" onclick="editarPessoa('${tab}',${i})">Editar</span>
               <span style="color:var(--ink-soft);font-weight:700;cursor:pointer;font-size:12px;" onclick="imprimirFichaPessoa('${tab}',${i})">Imprimir ficha</span>
-              ${tab==='membros'?`<span style="color:var(--gold);font-weight:700;cursor:pointer;font-size:12px;" onclick="verCartaoMembro(${i})">Cartão</span>`:`<span style="color:var(--ok);font-weight:700;cursor:pointer;font-size:12px;" onclick="tornarMembro('${tab}',${i})">Tornar membro</span>`}
+              ${tab==='membros'?`<span style="color:var(--gold);font-weight:700;cursor:pointer;font-size:12px;" onclick="verCartaoMembro(${i})">Cartão</span><span style="color:var(--red-dark);font-weight:700;cursor:pointer;font-size:12px;" onclick="openPessoaModal('membros',${i});carregarAcessoNoPerfilMembro(${i})">Acesso ao portal</span>`:`<span style="color:var(--ok);font-weight:700;cursor:pointer;font-size:12px;" onclick="tornarMembro('${tab}',${i})">Tornar membro</span>`}
             </td>
           </tr>`).join('')}
         </tbody>
@@ -3812,12 +3812,26 @@ function openPessoaModal(tipo,index){
     ${row('Género',p.genero)} ${row('Estado civil',p.estadoCivil)} ${row('Morada',p.morada)} ${row('Departamento',p.dept)}
     ${row('Profissão',p.profissao)} ${row('Escolaridade',p.escolaridade)} ${row('Membro desde',p.dataMembresia?formatDate(p.dataMembresia):'')}
     ${row('Estado da membresia',p.estadoMembresia)} ${row('Notas',p.notas)}
+    ${tipo==='membros'?'<div id="membro-access-control" style="margin-top:16px"><div class="hint-box">Abra “Acesso ao portal” para consultar ou gerir a credencial deste membro.</div></div>':''}
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:18px;"><button class="btn btn-outline" onclick="closeMemberModal();editarPessoa('${tipo}',${index})">Editar perfil</button><button class="btn btn-outline" onclick="imprimirFichaPessoa('${tipo}',${index})">Imprimir ficha</button>${tipo!=='membros'?`<button class="btn btn-primary" style="width:auto;margin-top:0;" onclick="closeMemberModal();tornarMembro('${tipo}',${index})">Tornar membro</button>`:''}</div>`;
   document.getElementById('member-modal-title').textContent=p.nome;
   document.querySelector('#member-modal-overlay .sub').textContent='Perfil de '+(tipo==='membros'?'membro':tipo==='congregados'?'congregado':'visitante');
   document.getElementById('member-modal-overlay').classList.add('show');
 }
-function closeMemberModal(){document.getElementById('member-modal-overlay').classList.remove('show');}
+let RH_ACCESS_MEMBER_INDEX=null;
+function closeMemberModal(){document.getElementById('member-modal-overlay').classList.remove('show');RH_ACCESS_MEMBER_INDEX=null;}
+
+async function carregarAcessoNoPerfilMembro(index){
+ const box=document.getElementById('membro-access-control'),m=PESSOAS.membros[index];if(!box||!m?._cloudId)return;
+ RH_ACCESS_MEMBER_INDEX=index;
+ box.innerHTML='<div class="hint-box">A consultar a credencial no servidor…</div>';
+ const {data:p,error}=await admsSupabase.from('profiles').select('id,nome,role,cargo,ativo,access_status,access_reason,access_changed_at,access_expires_at,sessions_revoked_at').eq('membro_id',m._cloudId).maybeSingle();
+ if(error){box.innerHTML='<div class="access-request-feedback error" style="display:block">Não foi possível consultar o acesso. Confirme o SQL da versão 106.</div>';return}
+ if(!p){box.innerHTML='<div class="hint-box"><strong>Sem acesso ao portal.</strong><br>Este membro ainda não possui uma credencial aprovada. O cadastro e o número de membro permanecem válidos.</div>';return}
+ const estado=p.access_status||((p.ativo===false)?'suspenso':'ativo'),protegido=p.role==='master';
+ let acoes=protegido?'<span class="tag tag-blue">Conta institucional protegida</span>':estado==='revogado'?'<span class="tag tag-red">Credencial revogada definitivamente</span>':estado==='suspenso'?`<button class="btn btn-primary" style="width:auto" onclick="gerirAcessoUtilizador('${p.id}','reativar',this)">Reativar acesso</button>`:`<button class="btn btn-outline" style="width:auto" onclick="gerirAcessoUtilizador('${p.id}','encerrar_sessoes',this)">Encerrar sessões</button><button class="btn btn-outline" style="width:auto" onclick="gerirAcessoUtilizador('${p.id}','suspender',this)">Suspender</button><button class="btn btn-red" style="width:auto" onclick="gerirAcessoUtilizador('${p.id}','revogar',this)">Revogar</button>`;
+ box.innerHTML=`<article class="access-request-card"><div class="access-request-head"><div><h4>Acesso ao portal</h4><div class="access-request-meta"><strong>Estado:</strong> ${admsEsc(estado)} · ${admsEsc(p.cargo||p.role)}${p.access_reason?`<br><strong>Motivo:</strong> ${admsEsc(p.access_reason)}`:''}${p.access_expires_at?`<br><strong>Prazo:</strong> ${new Date(p.access_expires_at).toLocaleString('pt-PT',{timeZone:'Europe/Lisbon'})}`:''}${p.access_changed_at?`<br><strong>Alterado em:</strong> ${new Date(p.access_changed_at).toLocaleString('pt-PT',{timeZone:'Europe/Lisbon'})}`:''}</div></div><span class="access-request-status ${estado==='ativo'?'aprovado':estado==='revogado'?'rejeitado':'pendente'}">${admsEsc(estado)}</span></div><div class="access-request-actions" style="margin-top:14px;flex-wrap:wrap">${acoes}</div></article>`;
+}
 
 async function editarPessoa(tipo,index){
   if(!exigirPermissao('membros','editar')) return;
@@ -5434,7 +5448,8 @@ async function atualizarPermissao(perfil,modulo,acao,valor,botao){
 function viewAcessos(){
  return `<div class="topbar"><div><div class="breadcrumb">Administração</div><h1>Gestão de Acessos</h1></div><span class="access-pill">${ICON.acesso} Secretaria</span></div>
  ${ruleDivider()}
- <div class="card"><h3>Solicitações de acesso</h3><p style="color:var(--ink-soft)">Confirme a identidade do solicitante, escolha o perfil e os departamentos autorizados. Ao aprovar, o sistema envia um convite seguro para que a própria pessoa defina a sua palavra-passe.</p><div class="hint-box" style="margin:14px 0"><strong>Comece apenas pelos responsáveis principais.</strong> Pastor, Secretaria Master, Tesouraria e um líder de departamento para validação.</div><div id="solicitacoes-acesso-lista">A carregar solicitações...</div></div>`;
+ <div class="card"><h3>Utilizadores com acesso ao portal</h3><p style="color:var(--ink-soft)">Suspenda, encerre sessões ou revogue credenciais sem apagar o cadastro do membro, o cartão, as escalas ou o histórico.</p><div id="utilizadores-acesso-lista">A carregar utilizadores...</div></div>
+ <div class="card" style="margin-top:18px"><h3>Solicitações de acesso</h3><p style="color:var(--ink-soft)">Confirme a identidade do solicitante, escolha o perfil e os departamentos autorizados. Ao aprovar, o sistema envia um convite seguro para que a própria pessoa defina a sua palavra-passe.</p><div class="hint-box" style="margin:14px 0"><strong>Comece apenas pelos responsáveis principais.</strong> Pastor, Secretaria Master, Tesouraria e um líder de departamento para validação.</div><div id="solicitacoes-acesso-lista">A carregar solicitações...</div></div>`;
 }
 
 function enviarBoasVindas(leaderId, deptId){
@@ -6737,10 +6752,12 @@ async function admsPerfilAtual(){
   const {data:{user}, error:userError} = await admsSupabase.auth.getUser();
   if(userError || !user) return null;
   const {data:profile, error} = await admsSupabase.from('profiles')
-    .select('id,nome,role,ativo,cargo,dept_ids,membro_id,rgpd_accepted_at,must_set_password')
+    .select('id,nome,role,ativo,cargo,dept_ids,membro_id,rgpd_accepted_at,must_set_password,access_status,access_expires_at,sessions_revoked_at')
     .eq('id', user.id).single();
   const contaInstitucionalMaster=profile?.role==='master';
-  if(error || !profile || !profile.ativo || (!contaInstitucionalMaster && !profile.membro_id)) return null;
+  if(error || !profile || !profile.ativo || ['suspenso','revogado'].includes(profile.access_status) || (!contaInstitucionalMaster && !profile.membro_id)) return null;
+  const {data:{session:authSession}}=await admsSupabase.auth.getSession();
+  if(authSession?.access_token){try{let tokenPart=authSession.access_token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');tokenPart+='='.repeat((4-tokenPart.length%4)%4);const payload=JSON.parse(atob(tokenPart));profile._authIssuedAt=Number(payload.iat||0)*1000}catch(e){profile._authIssuedAt=Date.now()}}
   return {user, profile};
 }
 
@@ -6750,16 +6767,17 @@ function admsSessaoDoPerfil(profile){
   const memberLink={membroCloudId:profile.membro_id||null,membroId:null};
   if(role==='master'){
     const cargo=(profile.cargo||'').toLowerCase();
-    if(/secretar/.test(cargo)) return {tipo:'secretaria',entityKey:'master_secretaria',label:profile.nome||'Secretaria',deptIds:depts,liderId:null,cloud:true,...memberLink};
-    if(/tesour/.test(cargo)) return {tipo:'tesoureiro',entityKey:'master_tesoureiro',label:profile.nome||'Tesouraria',deptIds:depts,liderId:null,cloud:true,...memberLink};
-    if(/pastor/.test(cargo)) return {tipo:'pastor',entityKey:'master_pastor',label:profile.nome||'Pastoral',deptIds:depts,liderId:null,cloud:true,...memberLink};
-    return {tipo:'secretaria',entityKey:'master_secretaria',label:profile.nome||'Administração',deptIds:depts,liderId:null,cloud:true,...memberLink};
+    if(/secretar/.test(cargo)) return {tipo:'secretaria',entityKey:'master_secretaria',label:profile.nome||'Secretaria',deptIds:depts,liderId:null,cloud:true,authIssuedAt:profile._authIssuedAt||Date.now(),...memberLink};
+    if(/tesour/.test(cargo)) return {tipo:'tesoureiro',entityKey:'master_tesoureiro',label:profile.nome||'Tesouraria',deptIds:depts,liderId:null,cloud:true,authIssuedAt:profile._authIssuedAt||Date.now(),...memberLink};
+    if(/pastor/.test(cargo)) return {tipo:'pastor',entityKey:'master_pastor',label:profile.nome||'Pastoral',deptIds:depts,liderId:null,cloud:true,authIssuedAt:profile._authIssuedAt||Date.now(),...memberLink};
+    return {tipo:'secretaria',entityKey:'master_secretaria',label:profile.nome||'Administração',deptIds:depts,liderId:null,cloud:true,authIssuedAt:profile._authIssuedAt||Date.now(),...memberLink};
   }
-  if(role==='pastor') return {tipo:'pastor',entityKey:'master_pastor',label:profile.nome||'Pastoral',deptIds:depts,liderId:null,cloud:true,...memberLink};
-  if(role==='tesouraria') return {tipo:'tesoureiro',entityKey:'master_tesoureiro',label:profile.nome||'Tesouraria',deptIds:depts,liderId:null,cloud:true,...memberLink};
-  if(role==='secretaria') return {tipo:'secretaria',entityKey:'master_secretaria',label:profile.nome||'Secretaria',deptIds:depts,liderId:null,cloud:true,...memberLink};
-  if(role==='lider') return {tipo:'lider',entityKey:depts[0]||'lider',label:profile.nome||'Liderança',deptIds:depts,liderId:null,cloud:true,...memberLink};
-  return {tipo:'consulta',entityKey:'consulta',label:profile.nome||'Consulta',deptIds:depts,liderId:null,cloud:true,...memberLink};
+  const base={deptIds:depts,liderId:null,cloud:true,authIssuedAt:profile._authIssuedAt||Date.now(),...memberLink};
+  if(role==='pastor') return {tipo:'pastor',entityKey:'master_pastor',label:profile.nome||'Pastoral',...base};
+  if(role==='tesouraria') return {tipo:'tesoureiro',entityKey:'master_tesoureiro',label:profile.nome||'Tesouraria',...base};
+  if(role==='secretaria') return {tipo:'secretaria',entityKey:'master_secretaria',label:profile.nome||'Secretaria',...base};
+  if(role==='lider') return {tipo:'lider',entityKey:depts[0]||'lider',label:profile.nome||'Liderança',...base};
+  return {tipo:'consulta',entityKey:'consulta',label:profile.nome||'Consulta',...base};
 }
 
 async function attemptLoginUnificado(){
@@ -6843,6 +6861,27 @@ async function finalizeLogin(){
 
 function guardarSessao(){ /* Supabase Auth gere a persistência e renovação da sessão. */ }
 function sessaoAindaValida(){ return !!session?.cloud; }
+let admsSessionGuardBusy=false;
+async function admsTerminarSessaoAdministrativa(mensagem){
+  try{await admsSupabase.auth.signOut({scope:'local'})}catch(e){}
+  session=null;admsCloudProfile=null;document.body.classList.remove('portal-active');
+  try{localStorage.removeItem(SESSAO_KEY);localStorage.removeItem(ESTADO_KEY)}catch(e){}
+  alert(mensagem||'Esta sessão foi encerrada pela administração.');
+  location.replace('/sistema?v=106');
+}
+async function admsVerificarSessaoAdministrada(){
+  if(admsSessionGuardBusy||!session?.cloud||!admsSupabase)return;
+  admsSessionGuardBusy=true;
+  try{
+    const {data:{user}}=await admsSupabase.auth.getUser();if(!user)return;
+    const {data:p,error}=await admsSupabase.from('profiles').select('ativo,access_status,sessions_revoked_at').eq('id',user.id).single();
+    if(error||!p)return;
+    if(!p.ativo||['suspenso','revogado'].includes(p.access_status))return admsTerminarSessaoAdministrativa(p.access_status==='revogado'?'O seu acesso ao portal foi revogado pela administração.':'O seu acesso ao portal encontra-se suspenso.');
+    if(p.sessions_revoked_at&&new Date(p.sessions_revoked_at).getTime()>Number(session.authIssuedAt||0))return admsTerminarSessaoAdministrativa('Esta sessão foi encerrada remotamente pela administração. Entre novamente para continuar.');
+  }finally{admsSessionGuardBusy=false}
+}
+setInterval(admsVerificarSessaoAdministrada,30000);
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')admsVerificarSessaoAdministrada()});
 
 async function tentarRestaurarSessao(){
   const atual=await admsPerfilAtual();
@@ -6870,7 +6909,7 @@ async function handleLogout(){
   document.body.classList.remove('portal-active');
   session=null; admsCloudProfile=null; pendingLoginKey=null; pendingLoginLeaderId=null; currentProfileRef=null;
   try{ localStorage.removeItem(SESSAO_KEY);localStorage.removeItem(ESTADO_KEY); }catch(e){}
-  location.replace('/sistema?v=101');
+  location.replace('/sistema?v=106');
 }
 
 admsSupabase?.auth.onAuthStateChange((event)=>{
@@ -6943,7 +6982,7 @@ if(paramsUrl.get('form') === 'cadastro'){
 
 // Mantém a instalação como aplicação sem guardar páginas ou dados sensíveis em cache.
 if('serviceWorker' in navigator){
-  window.addEventListener('load',()=>navigator.serviceWorker.register('/sw-sistema.js?v=101').catch(()=>{}));
+    window.addEventListener('load',()=>navigator.serviceWorker.register('/sw-sistema.js?v=106').catch(()=>{}));
 }
 if(window.caches){
   caches.keys().then(keys=>Promise.all(keys.map(key=>caches.delete(key)))).catch(()=>{});
@@ -7010,6 +7049,53 @@ async function renderSolicitacoesAcesso(){
  box.innerHTML=`<div class="access-requests-toolbar"><div class="access-requests-summary"><span>${pendentes} pendente(s)</span><span>${pedidos.length} pedido(s) no total</span></div><button class="btn btn-outline" onclick="renderSolicitacoesAcesso()">Atualizar</button></div><div class="access-request-list">${cards||'<p>Nenhuma solicitação.</p>'}</div>`;
 }
 
+async function renderUtilizadoresAcesso(){
+ const box=document.getElementById('utilizadores-acesso-lista');if(!box||!admsSupabase)return;
+ const campos='id,nome,role,cargo,dept_ids,membro_id,ativo,access_status,access_reason,access_changed_at,access_expires_at,sessions_revoked_at';
+ const {data,error}=await admsSupabase.from('profiles').select(campos).order('nome',{ascending:true});
+ if(error){box.innerHTML='<div class="access-request-feedback error" style="display:block">Execute o SQL da versão 106 para ativar a gestão de suspensão e revogação.</div>';return}
+ const agora=Date.now(),perfis=data||[];
+ const cards=perfis.map(p=>{
+  const estado=p.access_status||((p.ativo===false)?'suspenso':'ativo'),expirou=p.access_expires_at&&new Date(p.access_expires_at).getTime()<=agora;
+  const protegido=p.role==='master',classe=estado==='ativo'?'aprovado':estado==='revogado'?'rejeitado':'pendente';
+  const depts=Array.isArray(p.dept_ids)&&p.dept_ids.length?p.dept_ids.map(deptNome).join(', '):'Acesso geral / sem departamento específico';
+  const detalhe=[p.cargo||p.role,depts,p.access_reason?`Motivo: ${p.access_reason}`:'',p.access_expires_at?`${expirou?'Prazo terminado':'Suspenso até'}: ${new Date(p.access_expires_at).toLocaleString('pt-PT',{timeZone:'Europe/Lisbon'})}`:'',p.access_changed_at?`Última alteração: ${new Date(p.access_changed_at).toLocaleString('pt-PT',{timeZone:'Europe/Lisbon'})}`:''].filter(Boolean).join('<br>');
+  let acoes='';
+  if(protegido)acoes='<span class="tag tag-blue">Conta institucional protegida</span>';
+  else if(estado==='revogado')acoes='<span class="tag tag-red">Revogação definitiva</span>';
+  else if(estado==='suspenso')acoes=`<button class="btn btn-primary" style="width:auto" onclick="gerirAcessoUtilizador('${p.id}','reativar',this)">Reativar acesso</button>`;
+  else acoes=`<button class="btn btn-outline" style="width:auto" onclick="gerirAcessoUtilizador('${p.id}','encerrar_sessoes',this)">Encerrar sessões</button><button class="btn btn-outline" style="width:auto" onclick="gerirAcessoUtilizador('${p.id}','suspender',this)">Suspender</button><button class="btn btn-red" style="width:auto" onclick="gerirAcessoUtilizador('${p.id}','revogar',this)">Revogar</button>`;
+  return `<article class="access-request-card"><div class="access-request-head"><div><h4>${admsEsc(p.nome||'Utilizador')}</h4><div class="access-request-meta">${detalhe}</div></div><span class="access-request-status ${classe}">${admsEsc(estado)}${expirou&&estado==='suspenso'?' · prazo terminado':''}</span></div><div class="access-request-actions" style="margin-top:14px;flex-wrap:wrap">${acoes}</div></article>`;
+ }).join('');
+ const estadoDe=p=>p.access_status||((p.ativo===false)?'suspenso':'ativo');
+ box.innerHTML=`<div class="access-requests-toolbar"><div class="access-requests-summary"><span>${perfis.filter(p=>estadoDe(p)==='ativo').length} ativo(s)</span><span>${perfis.filter(p=>estadoDe(p)==='suspenso').length} suspenso(s)</span><span>${perfis.filter(p=>estadoDe(p)==='revogado').length} revogado(s)</span></div><button class="btn btn-outline" onclick="renderUtilizadoresAcesso()">Atualizar</button></div><div class="access-request-list">${cards||'<p>Nenhum utilizador encontrado.</p>'}</div>`;
+}
+
+async function gerirAcessoUtilizador(targetUserId,action,botao){
+ if(!canAccessGestaoAcessos()||!exigirPermissao('acessos','editar'))return;
+ let motivo='',expiresAt=null,confirmation='';
+ if(action==='suspender'){
+  motivo=(prompt('Informe o motivo da suspensão:')||'').trim();if(motivo.length<5)return showToast('Informe um motivo com pelo menos cinco caracteres.');
+  const prazo=(prompt('Suspensão temporária: informe a data e hora final no formato AAAA-MM-DD HH:MM.\nDeixe vazio para suspensão sem prazo.')||'').trim();
+  if(prazo){const normalizado=prazo.replace(' ','T'),data=new Date(normalizado);if(!Number.isFinite(data.getTime())||data.getTime()<=Date.now())return showToast('A data final deve estar no futuro.');expiresAt=data.toISOString()}
+ }else if(action==='revogar'){
+  motivo=(prompt('Informe o motivo da revogação definitiva:')||'').trim();if(motivo.length<5)return showToast('Informe um motivo com pelo menos cinco caracteres.');
+  confirmation=(prompt('Esta operação preserva o membro, mas bloqueia definitivamente a credencial. Escreva REVOGAR para confirmar:')||'').trim();if(confirmation!=='REVOGAR')return showToast('Revogação cancelada.');
+ }else if(action==='encerrar_sessoes'){
+  motivo=(prompt('Informe o motivo para encerrar as sessões deste utilizador:')||'Verificação administrativa').trim();if(motivo.length<5)return;
+ }
+ const botoes=[...botao.closest('.access-request-card').querySelectorAll('button')];botoes.forEach(b=>b.disabled=true);
+ try{
+  const {data:{session:cloudSession},error:sessionError}=await admsSupabase.auth.getSession();if(sessionError||!cloudSession?.access_token)throw new Error('Sessão administrativa expirada. Entre novamente.');
+  const resposta=await fetch(`${ADMS_CLOUD.url}/functions/v1/gerir-solicitacoes-acesso`,{method:'POST',headers:{'Content-Type':'application/json','apikey':ADMS_CLOUD.publishableKey,'Authorization':`Bearer ${cloudSession.access_token}`},body:JSON.stringify({action,targetUserId,motivo,expiresAt,confirmation})});
+  const texto=await resposta.text();let data={};try{data=texto?JSON.parse(texto):{}}catch{throw new Error(`Resposta inválida da função (HTTP ${resposta.status}).`)}
+  if(!resposta.ok||!data?.ok)throw new Error(data?.error||`Não foi possível concluir a operação (HTTP ${resposta.status}).`);
+  showToast(data.message||'Operação concluída.');
+  await renderUtilizadoresAcesso();
+  if(RH_ACCESS_MEMBER_INDEX!==null&&document.getElementById('membro-access-control'))await carregarAcessoNoPerfilMembro(RH_ACCESS_MEMBER_INDEX);
+ }catch(error){showToast(error?.message||'Não foi possível gerir o acesso.');botoes.forEach(b=>b.disabled=false)}
+}
+
 async function admsDecidirSolicitacao(id,acao,botao){
  if(!canAccessGestaoAcessos()||!exigirPermissao('acessos','editar'))return;
  const feedback=document.getElementById(`acc-feedback-${id}`),perfil=document.getElementById(`acc-role-${id}`)?.value||'consulta';
@@ -7022,7 +7108,7 @@ async function admsDecidirSolicitacao(id,acao,botao){
  try{
   const {data:{session:cloudSession},error:sessionError}=await admsSupabase.auth.getSession();
   if(sessionError||!cloudSession?.access_token)throw new Error('Sessão expirada. Termine a sessão e entre novamente.');
-  const resposta=await fetch(`${ADMS_CLOUD.url}/functions/v1/gerir-solicitacoes-acesso`,{method:'POST',headers:{'Content-Type':'application/json','apikey':ADMS_CLOUD.publishableKey,'Authorization':`Bearer ${cloudSession.access_token}`},body:JSON.stringify({action:acao,requestId:id,profileRole:perfil,deptIds,motivo,redirectTo:`${location.origin}/sistema?v=101`})});
+  const resposta=await fetch(`${ADMS_CLOUD.url}/functions/v1/gerir-solicitacoes-acesso`,{method:'POST',headers:{'Content-Type':'application/json','apikey':ADMS_CLOUD.publishableKey,'Authorization':`Bearer ${cloudSession.access_token}`},body:JSON.stringify({action:acao,requestId:id,profileRole:perfil,deptIds,motivo,redirectTo:`${location.origin}/sistema?v=106`})});
   const texto=await resposta.text();let data={};try{data=texto?JSON.parse(texto):{}}catch{throw new Error(`A função respondeu com conteúdo inválido (HTTP ${resposta.status}).`)}
   if(!resposta.ok||!data?.ok)throw new Error(data?.error||`Não foi possível concluir a operação (HTTP ${resposta.status}).`);
   feedback.className='access-request-feedback success';feedback.textContent=data.message||'Operação concluída.';

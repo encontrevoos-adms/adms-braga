@@ -1,0 +1,58 @@
+ADMS BRAGA — VERSÃO 106
+GESTÃO DE ACESSOS E SESSÕES DOS MEMBROS
+
+O QUE FOI IMPLEMENTADO
+
+1. Gestão centralizada em Gestão de Acessos
+   - encerrar sessões remotas;
+   - suspender por tempo indeterminado;
+   - suspender até uma data e hora;
+   - reativar uma credencial suspensa;
+   - revogar definitivamente a credencial.
+
+2. O mesmo controlo dentro do cadastro do membro
+   Recursos Humanos > Membros > Acesso ao portal.
+   A alteração feita no membro é imediatamente refletida em Gestão de Acessos.
+
+3. Preservação dos dados
+   Suspender ou revogar a credencial NÃO elimina o membro, o número ADMSBRG,
+   o cartão, as escalas nem o histórico. Apenas o acesso ao portal é bloqueado.
+
+4. Segurança e auditoria
+   - motivo obrigatório para suspensão, encerramento de sessões e revogação;
+   - confirmação escrita REVOGAR para a revogação definitiva;
+   - a própria conta não pode bloquear a si mesma;
+   - contas institucionais Master estão protegidas nesta rotina;
+   - todas as ações são registadas no Registo de Atividade;
+   - o portal verifica o estado da sessão periodicamente.
+
+INSTALAÇÃO — RESPEITE ESTA ORDEM
+
+PASSO 1 — SUPABASE / SQL EDITOR
+Execute integralmente:
+  EXECUTAR-NO-SUPABASE-v106.sql
+
+PASSO 2 — SUPABASE / EDGE FUNCTIONS
+Abra a função com o slug exato:
+  gerir-solicitacoes-acesso
+
+Substitua o conteúdo do index.ts pelo arquivo:
+  supabase/functions/gerir-solicitacoes-acesso/index.ts
+
+Depois clique em Deploy. Não crie um slug diferente.
+
+PASSO 3 — VERCEL
+Publique a pasta completa da versão 106 no projeto do portal:
+  adms-braga.vercel.app
+
+PASSO 4 — TESTE CONTROLADO
+Use uma conta comum de teste, nunca a única conta Master:
+  a) abra Recursos Humanos > Membros;
+  b) clique em Acesso ao portal;
+  c) suspenda a conta e confirme que a sessão aberta é encerrada;
+  d) reative e confirme um novo login;
+  e) confira o Registo de Atividade.
+
+OBSERVAÇÃO
+A revogação é tratada como definitiva pela interface. Para preservar a
+integridade administrativa, o cadastro do membro continua existente.
