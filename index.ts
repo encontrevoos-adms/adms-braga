@@ -1,21 +1,35 @@
 import { createClient } from 'npm:@supabase/supabase-js@2.57.4'
 
+function defaultApiKey(
+  variable: 'SUPABASE_PUBLISHABLE_KEYS' | 'SUPABASE_SECRET_KEYS',
+  legacyVariable: 'SUPABASE_ANON_KEY' | 'SUPABASE_SERVICE_ROLE_KEY',
+) {
+  const raw = Deno.env.get(variable)
+  if (raw) {
+    try {
+      const keys = JSON.parse(raw) as Record<string, string>
+      if (keys.default) return keys.default
+    } catch {
+      if (raw.startsWith('sb_') || raw.startsWith('eyJ')) return raw
+    }
+  }
+  const legacy = Deno.env.get(legacyVariable)
+  if (legacy) return legacy
+  throw new Error(`${variable} e ${legacyVariable} não estão disponíveis.`)
+}
+
 const allowedOrigins = new Set([
   'https://adms-braga.vercel.app',
   'https://adms-braga-site.vercel.app',
-  'https://admsbraga.org',
   'https://www.admsbraga.org',
+  'https://admsbraga.org',
 ])
 
 function cors(origin: string | null) {
-  const allowed = origin && (allowedOrigins.has(origin) || /^http:\/\/localhost:\d+$/.test(origin))
-    ? origin
-    : 'https://adms-braga.vercel.app'
   return {
-    'Access-Control-Allow-Origin': allowed,
-    'Access-Control-Allow-Headers': 'apikey, content-type, x-client-info',
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Vary': 'Origin',
   }
 }
 
@@ -26,88 +40,103 @@ function json(origin: string | null, body: Record<string, unknown>, status = 200
   })
 }
 
-function defaultSecretKey() {
-  const raw = Deno.env.get('SUPABASE_SECRET_KEYS')
-  if (raw) {
-    try {
-      const parsed = JSON.parse(raw) as Record<string, string>
-      if (parsed.default) return parsed.default
-    } catch {
-      if (raw.startsWith('sb_') || raw.startsWith('eyJ')) return raw
-    }
-  }
-  const legacy = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
-  if (legacy) return legacy
-  throw new Error('A chave de servidor do Supabase não está disponível.')
-}
-
-async function verifyTurnstile(token: string, remoteIp: string) {
-  const secret = Deno.env.get('TURNSTILE_SECRET_KEY')
-  if (!secret) throw new Error('TURNSTILE_SECRET_KEY não está configurada.')
-  const form = new URLSearchParams({ secret, response: token })
-  if (remoteIp) form.set('remoteip', remoteIp)
-  const response = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: form,
-  })
-  if (!response.ok) return false
-  const result = await response.json() as { success?: boolean; hostname?: string }
-  const hostname = String(result.hostname || '').toLowerCase()
-  const trustedHost = hostname === 'localhost' || allowedOrigins.has(`https://${hostname}`)
-  return result.success === true && trustedHost
+const roleConfig: Record<string, { role: string; cargo: string }> = {
+  pastor: { role: 'pastor', cargo: 'Pastoral' },
+  secretaria: { role: 'master', cargo: 'Secretaria — Usuário Master' },
+  tesouraria: { role: 'tesouraria', cargo: 'Tesouraria' },
+  lider: { role: 'lider', cargo: 'Liderança de departamento' },
+  consulta: { role: 'consulta', cargo: 'Consulta' },
 }
 
 Deno.serve(async (req) => {
   const origin = req.headers.get('origin')
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors(origin) })
   if (req.method !== 'POST') return json(origin, { ok: false, error: 'Método não permitido.' }, 405)
-  if (!origin || (!allowedOrigins.has(origin) && !/^http:\/\/localhost:\d+$/.test(origin))) {
-    return json(origin, { ok: false, error: 'Origem não autorizada.' }, 403)
-  }
 
   try {
-    const body = await req.json()
-    const captchaToken = String(body.captchaToken || '')
-    const remoteIp = String(req.headers.get('cf-connecting-ip') || req.headers.get('x-forwarded-for') || '').split(',')[0].trim()
-    if (!captchaToken || !(await verifyTurnstile(captchaToken, remoteIp))) {
-      return json(origin, { ok: false, error: 'A validação de segurança expirou ou não foi aceite. Tente novamente.' }, 400)
-    }
-
-    const numero = String(body.numero || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '')
-    const nome = String(body.nome || '').trim().slice(0, 160)
-    const email = String(body.email || '').trim().toLowerCase().slice(0, 254)
-    const contacto = String(body.contacto || '').trim().slice(0, 40)
-    const dataNascimento = String(body.data_nascimento || '')
-    if (!/^ADMSBRG\d{4,}$/.test(numero) || nome.length < 3 || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email) || contacto.length < 9 || !/^\d{4}-\d{2}-\d{2}$/.test(dataNascimento)) {
-      return json(origin, { ok: false, error: 'Não foi possível validar os dados apresentados.' }, 400)
-    }
-
     const supabaseUrl = Deno.env.get('SUPABASE_URL')
-    if (!supabaseUrl) throw new Error('SUPABASE_URL não está disponível.')
-    const admin = createClient(supabaseUrl, defaultSecretKey(), {
-      global: { headers: { 'x-forwarded-for': remoteIp || 'desconhecido', 'user-agent': req.headers.get('user-agent') || 'sem-agente' } },
-      auth: { autoRefreshToken: false, persistSession: false },
-    })
-    const { data, error } = await admin.rpc('solicitar_acesso_membro_v96', {
-      p_numero_membro: numero,
-      p_nome: nome,
-      p_email: email,
-      p_contacto: contacto,
-      p_data_nascimento: dataNascimento,
-    })
-    if (error) throw error
+    const publishableKey = defaultApiKey('SUPABASE_PUBLISHABLE_KEYS', 'SUPABASE_ANON_KEY')
+    const secretKey = defaultApiKey('SUPABASE_SECRET_KEYS', 'SUPABASE_SERVICE_ROLE_KEY')
+    const authorization = req.headers.get('Authorization')
+    if (!supabaseUrl || !authorization) return json(origin, { ok: false, error: 'Sessão administrativa inválida.' }, 401)
 
-    if (data?.rate_limited) return json(origin, data, 429)
-    if (!data?.ok) {
-      return json(origin, { ok: false, error: 'Não foi possível validar os dados apresentados. Confirme-os com a Secretaria.' }, 400)
+    const callerClient = createClient(supabaseUrl, publishableKey, { global: { headers: { Authorization: authorization } }, auth: { autoRefreshToken: false, persistSession: false } })
+    const admin = createClient(supabaseUrl, secretKey, { auth: { autoRefreshToken: false, persistSession: false } })
+    const { data: userData, error: userError } = await callerClient.auth.getUser()
+    if (userError || !userData.user) return json(origin, { ok: false, error: 'Sessão expirada. Entre novamente.' }, 401)
+
+    const { data: callerProfile, error: profileError } = await admin.from('profiles').select('id,nome,role,ativo,cargo').eq('id', userData.user.id).single()
+    const callerCargo = String(callerProfile?.cargo || '').toLowerCase()
+    const authorized = callerProfile?.ativo === true && (['master', 'pastor', 'secretaria'].includes(callerProfile.role) || callerCargo.includes('secretar'))
+    if (profileError || !authorized) return json(origin, { ok: false, error: 'Não tem autorização para gerir acessos.' }, 403)
+
+    const body = await req.json()
+    const action = String(body.action || '')
+    const requestId = String(body.requestId || '')
+    if (!['aprovar', 'rejeitar'].includes(action) || !/^[0-9a-f-]{36}$/i.test(requestId)) return json(origin, { ok: false, error: 'Pedido inválido.' }, 400)
+
+    const { data: accessRequest, error: requestError } = await admin.from('solicitacoes_acesso').select('*').eq('id', requestId).single()
+    if (requestError || !accessRequest) return json(origin, { ok: false, error: 'Solicitação não encontrada.' }, 404)
+    if ((accessRequest.status || 'pendente') !== 'pendente') return json(origin, { ok: false, error: 'Esta solicitação já foi decidida.' }, 409)
+
+    if (action === 'rejeitar') {
+      const motivo = String(body.motivo || '').trim().slice(0, 500)
+      if (!motivo) return json(origin, { ok: false, error: 'Informe o motivo da rejeição.' }, 400)
+      const { error } = await admin.from('solicitacoes_acesso').update({ status: 'rejeitado', motivo_rejeicao: motivo, decidido_por: userData.user.id, decidido_em: new Date().toISOString() }).eq('id', requestId).eq('status', 'pendente')
+      if (error) throw error
+      await admin.from('registo_atividade').insert({ utilizador: callerProfile.nome || 'Administração', perfil: callerProfile.role, modulo: 'acesso', acao: 'Solicitação rejeitada', detalhes: `${accessRequest.nome_completo} · ${accessRequest.email}` })
+      return json(origin, { ok: true, message: 'Solicitação rejeitada e registada no histórico.' })
     }
-    return json(origin, {
-      ok: true,
-      message: 'Se os dados forem elegíveis, a solicitação será analisada pela Secretaria.',
-    })
+
+    const requestedRole = String(body.profileRole || '')
+    const config = roleConfig[requestedRole]
+    const deptIds = Array.isArray(body.deptIds) ? [...new Set(body.deptIds.map((x: unknown) => String(x)).filter(Boolean))].slice(0, 30) : []
+    if (!config) return json(origin, { ok: false, error: 'Perfil de acesso inválido.' }, 400)
+    if (requestedRole === 'lider' && deptIds.length === 0) return json(origin, { ok: false, error: 'A Liderança exige pelo menos um departamento.' }, 400)
+
+    const email = String(accessRequest.email || '').trim().toLowerCase()
+    let authUser: { id: string; email?: string } | null = null
+    for (let page = 1; page <= 10 && !authUser; page++) {
+      const { data, error } = await admin.auth.admin.listUsers({ page, perPage: 1000 })
+      if (error) throw error
+      authUser = data.users.find((u) => u.email?.toLowerCase() === email) || null
+      if (data.users.length < 1000) break
+    }
+
+    let invited = false
+    if (!authUser) {
+      const suppliedRedirect = String(body.redirectTo || '')
+      const redirectTo = /^https:\/\/(adms-braga(-site)?\.vercel\.app|(?:www\.)?admsbraga\.org)\/sistema(?:\?|$)/.test(suppliedRedirect)
+        ? suppliedRedirect
+        : 'https://adms-braga.vercel.app/sistema?v=90'
+      const { data, error } = await admin.auth.admin.inviteUserByEmail(email, { redirectTo, data: { nome: accessRequest.nome_completo } })
+      if (error) throw error
+      authUser = data.user
+      invited = true
+    }
+    if (!authUser) throw new Error('Não foi possível preparar a conta do utilizador.')
+
+    const { error: upsertError } = await admin.from('profiles').upsert({
+      id: authUser.id,
+      nome: accessRequest.nome_completo,
+      role: config.role,
+      ativo: true,
+      cargo: config.cargo,
+      dept_ids: deptIds,
+      must_set_password: invited,
+    }, { onConflict: 'id' })
+    if (upsertError) throw upsertError
+
+    const { error: updateError } = await admin.from('solicitacoes_acesso').update({
+      status: 'aprovado', perfil_atribuido: requestedRole, dept_ids: deptIds,
+      auth_user_id: authUser.id, decidido_por: userData.user.id, decidido_em: new Date().toISOString(), motivo_rejeicao: null,
+    }).eq('id', requestId).eq('status', 'pendente')
+    if (updateError) throw updateError
+
+    await admin.from('registo_atividade').insert({ utilizador: callerProfile.nome || 'Administração', perfil: callerProfile.role, modulo: 'acesso', acao: 'Acesso aprovado', detalhes: `${accessRequest.nome_completo} · ${requestedRole} · ${deptIds.join(', ') || 'sem departamento específico'}` })
+    return json(origin, { ok: true, message: invited ? 'Acesso aprovado. O convite foi enviado por e-mail.' : 'Acesso atualizado. O utilizador já possuía uma conta e pode entrar ou recuperar a palavra-passe.' })
   } catch (error) {
-    console.error('solicitar-acesso:', error)
-    return json(origin, { ok: false, error: 'Não foi possível concluir a solicitação agora.' }, 500)
+    console.error('gerir-solicitacoes-acesso:', error)
+    return json(origin, { ok: false, error: 'Não foi possível concluir a operação. Consulte os registos da função.' }, 500)
   }
 })
