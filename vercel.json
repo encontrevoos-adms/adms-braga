@@ -2,11 +2,15 @@
   "cleanUrls": true,
   "rewrites": [
     {"source": "/sistema", "destination": "/sistema.html"},
-    {"source": "/sistema/", "destination": "/sistema.html"}
+    {"source": "/sistema/", "destination": "/sistema.html"},
+    {"source": "/store", "destination": "/store.html"},
+    {"source": "/store/", "destination": "/store.html"}
   ],
   "headers": [
     {"source": "/", "headers": [{"key": "Cache-Control", "value": "no-cache, max-age=0, must-revalidate"}]},
     {"source": "/index.html", "headers": [{"key": "Cache-Control", "value": "no-cache, max-age=0, must-revalidate"}]},
+    {"source": "/store", "headers": [{"key": "Cache-Control", "value": "no-cache, max-age=0, must-revalidate"}]},
+    {"source": "/store.html", "headers": [{"key": "Cache-Control", "value": "no-cache, max-age=0, must-revalidate"}]},
     {"source": "/biblia-local.json", "headers": [{"key": "Cache-Control", "value": "public, max-age=86400, stale-while-revalidate=604800"}]},
     {"source": "/video-igreja-adms.mp4", "headers": [{"key": "Cache-Control", "value": "public, max-age=604800, immutable"}]},
     {"source": "/sw-sistema.js", "headers": [{"key": "Cache-Control", "value": "no-cache, no-store, must-revalidate"}]},
