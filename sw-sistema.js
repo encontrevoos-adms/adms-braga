@@ -1,4 +1,4 @@
-// ADMS Braga v104: encerramento mensal financeiro e períodos bloqueados.
+// ADMS Braga v105: lançamentos do mês corrente e filtros por coluna.
 self.addEventListener('install',()=>self.skipWaiting());
 self.addEventListener('activate',event=>{
   event.waitUntil(

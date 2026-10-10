@@ -207,6 +207,9 @@
   .grid-3{grid-template-columns:repeat(3,1fr);}
   .grid-2{grid-template-columns:repeat(2,1fr);}
   @media (max-width:1000px){.grid-4{grid-template-columns:repeat(2,1fr);} .grid-3{grid-template-columns:repeat(2,1fr);}}
+  .fin-filter-row th{padding:7px 6px;background:#f7f9fd;vertical-align:top;}
+  .fin-filter-row input,.fin-filter-row select{width:100%;min-width:105px;height:35px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink);font-size:11px;font-weight:600;}
+  .fin-filter-row input:focus,.fin-filter-row select:focus{border-color:var(--royal);box-shadow:0 0 0 2px rgba(23,60,151,.10);outline:0;}
 
   .card{
     background:var(--white); border-radius:16px; padding:20px; border:1px solid var(--line);
@@ -3991,7 +3994,8 @@ async function fecharMovimentoFinanceiro(mes){
   const guardado=await salvarEstado(['fechamentos']);
   if(!guardado?.ok){FECHAMENTOS_FINANCEIROS=FECHAMENTOS_FINANCEIROS.filter(f=>f.id!==registo.id);showToast('Não foi possível confirmar o encerramento na nuvem. O mês permanece aberto.');return;}
   await logAction('financeiro','Movimento mensal encerrado',`${rotuloMesFinanceiro(mes)} · saldo inicial ${formatEuro(info.saldoAbertura)} · entradas ${formatEuro(info.entradas)} · saídas ${formatEuro(info.saidas)} · saldo transportado ${formatEuro(info.saldoEncerramento)}`);
-  showToast(`Movimento de ${rotuloMesFinanceiro(mes)} encerrado definitivamente.`);renderModule();
+  FIN_FILTROS_LANCAMENTOS.mes=mesAtualLisboa();
+  showToast(`Movimento de ${rotuloMesFinanceiro(mes)} encerrado definitivamente. A lista mostra agora o mês corrente.`);renderModule();
 }
 
 function viewFinanceiro(){
@@ -4068,11 +4072,8 @@ function viewFinanceiro(){
     <div class="section-title"><h2>Lançamentos</h2></div>
     <div class="card">
       <div class="search-filter-bar">
-        <select id="fin-filtro-dept" onchange="renderLancamentosTable()">
-          <option value="todos">Todos os departamentos</option>
-          <option value="geral">Geral / Sede</option>
-          ${deptsFin.map(d=>`<option value="${d.id}">${d.nome}</option>`).join('')}
-        </select>
+        <span class="access-pill" id="fin-contador-lancamentos">A preparar lançamentos…</span>
+        <button class="btn btn-ghost" style="width:auto" onclick="limparFiltrosLancamentos()">Limpar filtros</button>
       </div>
       <div id="fin-tabela"></div>
     </div>
@@ -4084,15 +4085,58 @@ function toggleFinPessoa(){
 function toggleFinBeneficiario(){
   document.getElementById('fin-beneficiario-wrap').style.display = document.getElementById('fin-para-pessoa').value==='sim' ? 'block' : 'none';
 }
+const FIN_FILTROS_LANCAMENTOS={mes:'',departamento:'todos',entidade:'',categoria:'Todas',descricao:'',tipo:'Todos',valor:'',responsavel:'',situacao:'Todos'};
+function normalizarPesquisaFinanceira(valor){return String(valor||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-PT').trim();}
+function atualizarFiltroLancamentos(campo,valor){FIN_FILTROS_LANCAMENTOS[campo]=valor;aplicarFiltrosLancamentos();}
+function limparFiltrosLancamentos(){
+  Object.assign(FIN_FILTROS_LANCAMENTOS,{mes:mesAtualLisboa(),departamento:'todos',entidade:'',categoria:'Todas',descricao:'',tipo:'Todos',valor:'',responsavel:'',situacao:'Todos'});
+  renderLancamentosTable();
+}
+function aplicarFiltrosLancamentos(){
+  const f=FIN_FILTROS_LANCAMENTOS,termo=normalizarPesquisaFinanceira;
+  let visiveis=0;
+  document.querySelectorAll('#fin-tabela tbody .fin-lancamento-row').forEach(row=>{
+    const valorFiltro=Number(String(f.valor||'').replace(',','.'));
+    const corresponde=
+      (!f.mes||f.mes==='todos'||row.dataset.mes===f.mes)&&
+      (f.departamento==='todos'||row.dataset.departamento===f.departamento)&&
+      (!f.entidade||termo(row.dataset.entidade).includes(termo(f.entidade)))&&
+      (f.categoria==='Todas'||row.dataset.categoria===f.categoria)&&
+      (!f.descricao||termo(row.dataset.descricao).includes(termo(f.descricao)))&&
+      (f.tipo==='Todos'||row.dataset.tipo===f.tipo)&&
+      (!f.valor||Number(row.dataset.valor)>=valorFiltro)&&
+      (!f.responsavel||termo(row.dataset.responsavel).includes(termo(f.responsavel)))&&
+      (f.situacao==='Todos'||row.dataset.situacao===f.situacao);
+    row.style.display=corresponde?'':'none';if(corresponde)visiveis++;
+  });
+  const contador=document.getElementById('fin-contador-lancamentos');
+  if(contador)contador.textContent=`${visiveis} lançamento(s) visível(is) · ${f.mes==='todos'?'todos os períodos':rotuloMesFinanceiro(f.mes)}`;
+  const vazio=document.getElementById('fin-filtro-vazio');if(vazio)vazio.style.display=visiveis?'none':'block';
+}
 function renderLancamentosTable(){
-  const filtro = document.getElementById('fin-filtro-dept').value;
-  const lista = FINANCEIRO.lancamentos.filter(l=>filtro==='todos'||l.departamento===filtro);
-  document.getElementById('fin-tabela').innerHTML = lista.length ? `
-      <table>
-        <thead><tr><th>Data</th><th>Departamento</th><th>Fornecedor / Pagador</th><th>Categoria</th><th>Descrição</th><th>Tipo</th><th>Valor</th><th>Registado por</th><th></th></tr></thead>
+  if(!FIN_FILTROS_LANCAMENTOS.mes)FIN_FILTROS_LANCAMENTOS.mes=mesAtualLisboa();
+  const f=FIN_FILTROS_LANCAMENTOS;
+  const lista=[...FINANCEIRO.lancamentos].sort((a,b)=>{const iso=l=>{const [d,m,y]=String(l.data||'').split('/');return `${y||'0000'}-${m||'00'}-${d||'00'}`};return iso(b).localeCompare(iso(a));});
+  const meses=[...new Set([mesAtualLisboa(),...lista.map(l=>mesFinanceiroDaData(l.data)).filter(Boolean)])].sort().reverse();
+  const categorias=[...new Set(lista.map(l=>categoriaLancamento(l)).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-PT'));
+  const deptsFin=DEPARTMENTS.filter(d=>d.id!=='pastoral');
+  document.getElementById('fin-tabela').innerHTML = lista.length ? `<div style="overflow-x:auto;padding-bottom:5px;">
+      <table style="min-width:1320px;">
+        <thead><tr><th>Data</th><th>Departamento</th><th>Fornecedor / Pagador</th><th>Categoria</th><th>Descrição</th><th>Tipo</th><th>Valor</th><th>Registado por</th><th>Situação / ações</th></tr>
+        <tr class="fin-filter-row">
+          <th><select aria-label="Filtrar por mês" onchange="atualizarFiltroLancamentos('mes',this.value)"><option value="todos" ${f.mes==='todos'?'selected':''}>Todos os períodos</option>${meses.map(m=>`<option value="${m}" ${f.mes===m?'selected':''}>${rotuloMesFinanceiro(m)}${mesFinanceiroFechado(m)?' 🔒':''}</option>`).join('')}</select></th>
+          <th><select aria-label="Filtrar por departamento" onchange="atualizarFiltroLancamentos('departamento',this.value)"><option value="todos">Todos</option><option value="geral" ${f.departamento==='geral'?'selected':''}>Geral / Sede</option>${deptsFin.map(d=>`<option value="${d.id}" ${f.departamento===d.id?'selected':''}>${admsEsc(d.nome)}</option>`).join('')}</select></th>
+          <th><input aria-label="Filtrar fornecedor ou pagador" value="${admsEsc(f.entidade)}" placeholder="Pesquisar entidade" oninput="atualizarFiltroLancamentos('entidade',this.value)"></th>
+          <th><select aria-label="Filtrar categoria" onchange="atualizarFiltroLancamentos('categoria',this.value)"><option value="Todas">Todas</option>${categorias.map(c=>`<option value="${admsEsc(c)}" ${f.categoria===c?'selected':''}>${admsEsc(c)}</option>`).join('')}</select></th>
+          <th><input aria-label="Filtrar descrição" value="${admsEsc(f.descricao)}" placeholder="Pesquisar descrição" oninput="atualizarFiltroLancamentos('descricao',this.value)"></th>
+          <th><select aria-label="Filtrar tipo" onchange="atualizarFiltroLancamentos('tipo',this.value)"><option value="Todos">Todos</option><option value="Entrada" ${f.tipo==='Entrada'?'selected':''}>Entrada</option><option value="Saída" ${f.tipo==='Saída'?'selected':''}>Saída</option></select></th>
+          <th><input aria-label="Filtrar valor mínimo" type="number" min="0" step="0.01" value="${admsEsc(f.valor)}" placeholder="Mínimo €" oninput="atualizarFiltroLancamentos('valor',this.value)"></th>
+          <th><input aria-label="Filtrar responsável" value="${admsEsc(f.responsavel)}" placeholder="Pesquisar" oninput="atualizarFiltroLancamentos('responsavel',this.value)"></th>
+          <th><select aria-label="Filtrar situação" onchange="atualizarFiltroLancamentos('situacao',this.value)"><option value="Todos">Todas</option><option value="aberto" ${f.situacao==='aberto'?'selected':''}>Aberto</option><option value="corrigido" ${f.situacao==='corrigido'?'selected':''}>Corrigido</option><option value="fechado" ${f.situacao==='fechado'?'selected':''}>Fechado</option></select></th>
+        </tr></thead>
         <tbody>
-          ${lista.map(l=>`
-            <tr>
+          ${lista.map(l=>{const fechado=mesFinanceiroFechado(mesFinanceiroDaData(l.data));const situacao=fechado?'fechado':l.corrigido?'corrigido':'aberto';return `
+            <tr class="fin-lancamento-row" data-mes="${mesFinanceiroDaData(l.data)}" data-departamento="${admsEsc(l.departamento)}" data-entidade="${admsEsc(l.fornecedor||l.beneficiario||'')}" data-categoria="${admsEsc(categoriaLancamento(l))}" data-descricao="${admsEsc(l.desc)}" data-tipo="${admsEsc(l.tipo)}" data-valor="${parseValorEuro(l.valor)}" data-responsavel="${admsEsc(l.criadoPor||'')}" data-situacao="${situacao}">
               <td>${l.data}</td>
               <td><span class="tag tag-blue">${entityDeptLabel(l.departamento)}</span></td>
               <td style="font-weight:600;">${admsEsc(l.fornecedor||l.beneficiario||'—')}</td>
@@ -4102,12 +4146,13 @@ function renderLancamentosTable(){
               <td class="mono" style="font-weight:700;">${l.valor}</td>
               <td style="font-size:11.5px; color:var(--ink-soft);">${l.criadoPor||'—'}${l.corrigido?` <span class="tag tag-gold" style="margin-left:4px;">Corrigido</span>`:''}</td>
               <td style="display:flex; gap:12px; align-items:center;">
-                ${mesFinanceiroFechado(mesFinanceiroDaData(l.data))?'<span class="tag tag-green">🔒 Fechado</span>':`<span style="color:var(--royal-dark); font-weight:700; cursor:pointer; font-size:12px; display:flex; align-items:center; gap:4px;" onclick="openCorrectionModal('${l.id}')">${ICON.edit} Corrigir</span>`}
+                ${fechado?'<span class="tag tag-green">🔒 Fechado</span>':`<span style="color:var(--royal-dark); font-weight:700; cursor:pointer; font-size:12px; display:flex; align-items:center; gap:4px;" onclick="openCorrectionModal('${l.id}')">${ICON.edit} Corrigir</span>`}
                 ${l.reciboId ? `<span style="color:var(--red-dark); font-weight:700; cursor:pointer; font-size:12px;" onclick="verRecibo('${l.reciboId}')">Recibo</span>` : ''}
               </td>
-            </tr>`).join('')}
+            </tr>`}).join('')}
         </tbody>
-      </table>` : `<div class="empty-state"><p>Sem lançamentos para este filtro.</p></div>`;
+      </table><div id="fin-filtro-vazio" class="empty-state" style="display:none"><p>Não existem lançamentos correspondentes aos filtros.</p></div></div>` : `<div class="empty-state"><p>Sem lançamentos registados.</p></div>`;
+  aplicarFiltrosLancamentos();
 }
 function entityDeptLabel(id){ return id==='geral' ? 'Geral / Sede' : deptNome(id); }
 

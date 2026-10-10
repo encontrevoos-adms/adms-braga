@@ -1,0 +1,39 @@
+ADMS BRAGA — VERSÃO 105
+========================
+
+LANÇAMENTOS FINANCEIROS
+-----------------------
+- A listagem abre mostrando somente os lançamentos do mês corrente.
+- Depois de encerrar um movimento mensal, a listagem regressa automaticamente
+  ao mês corrente.
+- Os movimentos encerrados continuam disponíveis para consulta no filtro Data.
+- Os meses encerrados são identificados com um cadeado.
+- A área informa quantos lançamentos estão visíveis e qual período foi escolhido.
+- O botão "Limpar filtros" volta ao mês corrente.
+
+FILTROS NO CABEÇALHO
+--------------------
+Cada coluna possui o seu próprio filtro:
+- Data: mês/período, incluindo a opção de consultar todos os períodos;
+- Departamento;
+- Fornecedor ou pagador;
+- Categoria/rubrica;
+- Descrição;
+- Tipo: entrada ou saída;
+- Valor mínimo;
+- Responsável pelo registo;
+- Situação: aberto, corrigido ou fechado.
+
+Os filtros podem ser combinados. Exemplo: outubro + Geral/Sede + Saída +
+Goldenergy + valor mínimo de 100 euros.
+
+RESPONSIVIDADE
+--------------
+A tabela possui rolagem horizontal própria para preservar todas as colunas em
+computadores, tablets e telemóveis sem deformar o restante do portal.
+
+INSTALAÇÃO
+----------
+Publique a pasta completa na Vercel. Não é necessário executar SQL nem alterar
+Edge Functions. Depois do deploy, abra o portal numa janela anónima ou limpe o
+cache para confirmar que a versão 105 foi carregada.
