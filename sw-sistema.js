@@ -1,4 +1,4 @@
-// ADMS Braga v117: cargo de consagração destacado no cartão de membro.
+// ADMS Braga v118: emissão restrita e auditada de cartas eclesiásticas.
 self.addEventListener('install',()=>self.skipWaiting());
 self.addEventListener('activate',event=>{
   event.waitUntil(

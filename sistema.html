@@ -3940,7 +3940,7 @@ function openPessoaModal(tipo,index){
     ${row('Profissão',p.profissao)} ${row('Escolaridade',p.escolaridade)} ${row('Membro desde',p.dataMembresia?formatDate(p.dataMembresia):'')}
     ${row('Estado da membresia',p.estadoMembresia)} ${row('Notas',p.notas)}
     ${tipo==='membros'?'<div id="membro-access-control" style="margin-top:16px"><div class="hint-box">Abra “Acesso ao portal” para consultar ou gerir a credencial deste membro.</div></div>':''}
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:18px;"><button class="btn btn-outline" onclick="closeMemberModal();editarPessoa('${tipo}',${index})">Editar perfil</button><button class="btn btn-outline" onclick="imprimirFichaPessoa('${tipo}',${index})">Imprimir ficha</button>${tipo!=='membros'?`<button class="btn btn-primary" style="width:auto;margin-top:0;" onclick="closeMemberModal();tornarMembro('${tipo}',${index})">Tornar membro</button>`:''}</div>`;
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:18px;"><button class="btn btn-outline" onclick="closeMemberModal();editarPessoa('${tipo}',${index})">Editar perfil</button><button class="btn btn-outline" onclick="imprimirFichaPessoa('${tipo}',${index})">Imprimir ficha</button>${tipo==='membros'&&hasFullConfidentialAccess()?`<button class="btn btn-primary" style="width:auto;margin-top:0;" onclick="gerarCartaRecomendacao('${tipo}',${index})">Carta de recomendação</button>`:''}${tipo!=='membros'?`<button class="btn btn-primary" style="width:auto;margin-top:0;" onclick="closeMemberModal();tornarMembro('${tipo}',${index})">Tornar membro</button>`:''}</div>`;
   document.getElementById('member-modal-title').textContent=p.nome;
   document.querySelector('#member-modal-overlay .sub').textContent='Perfil de '+(tipo==='membros'?'membro':tipo==='congregados'?'congregado':'visitante');
   document.getElementById('member-modal-overlay').classList.add('show');
@@ -4024,6 +4024,31 @@ async function imprimirFichaPessoa(tipo,index){
     ${corpo}
     <div class="print-sign-row" style="margin-top:34px;"><div class="print-sign"><div class="line"></div><div class="label">Assinatura do(a) cadastrado(a)</div></div><div class="print-sign"><div class="line"></div><div class="label">Responsável pelo cadastro</div></div></div>
     <div class="print-footer">Emitido em ${new Date().toLocaleString('pt-PT')} · Sistema de Gestão ADMS Braga</div></div>`;
+  mostrarDocumentoImpressao(html);
+}
+async function gerarCartaRecomendacao(tipo,index){
+  if(!hasFullConfidentialAccess()){showToast('Apenas Pastor, Usuário Master ou Secretaria podem emitir esta carta.');return;}
+  const p=PESSOAS[tipo]?.[index];if(!p||tipo!=='membros')return showToast('Membro não encontrado.');
+  if(String(p.estadoMembresia||'Ativo').toLowerCase()!=='ativo')return showToast('A carta só pode ser emitida para membro ativo.');
+  const modalidade=prompt('Tipo de documento: escreva RECOMENDAÇÃO, TRANSFERÊNCIA ou APRESENTAÇÃO.','RECOMENDAÇÃO');
+  if(modalidade===null)return;
+  const tipoCarta=String(modalidade||'RECOMENDAÇÃO').trim().toUpperCase();
+  if(!['RECOMENDAÇÃO','TRANSFERÊNCIA','APRESENTAÇÃO'].includes(tipoCarta))return showToast('Escolha Recomendação, Transferência ou Apresentação.');
+  const destino=prompt('Nome da igreja ou instituição destinatária:','À Igreja Evangélica destinatária');if(destino===null)return;
+  const localDestino=prompt('Cidade / localidade da igreja destinatária:','');if(localDestino===null)return;
+  const finalidade=prompt('Finalidade da carta:',tipoCarta==='TRANSFERÊNCIA'?'Receção e integração no rol de membros da igreja destinatária':'Apresentação e acolhimento cristão');if(finalidade===null)return;
+  if(!String(destino).trim()||!String(finalidade).trim())return showToast('Informe o destinatário e a finalidade.');
+  const logoSrc=document.querySelector('.side-brand img')?.src||'';
+  const numero=p.numeroMembro||p.numero_membro||'—',membroDesde=p.dataMembresia?formatDate(p.dataMembresia):(p.desde||'—');
+  const cargo=p.consagrado&&p.cargoConsagracao?p.cargoConsagracao:'Membro';
+  const departamento=p.dept&&p.dept!=='—'?p.dept:'Geral / Sede';
+  const emissao=new Date().toLocaleDateString('pt-PT',{timeZone:'Europe/Lisbon',day:'2-digit',month:'long',year:'numeric'});
+  const referencia=`CR-${String(numero).replace(/[^A-Z0-9]/gi,'')}-${new Date().toLocaleDateString('en-CA',{timeZone:'Europe/Lisbon'}).replaceAll('-','')}`;
+  const tratamento=String(p.genero||'').toLowerCase()==='feminino'?'irmã':'irmão';
+  const verbo=tipoCarta==='TRANSFERÊNCIA'?'transferir e recomendar':tipoCarta==='APRESENTAÇÃO'?'apresentar e recomendar':'recomendar';
+  const texto=`Por meio desta, a Igreja Evangélica Assembleia de Deus Ministério de Santos — Congregação Braga, declara que o(a) ${tratamento} <strong>${admsEsc(p.nome)}</strong>, titular do número de membro <strong>${admsEsc(numero)}</strong>, integra o nosso quadro de membros desde <strong>${admsEsc(membroDesde)}</strong> e encontra-se, nesta data, com situação eclesiástica ativa em nossos registos.<br><br>Com base no acompanhamento pastoral e nas informações institucionais disponíveis, vimos ${verbo} o(a) referido(a) membro à <strong>${admsEsc(String(destino).trim())}</strong>${String(localDestino).trim()?`, em ${admsEsc(String(localDestino).trim())}`:''}, para a seguinte finalidade: <strong>${admsEsc(String(finalidade).trim())}</strong>.<br><br>Durante a sua permanência nesta congregação, consta em nossos registos como <strong>${admsEsc(cargo)}</strong>, ligado(a) ao departamento <strong>${admsEsc(departamento)}</strong>. Solicitamos que seja recebido(a) com amor cristão e acompanhado(a) segundo as normas e os princípios da igreja destinatária.<br><br>Esta carta confirma exclusivamente o vínculo e a situação eclesiástica conhecidos na data de emissão, não substituindo documentos civis ou outras certidões legalmente exigidas.`;
+  const html=`<div style="font-family:Inter,Arial,sans-serif;color:#172033;max-width:780px;margin:0 auto;line-height:1.65;"><div class="print-header">${logoSrc?`<img src="${logoSrc}">`:''}<div class="titles"><h1>Igreja Evangélica Assembleia de Deus Ministério de Santos</h1><p>Congregação Braga · Portugal</p></div></div><div class="print-band"></div><div style="display:flex;justify-content:space-between;gap:15px;align-items:start;margin:24px 0 34px;"><div><div style="font-size:11px;color:#9B771C;font-weight:800;letter-spacing:1px;">DOCUMENTO ECLESIÁSTICO</div><h1 style="font-family:'Cormorant Garamond',Georgia,serif;color:#07194F;font-size:31px;margin:4px 0;">Carta de ${admsEsc(tipoCarta.charAt(0)+tipoCarta.slice(1).toLowerCase())}</h1></div><div style="font-size:10px;text-align:right;color:#69738A;"><strong>Referência</strong><br>${admsEsc(referencia)}</div></div><p><strong>À</strong><br>${admsEsc(String(destino).trim())}${String(localDestino).trim()?`<br>${admsEsc(String(localDestino).trim())}`:''}</p><p style="margin:25px 0;">A paz do Senhor Jesus.</p><p style="text-align:justify;">${texto}</p><p style="text-align:right;margin-top:34px;">Braga, ${admsEsc(emissao)}.</p><div class="print-sign-row" style="margin-top:70px;"><div class="print-sign"><div class="line"></div><div class="label">Pastor Local</div></div><div class="print-sign"><div class="line"></div><div class="label">Secretaria</div></div></div><div class="print-footer">${admsEsc(referencia)} · Documento emitido pelo Sistema de Gestão ADMS Braga</div></div>`;
+  await logAction('membros',`Carta de ${tipoCarta.toLowerCase()} emitida`,`${p.nome} · ${numero} · ${String(destino).trim()}`);
   mostrarDocumentoImpressao(html);
 }
 function parseValorEuro(v){ return parseFloat(String(v).replace(/[€\s.]/g,'').replace(',', '.')) || 0; }
@@ -7119,7 +7144,7 @@ if(paramsUrl.get('form') === 'cadastro'){
 
 // Mantém a instalação como aplicação sem guardar páginas ou dados sensíveis em cache.
 if('serviceWorker' in navigator){
-    window.addEventListener('load',()=>navigator.serviceWorker.register('/sw-sistema.js?v=117').catch(()=>{}));
+    window.addEventListener('load',()=>navigator.serviceWorker.register('/sw-sistema.js?v=118').catch(()=>{}));
 }
 if(window.caches){
   caches.keys().then(keys=>Promise.all(keys.map(key=>caches.delete(key)))).catch(()=>{});
