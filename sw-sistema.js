@@ -1,4 +1,4 @@
-// ADMS Braga v108: indicadores financeiros mensais e acumulados.
+// ADMS Braga v109: correção das permissões de importação e gestão de membros.
 self.addEventListener('install',()=>self.skipWaiting());
 self.addEventListener('activate',event=>{
   event.waitUntil(

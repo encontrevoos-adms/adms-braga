@@ -6668,7 +6668,8 @@ async function importarCadastro(){
   const cloudImport = await admsSalvarMembroCloud(membro);
   if(!cloudImport.ok){
     PESSOAS.membros.pop();
-    err.textContent = 'Não foi possível importar o cadastro para o servidor.';
+    const codigoErro=cloudImport.error?.code?` (${cloudImport.error.code})`:'';
+    err.textContent = `Não foi possível importar o cadastro para o servidor${codigoErro}. Confirme se o SQL da versão 109 foi executado.`;
     err.style.display = 'block';
     console.error('ADMS Cloud:', cloudImport.error || cloudImport.reason);
     return;
