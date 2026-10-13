@@ -1,4 +1,4 @@
-// ADMS Braga v115: cartão de membro com validade de um ano desde a expedição.
+// ADMS Braga v116: relatórios segmentados, indicadores por abas e aniversários de casamento.
 self.addEventListener('install',()=>self.skipWaiting());
 self.addEventListener('activate',event=>{
   event.waitUntil(

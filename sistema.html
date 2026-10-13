@@ -2736,6 +2736,11 @@ function aniversarioPartes(p){
   const mes=parseInt(partes[1],10),dia=parseInt(partes[2],10);
   return mes>=1&&mes<=12&&dia>=1&&dia<=31?{mes,dia}:null;
 }
+function casamentoPartes(p){
+  const partes=String(p?.dataCasamento||'').split('-');if(partes.length!==3)return null;
+  const ano=parseInt(partes[0],10),mes=parseInt(partes[1],10),dia=parseInt(partes[2],10);
+  return ano>1900&&mes>=1&&mes<=12&&dia>=1&&dia<=31?{ano,mes,dia}:null;
+}
 function distanciaAniversario(p,hoje=new Date()){
   const partes=aniversarioPartes(p);if(!partes)return Number.MAX_SAFE_INTEGER;
   const inicio=new Date(hoje.getFullYear(),hoje.getMonth(),hoje.getDate());
@@ -2767,7 +2772,9 @@ async function renderAniversariantes(){
   }).join('');
   const doMes=membros.filter(p=>aniversarioPartes(p).mes===mesAtual).sort((a,b)=>aniversarioPartes(a).dia-aniversarioPartes(b).dia||a.nome.localeCompare(b.nome,'pt'));
   const lista=doMes.map(p=>{const d=aniversarioPartes(p);return `<div class="birthday-person"><div class="birthday-day">${String(d.dia).padStart(2,'0')}</div><div><strong>${admsEsc(p.nome)}</strong><small>${d.dia===diaAtual?'Aniversariante de hoje':'Aniversário em '+d.dia+' de '+mesLabelCompleto(d.mes)}</small></div></div>`;}).join('');
-  el.innerHTML=`<div class="topbar"><div><div class="breadcrumb">Comunhão e cuidado</div><h1>Aniversariantes</h1></div><span class="access-pill">${ICON.crown} Cadastro de membros</span></div>${ruleDivider()}${banners||'<div class="card"><h2>Nenhum aniversário disponível</h2><p>Cadastre a data de nascimento dos membros para gerar automaticamente as felicitações.</p></div>'}<div class="section-title"><h2>Aniversariantes de ${mesLabelCompleto(mesAtual)}</h2></div><div class="birthday-month-list">${lista||'<div class="card">Nenhum membro aniversaria neste mês.</div>'}</div>`;
+  const casamentos=(PESSOAS.membros||[]).filter(p=>{const d=casamentoPartes(p);return d&&d.mes===mesAtual&&String(p.estadoMembresia||'Ativo').toLowerCase()!=='inativo';}).sort((a,b)=>casamentoPartes(a).dia-casamentoPartes(b).dia||a.nome.localeCompare(b.nome,'pt'));
+  const listaCasamentos=casamentos.map(p=>{const d=casamentoPartes(p),anos=hoje.getFullYear()-d.ano;return `<div class="birthday-person"><div class="birthday-day">${String(d.dia).padStart(2,'0')}</div><div><strong>${admsEsc(p.nome)}${p.nomeConjuge?' & '+admsEsc(p.nomeConjuge):''}</strong><small>${anos} ano${anos===1?'':'s'} de casamento · ${d.dia} de ${mesLabelCompleto(d.mes)}</small></div></div>`;}).join('');
+  el.innerHTML=`<div class="topbar"><div><div class="breadcrumb">Comunhão e cuidado</div><h1>Aniversariantes</h1></div><span class="access-pill">${ICON.crown} Cadastro de membros</span></div>${ruleDivider()}${banners||'<div class="card"><h2>Nenhum aniversário disponível</h2><p>Cadastre a data de nascimento dos membros para gerar automaticamente as felicitações.</p></div>'}<div class="grid2"><section><div class="section-title"><h2>Aniversariantes de ${mesLabelCompleto(mesAtual)}</h2></div><div class="birthday-month-list">${lista||'<div class="card">Nenhum membro aniversaria neste mês.</div>'}</div></section><section><div class="section-title"><h2>Aniversários de casamento</h2></div><div class="birthday-month-list">${listaCasamentos||'<div class="card">Nenhum aniversário de casamento neste mês.</div>'}</div></section></div>`;
 }
 async function publicarAniversariante(indice){
   if(!exigirPermissao('site-publico','inserir'))return;
@@ -3500,9 +3507,20 @@ function rhLinhasIndicador(contagens){
   const itens=Object.entries(contagens).sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0],'pt'));
   return itens.map(([nome,total])=>`<div style="display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--paper-2)"><span>${admsEsc(nome)}</span><strong>${total}</strong></div>`).join('')||'<p style="color:var(--ink-soft)">Sem dados.</p>';
 }
+function rhIdade(m){
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(String(m.dataNascimento||'')))return null;
+  const [ano,mes,dia]=m.dataNascimento.split('-').map(Number),hoje=new Date();let idade=hoje.getFullYear()-ano;
+  if((hoje.getMonth()+1)<mes||((hoje.getMonth()+1)===mes&&hoje.getDate()<dia))idade--;
+  return idade;
+}
 function rhFiltrarRelatorio(tipo){
   const membros=PESSOAS.membros||[];
   if(tipo==='ativos')return membros.filter(m=>String(m.estadoMembresia||'Ativo').toLowerCase()==='ativo');
+  if(tipo==='inativos')return membros.filter(m=>String(m.estadoMembresia||'').toLowerCase()==='inativo');
+  if(tipo==='solteiros')return membros.filter(m=>String(m.estadoCivil||'').startsWith('Solteiro'));
+  if(tipo==='casados')return membros.filter(m=>String(m.estadoCivil||'').startsWith('Casado'));
+  if(tipo.startsWith('dept:')){const id=tipo.slice(5),nome=DEPARTMENTS.find(x=>x.id===id)?.nome||id;return membros.filter(m=>m.liderDepartamentoId===id||m.dept===nome||(m.jaServiuDepartamentos||[]).includes(id)||(m.pretendeServirDepartamentos||[]).includes(id));}
+  if(tipo.startsWith('idade:')){const [min,max]=tipo.slice(6).split('-').map(Number);return membros.filter(m=>{const idade=rhIdade(m);return idade!==null&&idade>=min&&idade<=max;});}
   if(tipo==='lideres')return membros.filter(m=>m.eLider);
   if(tipo==='musicos')return membros.filter(m=>m.musico);
   if(tipo==='cantores')return membros.filter(m=>m.canta);
@@ -3512,15 +3530,17 @@ function rhFiltrarRelatorio(tipo){
 function rhJanelaImpressao(titulo,conteudo){
   const w=window.open('','_blank','width=1100,height=760');
   if(!w){showToast('Autorize as janelas pop-up para imprimir o relatório.');return;}
-  w.document.write(`<!doctype html><html lang="pt"><head><meta charset="utf-8"><title>${admsEsc(titulo)}</title><style>body{font-family:Arial,sans-serif;color:#07194f;margin:32px}h1{font-family:Georgia,serif;margin:0 0 6px}.sub{color:#667085;margin-bottom:24px}table{width:100%;border-collapse:collapse;font-size:12px}th,td{padding:9px;border-bottom:1px solid #dfe4ee;text-align:left;vertical-align:top}th{background:#f2f5fa}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}.box{border:1px solid #dfe4ee;border-radius:12px;padding:16px}.row{display:flex;justify-content:space-between;border-bottom:1px solid #edf0f5;padding:7px 0}@media print{body{margin:14mm}.no-print{display:none}}@media(max-width:700px){.grid{grid-template-columns:1fr}}</style></head><body><h1>${admsEsc(titulo)}</h1><div class="sub">ADMS Braga · emitido em ${new Date().toLocaleString('pt-PT',{timeZone:'Europe/Lisbon'})}</div>${conteudo}<script>window.onload=()=>window.print()<\/script></body></html>`);
+  const logo=document.querySelector('.side-brand img')?.src||'';
+  w.document.write(`<!doctype html><html lang="pt"><head><meta charset="utf-8"><title>${admsEsc(titulo)}</title><style>@page{size:A4 landscape;margin:12mm}*{box-sizing:border-box}body{font-family:Arial,sans-serif;color:#07194f;margin:28px}.head{display:flex;align-items:center;gap:15px}.head img{width:64px;height:64px;object-fit:contain}.head h1{font:700 24px Georgia,serif;margin:0}.head p{margin:4px 0 0;color:#667085;font-size:11px;text-transform:uppercase;letter-spacing:1px}.band{height:6px;background:linear-gradient(90deg,#b82431,#d6ad45,#07194f);margin:15px 0 20px;border-radius:8px}.title{display:flex;justify-content:space-between;align-items:end;margin-bottom:16px}.title h2{font:700 28px Georgia,serif;margin:0}.sub{color:#667085;font-size:11px}table{width:100%;border-collapse:collapse;font-size:10.5px;border:1px solid #dfe4ee}th,td{padding:8px;border-bottom:1px solid #dfe4ee;text-align:left;vertical-align:top}th{background:#07194f;color:#fff;text-transform:uppercase}tbody tr:nth-child(even){background:#f5f7fb}.total{display:inline-block;background:#f5edd7;border:1px solid #d6ad45;border-radius:99px;padding:6px 12px;font-weight:bold;margin-bottom:12px}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}.box{border:1px solid #d6ad45;border-radius:12px;padding:16px}.row{display:flex;justify-content:space-between;border-bottom:1px solid #edf0f5;padding:7px 0}.foot{margin-top:18px;padding-top:8px;border-top:1px solid #d6ad45;color:#667085;font-size:9px;text-align:center}@media print{body{margin:0}}@media(max-width:700px){.grid{grid-template-columns:1fr}}</style></head><body><header class="head">${logo?`<img src="${logo}">`:''}<div><h1>ADMS Braga</h1><p>Assembleia de Deus Ministério de Santos · Congregação Braga</p></div></header><div class="band"></div><div class="title"><h2>${admsEsc(titulo)}</h2><div class="sub">Emitido em ${new Date().toLocaleString('pt-PT',{timeZone:'Europe/Lisbon'})}</div></div>${conteudo}<div class="foot">Documento emitido pelo Sistema de Gestão ADMS Braga · uso interno</div><script>window.onload=()=>window.print()<\/script></body></html>`);
   w.document.close();
 }
 function imprimirListaMembrosRH(){
   const tipo=document.getElementById('rh-relatorio-tipo')?.value||'todos';
-  const nomes={todos:'Lista geral de membros',ativos:'Membros ativos',lideres:'Lideranças',musicos:'Músicos',cantores:'Cantores',consagrados:'Consagrados'};
+  const nomes={todos:'Lista geral de membros',ativos:'Membros ativos',inativos:'Membros inativos',solteiros:'Membros solteiros',casados:'Membros casados',lideres:'Lideranças',musicos:'Músicos',cantores:'Cantores',consagrados:'Consagrados','idade:0-12':'Faixa etária · 0 a 12 anos','idade:13-17':'Faixa etária · 13 a 17 anos','idade:18-29':'Faixa etária · 18 a 29 anos','idade:30-59':'Faixa etária · 30 a 59 anos','idade:60-200':'Faixa etária · 60 anos ou mais'};
   const lista=rhFiltrarRelatorio(tipo);
   const linhas=lista.map(m=>`<tr><td>${admsEsc(m.numeroMembro||m.numero_membro||'—')}</td><td><strong>${admsEsc(m.nome||'—')}</strong></td><td>${admsEsc(m.genero||'—')}</td><td>${admsEsc(rhFuncaoMembro(m))}</td><td>${admsEsc(m.dept||'—')}</td><td>${admsEsc(m.dataMembresia?formatDate(m.dataMembresia):rhValorAnoMembresia(m))}</td><td>${m.musico?'Sim'+(m.instrumentos?.length?' — '+admsEsc(m.instrumentos.join(', ')):''):'Não'}</td><td>${m.canta?'Sim'+(m.tipoVoz?' — '+admsEsc(m.tipoVoz):''):'Não'}</td></tr>`).join('');
-  rhJanelaImpressao(nomes[tipo]||nomes.todos,`<p><strong>Total: ${lista.length}</strong></p><table><thead><tr><th>N.º</th><th>Nome</th><th>Género</th><th>Função</th><th>Departamento</th><th>Membresia</th><th>Músico</th><th>Cantor(a)</th></tr></thead><tbody>${linhas||'<tr><td colspan="8">Sem registos.</td></tr>'}</tbody></table>`);
+  const titulo=tipo.startsWith('dept:')?`Membros por departamento · ${deptNome(tipo.slice(5))}`:(nomes[tipo]||nomes.todos);
+  rhJanelaImpressao(titulo,`<div class="total">${lista.length} registo(s)</div><table><thead><tr><th>N.º</th><th>Nome</th><th>Género</th><th>Função</th><th>Departamento</th><th>Membresia</th><th>Músico</th><th>Cantor(a)</th></tr></thead><tbody>${linhas||'<tr><td colspan="8">Sem registos.</td></tr>'}</tbody></table>`);
 }
 function imprimirIndicadoresRH(){
   const membros=PESSOAS.membros||[];
@@ -3528,10 +3548,26 @@ function imprimirIndicadoresRH(){
   const boxes=grupos.map(([titulo,dados])=>`<section class="box"><h2>${admsEsc(titulo)}</h2>${Object.entries(dados).sort((a,b)=>b[1]-a[1]).map(([n,v])=>`<div class="row"><span>${admsEsc(n)}</span><strong>${v}</strong></div>`).join('')||'Sem dados'}</section>`).join('');
   rhJanelaImpressao('Indicadores de Recursos Humanos',`<p><strong>${membros.length}</strong> membros · <strong>${membros.filter(m=>m.musico).length}</strong> músicos · <strong>${membros.filter(m=>m.canta).length}</strong> cantores · <strong>${membros.filter(m=>m.eLider).length}</strong> líderes</p><div class="grid">${boxes}</div>`);
 }
+let RH_INDICADOR_TAB='geral';
+function rhMudarIndicadorAba(tab,btn){
+  RH_INDICADOR_TAB=tab;
+  document.querySelectorAll('[data-rh-tab]').forEach(b=>{b.classList.toggle('btn-primary',b===btn);b.classList.toggle('btn-outline',b!==btn)});
+  document.querySelectorAll('[data-rh-panel]').forEach(p=>p.style.display=p.dataset.rhPanel===tab?'grid':'none');
+}
 function rhPainelIndicadoresHTML(){
   const membros=PESSOAS.membros||[],ativos=membros.filter(m=>String(m.estadoMembresia||'Ativo').toLowerCase()==='ativo');
-  const generos=rhContagens(membros,m=>m.genero),funcoes=rhContagens(membros,rhFuncaoMembro),anos=rhContagens(membros,rhValorAnoMembresia),depts=rhContagens(membros,m=>m.dept);
-  return `<section style="margin-bottom:22px"><div class="section-title" style="margin-top:0"><h2>Indicadores de Recursos Humanos</h2></div><div class="kpi-grid"><div class="kpi"><span>Total de membros</span><strong>${membros.length}</strong><small>${ativos.length} ativo(s)</small></div><div class="kpi"><span>Lideranças</span><strong>${membros.filter(m=>m.eLider).length}</strong><small>funções atuais</small></div><div class="kpi"><span>Músicos</span><strong>${membros.filter(m=>m.musico).length}</strong><small>instrumentistas cadastrados</small></div><div class="kpi"><span>Cantores</span><strong>${membros.filter(m=>m.canta).length}</strong><small>vozes cadastradas</small></div></div><div class="grid2" style="margin-top:16px"><article class="card"><h3>Por género</h3>${rhLinhasIndicador(generos)}</article><article class="card"><h3>Por função</h3>${rhLinhasIndicador(funcoes)}</article><article class="card"><h3>Por ano de membresia</h3>${rhLinhasIndicador(anos)}</article><article class="card"><h3>Por departamento</h3>${rhLinhasIndicador(depts)}</article></div><div class="card" style="margin-top:16px"><h3>Relatórios e listas</h3><div style="display:flex;gap:10px;align-items:end;flex-wrap:wrap"><label style="flex:1;min-width:230px">Tipo de lista<select id="rh-relatorio-tipo"><option value="todos">Todos os membros</option><option value="ativos">Somente membros ativos</option><option value="lideres">Lideranças</option><option value="musicos">Músicos</option><option value="cantores">Cantores</option><option value="consagrados">Consagrados</option></select></label><button class="btn btn-outline" style="width:auto" onclick="imprimirListaMembrosRH()">Imprimir lista</button><button class="btn btn-primary" style="width:auto;margin-top:0" onclick="imprimirIndicadoresRH()">Imprimir indicadores</button></div></div></section>`;
+  const generos=rhContagens(membros,m=>m.genero),funcoes=rhContagens(membros,rhFuncaoMembro),anos=rhContagens(membros,rhValorAnoMembresia),depts=rhContagens(membros,m=>m.dept),estados=rhContagens(membros,m=>m.estadoMembresia),civis=rhContagens(membros,m=>m.estadoCivil),idades=rhContagens(membros,m=>{const i=rhIdade(m);return i===null?'Não informada':i<=12?'0–12 anos':i<=17?'13–17 anos':i<=29?'18–29 anos':i<=59?'30–59 anos':'60+ anos'});
+  const tabs=[['geral','Visão geral'],['perfil','Perfil'],['funcoes','Funções'],['membresia','Membresia'],['departamentos','Departamentos'],['musica','Música e voz']];
+  const painel=(id,html)=>`<div data-rh-panel="${id}" class="grid2" style="${RH_INDICADOR_TAB===id?'':'display:none'}">${html}</div>`;
+  return `<section style="margin-bottom:22px"><div class="section-title" style="margin-top:0"><h2>Indicadores de Recursos Humanos</h2></div><div class="kpi-grid"><div class="kpi"><span>Total de membros</span><strong>${membros.length}</strong><small>${ativos.length} ativo(s)</small></div><div class="kpi"><span>Lideranças</span><strong>${membros.filter(m=>m.eLider).length}</strong><small>funções atuais</small></div><div class="kpi"><span>Músicos</span><strong>${membros.filter(m=>m.musico).length}</strong><small>instrumentistas cadastrados</small></div><div class="kpi"><span>Cantores</span><strong>${membros.filter(m=>m.canta).length}</strong><small>vozes cadastradas</small></div></div>
+  <div style="display:flex;gap:8px;overflow-x:auto;padding:4px 0 10px;margin-top:13px">${tabs.map(([id,n])=>`<button type="button" data-rh-tab="${id}" class="btn ${RH_INDICADOR_TAB===id?'btn-primary':'btn-outline'}" style="width:auto;white-space:nowrap" onclick="rhMudarIndicadorAba('${id}',this)">${n}</button>`).join('')}</div>
+  ${painel('geral',`<article class="card"><h3>Estado da membresia</h3>${rhLinhasIndicador(estados)}</article><article class="card"><h3>Estado civil</h3>${rhLinhasIndicador(civis)}</article>`)}
+  ${painel('perfil',`<article class="card"><h3>Por género</h3>${rhLinhasIndicador(generos)}</article><article class="card"><h3>Por faixa etária</h3>${rhLinhasIndicador(idades)}</article>`)}
+  ${painel('funcoes',`<article class="card"><h3>Por função</h3>${rhLinhasIndicador(funcoes)}</article><article class="card"><h3>Liderança</h3>${rhLinhasIndicador({'Líderes':membros.filter(m=>m.eLider).length,'Demais membros':membros.filter(m=>!m.eLider).length})}</article>`)}
+  ${painel('membresia',`<article class="card"><h3>Por ano de membresia</h3>${rhLinhasIndicador(anos)}</article><article class="card"><h3>Situação atual</h3>${rhLinhasIndicador(estados)}</article>`)}
+  ${painel('departamentos',`<article class="card"><h3>Por departamento</h3>${rhLinhasIndicador(depts)}</article><article class="card"><h3>Disponibilidade</h3>${rhLinhasIndicador(rhContagens(membros,m=>(m.pretendeServirDepartamentos||[]).length?'Disponível para servir':'Não informado'))}</article>`)}
+  ${painel('musica',`<article class="card"><h3>Músicos</h3>${rhLinhasIndicador(rhContagens(membros.filter(m=>m.musico),m=>(m.instrumentos||[]).join(', ')||'Instrumento não informado'))}</article><article class="card"><h3>Cantores</h3>${rhLinhasIndicador(rhContagens(membros.filter(m=>m.canta),m=>m.tipoVoz))}</article>`)}
+  <div class="card" style="margin-top:16px"><h3>Relatórios e listas</h3><div style="display:flex;gap:10px;align-items:end;flex-wrap:wrap"><label style="flex:1;min-width:230px">Tipo de lista<select id="rh-relatorio-tipo"><option value="todos">Todos os membros</option><option value="ativos">Membros ativos</option><option value="inativos">Membros inativos</option><option value="solteiros">Solteiros</option><option value="casados">Casados</option><optgroup label="Faixa etária"><option value="idade:0-12">0 a 12 anos</option><option value="idade:13-17">13 a 17 anos</option><option value="idade:18-29">18 a 29 anos</option><option value="idade:30-59">30 a 59 anos</option><option value="idade:60-200">60 anos ou mais</option></optgroup><optgroup label="Departamento">${DEPARTMENTS.map(d=>`<option value="dept:${d.id}">${admsEsc(d.nome)}</option>`).join('')}</optgroup><option value="lideres">Lideranças</option><option value="musicos">Músicos</option><option value="cantores">Cantores</option><option value="consagrados">Consagrados</option></select></label><button class="btn btn-outline" style="width:auto" onclick="imprimirListaMembrosRH()">Imprimir lista</button><button class="btn btn-primary" style="width:auto;margin-top:0" onclick="imprimirIndicadoresRH()">Imprimir indicadores</button></div></div></section>`;
 }
 
 function viewRH(){
@@ -3605,6 +3641,7 @@ function viewRH(){
         <div id="rh-conjuge-wrap" style="display:none;" class="form-row">
           <div><label>Nome do cônjuge</label><input id="rh-nome-conjuge" placeholder="Nome completo do cônjuge"></div>
           <div><label>Cônjuge é convertido(a)?</label><select id="rh-conjuge-convertido"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
+          <div><label>Data de casamento</label><input id="rh-data-casamento" type="date"></div>
         </div>
         <div><label>Morada completa</label><input id="rh-morada" placeholder="Rua, número, código postal, cidade"></div>
         <div class="form-row">
@@ -3756,7 +3793,7 @@ async function preencherFormularioPessoa(tipo,index,modo='editar'){
   if((modo==='converter'?'membros':tipo)==='membros'){
     rhSet('rh-nascimento',p.dataNascimento||''); rhSet('rh-genero',p.genero||'Masculino'); rhSet('rh-estado-civil',p.estadoCivil||'Solteiro(a)');
     rhSet('rh-email',p.email||''); rhSet('rh-morada',p.morada||''); rhSet('rh-emerg-nome',p.emergenciaNome||''); rhSet('rh-emerg-tel',p.emergenciaContacto||'');
-    rhSet('rh-profissao',p.profissao||''); rhSet('rh-escolaridade',p.escolaridade||'Ensino Básico'); rhSet('rh-nome-conjuge',p.nomeConjuge||''); rhSetBool('rh-conjuge-convertido',!!p.conjugeConvertido);
+    rhSet('rh-profissao',p.profissao||''); rhSet('rh-escolaridade',p.escolaridade||'Ensino Básico'); rhSet('rh-nome-conjuge',p.nomeConjuge||''); rhSet('rh-data-casamento',p.dataCasamento||''); rhSetBool('rh-conjuge-convertido',!!p.conjugeConvertido);
     rhSet('rh-data-membresia',p.dataMembresia||(modo==='converter'?new Date().toISOString().slice(0,10):'')); rhSet('rh-como-membro',p.comoMembro||(modo==='converter'?'Outro':'Batismo nesta igreja'));
     rhSetBool('rh-batizado',!!p.batizadoAguas); rhSet('rh-batismo-data',p.batizadoData||''); rhSet('rh-batismo-local',p.batizadoLocal||''); rhSetBool('rh-batizado-es',!!p.batizadoEspiritoSanto);
     rhSetBool('rh-tem-filhos',!!p.temFilhos); rhSet('rh-num-filhos',p.numFilhos||''); rhSet('rh-estado-membresia',p.estadoMembresia||'Ativo'); rhSetBool('rh-dizimista',!!p.dizimista); rhSet('rh-notas',p.notas||'');
@@ -3823,6 +3860,7 @@ async function addPessoa(){
     if(liderDepartamentoId==='pastoral'&&!canAccessDept('pastoral')){showToast('A liderança Pastoral só pode ser atribuída por Pastor, Secretaria ou Usuário Master.');return;}
     pessoa={...base,id:base.id||('mb'+Date.now()+Math.random().toString(36).slice(2,6)),nome,contacto,dept,eLider,liderDepartamentoId,liderDataInicio:document.getElementById('rh-lider-inicio')?.value||'',liderAtual:document.getElementById('rh-lider-atual')?.value!=='nao',liderDataFim:document.getElementById('rh-lider-atual')?.value==='nao'?(document.getElementById('rh-lider-fim')?.value||''):'',desde:dataMembresia?String(dataMembresia.split('-')[0]):String(hoje.getFullYear()),
       dataNascimento:document.getElementById('rh-nascimento').value,genero:document.getElementById('rh-genero').value,estadoCivil:document.getElementById('rh-estado-civil').value,email:document.getElementById('rh-email').value.trim(),morada:document.getElementById('rh-morada').value.trim(),emergenciaNome:document.getElementById('rh-emerg-nome').value.trim(),emergenciaContacto:document.getElementById('rh-emerg-tel').value.trim(),profissao:document.getElementById('rh-profissao').value.trim(),escolaridade:document.getElementById('rh-escolaridade').value,nomeConjuge:document.getElementById('rh-estado-civil').value==='Casado(a)'?document.getElementById('rh-nome-conjuge').value.trim():'',conjugeConvertido:document.getElementById('rh-estado-civil').value==='Casado(a)'?document.getElementById('rh-conjuge-convertido').value==='sim':null,dataMembresia,comoMembro:document.getElementById('rh-como-membro').value,batizadoAguas:batizado,batizadoData:batizado?document.getElementById('rh-batismo-data').value:'',batizadoLocal:batizado?document.getElementById('rh-batismo-local').value.trim():'',batizadoEspiritoSanto:document.getElementById('rh-batizado-es').value==='sim',temFilhos,numFilhos:temFilhos?parseInt(document.getElementById('rh-num-filhos').value,10)||0:0,estadoMembresia:document.getElementById('rh-estado-membresia').value,dizimista:document.getElementById('rh-dizimista').value==='sim',notas:document.getElementById('rh-notas').value.trim(),...lerCamposMembroExtra('rh')};
+    pessoa.dataCasamento=document.getElementById('rh-estado-civil').value==='Casado(a)'?(document.getElementById('rh-data-casamento')?.value||''):'';
     if(edit?.modo==='converter'){pessoa.origemCategoria=edit.tipo;pessoa.convertidoEm=new Date().toISOString();pessoa.convertidoPor=session.label;}
     if(edit?.modo==='editar'){pessoa.alteradoEm=new Date().toISOString();pessoa.alteradoPor=session.label;}
     const fotoFile=document.getElementById('rh-foto')?.files?.[0]||null;
@@ -3896,7 +3934,7 @@ function openPessoaModal(tipo,index){
     ${row('Categoria', tipo==='membros'?'Membro':tipo==='congregados'?'Congregado':'Visitante')}
     ${tipo==='membros'?row('N.º de membro',p.numeroMembro||p.numero_membro||'A atribuir'):''}
     ${row('Telemóvel',p.contacto)} ${row('Email',p.email)} ${row('Nascimento',p.dataNascimento?formatDate(p.dataNascimento):'')}
-    ${row('Género',p.genero)} ${row('Estado civil',p.estadoCivil)} ${row('Morada',p.morada)} ${row('Departamento',p.dept)}
+    ${row('Género',p.genero)} ${row('Estado civil',p.estadoCivil)} ${p.dataCasamento?row('Data de casamento',formatDate(p.dataCasamento)):''} ${row('Morada',p.morada)} ${row('Departamento',p.dept)}
     ${row('Profissão',p.profissao)} ${row('Escolaridade',p.escolaridade)} ${row('Membro desde',p.dataMembresia?formatDate(p.dataMembresia):'')}
     ${row('Estado da membresia',p.estadoMembresia)} ${row('Notas',p.notas)}
     ${tipo==='membros'?'<div id="membro-access-control" style="margin-top:16px"><div class="hint-box">Abra “Acesso ao portal” para consultar ou gerir a credencial deste membro.</div></div>':''}
@@ -3953,7 +3991,7 @@ async function imprimirFichaPessoa(tipo,index){
 
   if(tipo==='membros'){
     corpo+=secao('Família, formação e situação profissional',
-      campo('Nome do cônjuge',p.nomeConjuge)+campo('Cônjuge convertido(a)',simNao(!!p.conjugeConvertido))+
+      campo('Nome do cônjuge',p.nomeConjuge)+campo('Data de casamento',data(p.dataCasamento))+campo('Cônjuge convertido(a)',simNao(!!p.conjugeConvertido))+
       campo('Tem filhos',simNao(!!p.temFilhos))+campo('Número de filhos',p.temFilhos?texto(p.numFilhos):'—')+
       campo('Profissão / situação profissional',p.profissao)+campo('Escolaridade',p.escolaridade)+campo('Está empregado(a)',simNao(!!p.empregado)));
 
@@ -6611,6 +6649,7 @@ function renderCadastroForm(){
     <div id="reg-conjuge-wrap" style="display:none;" class="form-row">
       <div><label>Nome do cônjuge</label><input id="reg-nome-conjuge" placeholder="Nome completo do cônjuge"></div>
       <div><label>Cônjuge é convertido(a)?</label><select id="reg-conjuge-convertido"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
+      <div><label>Data de casamento</label><input id="reg-data-casamento" type="date"></div>
     </div>
     <label>Escolaridade</label>
     <select id="reg-escolaridade"><option>Ensino Básico</option><option>Ensino Secundário</option><option>Ensino Superior — Licenciatura</option><option>Ensino Superior — Mestrado</option><option>Ensino Superior — Doutoramento</option><option>Outro</option></select>
@@ -6677,6 +6716,7 @@ function submitCadastroMembro(){
     escolaridade: document.getElementById('reg-escolaridade') ? document.getElementById('reg-escolaridade').value : '',
     nomeConjuge: document.getElementById('reg-estado-civil').value==='Casado(a)' && document.getElementById('reg-nome-conjuge') ? document.getElementById('reg-nome-conjuge').value.trim() : '',
     conjugeConvertido: document.getElementById('reg-estado-civil').value==='Casado(a)' && document.getElementById('reg-conjuge-convertido') ? document.getElementById('reg-conjuge-convertido').value==='sim' : null,
+    dataCasamento: document.getElementById('reg-estado-civil').value==='Casado(a)' ? (document.getElementById('reg-data-casamento')?.value||'') : '',
     dataMembresia: document.getElementById('reg-data-membresia').value,
     comoMembro: document.getElementById('reg-como-membro').value,
     batizadoAguas: batizado,
@@ -7077,7 +7117,7 @@ if(paramsUrl.get('form') === 'cadastro'){
 
 // Mantém a instalação como aplicação sem guardar páginas ou dados sensíveis em cache.
 if('serviceWorker' in navigator){
-    window.addEventListener('load',()=>navigator.serviceWorker.register('/sw-sistema.js?v=115').catch(()=>{}));
+    window.addEventListener('load',()=>navigator.serviceWorker.register('/sw-sistema.js?v=116').catch(()=>{}));
 }
 if(window.caches){
   caches.keys().then(keys=>Promise.all(keys.map(key=>caches.delete(key)))).catch(()=>{});
