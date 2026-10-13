@@ -1,4 +1,4 @@
-// ADMS Braga v116: relatórios segmentados, indicadores por abas e aniversários de casamento.
+// ADMS Braga v117: cargo de consagração destacado no cartão de membro.
 self.addEventListener('install',()=>self.skipWaiting());
 self.addEventListener('activate',event=>{
   event.waitUntil(
