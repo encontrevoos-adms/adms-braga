@@ -520,10 +520,11 @@ async function admsCloudSession(){
 function membroParaNuvem(m){
   const p={...m};
   delete p.login; // credenciais nunca são enviadas para a tabela de membros
+  const nomeNormalizado=String(m.nome||m.nomeCompleto||'').trim();
   return {
     numero_membro: m.numeroMembro || m.numero_membro || null,
     legacy_id: m.id || null,
-    nome: m.nome || '',
+    nome: nomeNormalizado,
     telefone: m.contacto || m.telemovel || null,
     email: m.email || null,
     data_nascimento: m.dataNascimento || m.nascimento || null,
@@ -596,6 +597,7 @@ async function admsSalvarMembroCloud(m){
   const sess=await admsCloudSession();
   if(!sess) return {ok:false, reason:'no_session'};
   const row=membroParaNuvem(m);
+  if(!row.nome)return {ok:false,error:{code:'ADMS_NOME_OBRIGATORIO',message:'O nome completo não foi encontrado no código de cadastro.'}};
   const {data,error}=await admsSupabase.from('membros').upsert(row,{onConflict:'legacy_id'}).select().single();
   return error?{ok:false,error}:{ok:true,data};
 }
@@ -6669,7 +6671,8 @@ async function importarCadastro(){
   if(!cloudImport.ok){
     PESSOAS.membros.pop();
     const codigoErro=cloudImport.error?.code?` (${cloudImport.error.code})`:'';
-    err.textContent = `Não foi possível importar o cadastro para o servidor${codigoErro}. Confirme se o SQL da versão 109 foi executado.`;
+    const mensagemErro=cloudImport.error?.message?` ${cloudImport.error.message}`:'';
+    err.textContent = `Não foi possível importar o cadastro para o servidor${codigoErro}.${mensagemErro} Confirme se os SQL das versões 109 e 110 foram executados.`;
     err.style.display = 'block';
     console.error('ADMS Cloud:', cloudImport.error || cloudImport.reason);
     return;

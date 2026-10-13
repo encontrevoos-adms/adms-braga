@@ -1,4 +1,4 @@
-// ADMS Braga v109: correção das permissões de importação e gestão de membros.
+// ADMS Braga v110: normalização segura do nome na importação de membros.
 self.addEventListener('install',()=>self.skipWaiting());
 self.addEventListener('activate',event=>{
   event.waitUntil(
