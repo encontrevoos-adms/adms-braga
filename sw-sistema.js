@@ -1,4 +1,4 @@
-// ADMS Braga v114: indicadores e relatórios imprimíveis de Recursos Humanos.
+// ADMS Braga v115: cartão de membro com validade de um ano desde a expedição.
 self.addEventListener('install',()=>self.skipWaiting());
 self.addEventListener('activate',event=>{
   event.waitUntil(
