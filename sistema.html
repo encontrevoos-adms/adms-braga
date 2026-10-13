@@ -521,8 +521,7 @@ function membroParaNuvem(m){
   const p={...m};
   delete p.login; // credenciais nunca são enviadas para a tabela de membros
   const nomeNormalizado=String(m.nome||m.nomeCompleto||'').trim();
-  return {
-    numero_membro: m.numeroMembro || m.numero_membro || null,
+  const row={
     legacy_id: m.id || null,
     nome: nomeNormalizado,
     telefone: m.contacto || m.telemovel || null,
@@ -536,6 +535,9 @@ function membroParaNuvem(m){
     importado_por: m.importadoPor || null,
     payload: p
   };
+  const numero=String(m.numeroMembro||m.numero_membro||'').trim();
+  if(numero)row.numero_membro=numero;
+  return row;
 }
 
 function membroDaNuvem(r){
@@ -3459,6 +3461,56 @@ function addBem(){
   renderModule();
 }
 
+function rhValorAnoMembresia(m){
+  const data=String(m.dataMembresia||'');
+  return /^\d{4}/.test(data)?data.slice(0,4):(String(m.desde||'').match(/\d{4}/)?.[0]||'Não informado');
+}
+function rhFuncaoMembro(m){
+  if(m.eLider)return `Líder — ${deptNome(m.liderDepartamentoId)||m.dept||'Departamento'}`;
+  if(m.consagrado&&m.cargoConsagracao)return m.cargoConsagracao;
+  return 'Membro';
+}
+function rhContagens(lista,obter){
+  return lista.reduce((acc,item)=>{const chave=String(obter(item)||'Não informado').trim()||'Não informado';acc[chave]=(acc[chave]||0)+1;return acc;},{});
+}
+function rhLinhasIndicador(contagens){
+  const itens=Object.entries(contagens).sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0],'pt'));
+  return itens.map(([nome,total])=>`<div style="display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--paper-2)"><span>${admsEsc(nome)}</span><strong>${total}</strong></div>`).join('')||'<p style="color:var(--ink-soft)">Sem dados.</p>';
+}
+function rhFiltrarRelatorio(tipo){
+  const membros=PESSOAS.membros||[];
+  if(tipo==='ativos')return membros.filter(m=>String(m.estadoMembresia||'Ativo').toLowerCase()==='ativo');
+  if(tipo==='lideres')return membros.filter(m=>m.eLider);
+  if(tipo==='musicos')return membros.filter(m=>m.musico);
+  if(tipo==='cantores')return membros.filter(m=>m.canta);
+  if(tipo==='consagrados')return membros.filter(m=>m.consagrado);
+  return membros;
+}
+function rhJanelaImpressao(titulo,conteudo){
+  const w=window.open('','_blank','width=1100,height=760');
+  if(!w){showToast('Autorize as janelas pop-up para imprimir o relatório.');return;}
+  w.document.write(`<!doctype html><html lang="pt"><head><meta charset="utf-8"><title>${admsEsc(titulo)}</title><style>body{font-family:Arial,sans-serif;color:#07194f;margin:32px}h1{font-family:Georgia,serif;margin:0 0 6px}.sub{color:#667085;margin-bottom:24px}table{width:100%;border-collapse:collapse;font-size:12px}th,td{padding:9px;border-bottom:1px solid #dfe4ee;text-align:left;vertical-align:top}th{background:#f2f5fa}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}.box{border:1px solid #dfe4ee;border-radius:12px;padding:16px}.row{display:flex;justify-content:space-between;border-bottom:1px solid #edf0f5;padding:7px 0}@media print{body{margin:14mm}.no-print{display:none}}@media(max-width:700px){.grid{grid-template-columns:1fr}}</style></head><body><h1>${admsEsc(titulo)}</h1><div class="sub">ADMS Braga · emitido em ${new Date().toLocaleString('pt-PT',{timeZone:'Europe/Lisbon'})}</div>${conteudo}<script>window.onload=()=>window.print()<\/script></body></html>`);
+  w.document.close();
+}
+function imprimirListaMembrosRH(){
+  const tipo=document.getElementById('rh-relatorio-tipo')?.value||'todos';
+  const nomes={todos:'Lista geral de membros',ativos:'Membros ativos',lideres:'Lideranças',musicos:'Músicos',cantores:'Cantores',consagrados:'Consagrados'};
+  const lista=rhFiltrarRelatorio(tipo);
+  const linhas=lista.map(m=>`<tr><td>${admsEsc(m.numeroMembro||m.numero_membro||'—')}</td><td><strong>${admsEsc(m.nome||'—')}</strong></td><td>${admsEsc(m.genero||'—')}</td><td>${admsEsc(rhFuncaoMembro(m))}</td><td>${admsEsc(m.dept||'—')}</td><td>${admsEsc(m.dataMembresia?formatDate(m.dataMembresia):rhValorAnoMembresia(m))}</td><td>${m.musico?'Sim'+(m.instrumentos?.length?' — '+admsEsc(m.instrumentos.join(', ')):''):'Não'}</td><td>${m.canta?'Sim'+(m.tipoVoz?' — '+admsEsc(m.tipoVoz):''):'Não'}</td></tr>`).join('');
+  rhJanelaImpressao(nomes[tipo]||nomes.todos,`<p><strong>Total: ${lista.length}</strong></p><table><thead><tr><th>N.º</th><th>Nome</th><th>Género</th><th>Função</th><th>Departamento</th><th>Membresia</th><th>Músico</th><th>Cantor(a)</th></tr></thead><tbody>${linhas||'<tr><td colspan="8">Sem registos.</td></tr>'}</tbody></table>`);
+}
+function imprimirIndicadoresRH(){
+  const membros=PESSOAS.membros||[];
+  const grupos=[['Por género',rhContagens(membros,m=>m.genero)],['Por função',rhContagens(membros,rhFuncaoMembro)],['Por ano de membresia',rhContagens(membros,rhValorAnoMembresia)],['Por departamento',rhContagens(membros,m=>m.dept)]];
+  const boxes=grupos.map(([titulo,dados])=>`<section class="box"><h2>${admsEsc(titulo)}</h2>${Object.entries(dados).sort((a,b)=>b[1]-a[1]).map(([n,v])=>`<div class="row"><span>${admsEsc(n)}</span><strong>${v}</strong></div>`).join('')||'Sem dados'}</section>`).join('');
+  rhJanelaImpressao('Indicadores de Recursos Humanos',`<p><strong>${membros.length}</strong> membros · <strong>${membros.filter(m=>m.musico).length}</strong> músicos · <strong>${membros.filter(m=>m.canta).length}</strong> cantores · <strong>${membros.filter(m=>m.eLider).length}</strong> líderes</p><div class="grid">${boxes}</div>`);
+}
+function rhPainelIndicadoresHTML(){
+  const membros=PESSOAS.membros||[],ativos=membros.filter(m=>String(m.estadoMembresia||'Ativo').toLowerCase()==='ativo');
+  const generos=rhContagens(membros,m=>m.genero),funcoes=rhContagens(membros,rhFuncaoMembro),anos=rhContagens(membros,rhValorAnoMembresia),depts=rhContagens(membros,m=>m.dept);
+  return `<section style="margin-bottom:22px"><div class="section-title" style="margin-top:0"><h2>Indicadores de Recursos Humanos</h2></div><div class="kpi-grid"><div class="kpi"><span>Total de membros</span><strong>${membros.length}</strong><small>${ativos.length} ativo(s)</small></div><div class="kpi"><span>Lideranças</span><strong>${membros.filter(m=>m.eLider).length}</strong><small>funções atuais</small></div><div class="kpi"><span>Músicos</span><strong>${membros.filter(m=>m.musico).length}</strong><small>instrumentistas cadastrados</small></div><div class="kpi"><span>Cantores</span><strong>${membros.filter(m=>m.canta).length}</strong><small>vozes cadastradas</small></div></div><div class="grid2" style="margin-top:16px"><article class="card"><h3>Por género</h3>${rhLinhasIndicador(generos)}</article><article class="card"><h3>Por função</h3>${rhLinhasIndicador(funcoes)}</article><article class="card"><h3>Por ano de membresia</h3>${rhLinhasIndicador(anos)}</article><article class="card"><h3>Por departamento</h3>${rhLinhasIndicador(depts)}</article></div><div class="card" style="margin-top:16px"><h3>Relatórios e listas</h3><div style="display:flex;gap:10px;align-items:end;flex-wrap:wrap"><label style="flex:1;min-width:230px">Tipo de lista<select id="rh-relatorio-tipo"><option value="todos">Todos os membros</option><option value="ativos">Somente membros ativos</option><option value="lideres">Lideranças</option><option value="musicos">Músicos</option><option value="cantores">Cantores</option><option value="consagrados">Consagrados</option></select></label><button class="btn btn-outline" style="width:auto" onclick="imprimirListaMembrosRH()">Imprimir lista</button><button class="btn btn-primary" style="width:auto;margin-top:0" onclick="imprimirIndicadoresRH()">Imprimir indicadores</button></div></div></section>`;
+}
+
 function viewRH(){
   return `
     <div class="topbar">
@@ -3466,6 +3518,8 @@ function viewRH(){
       <span class="access-pill">${ICON.rh} Membros · Congregados · Visitantes</span>
     </div>
     ${ruleDivider()}
+
+    ${rhPainelIndicadoresHTML()}
 
     <div class="card" style="border-left:4px solid var(--gold); margin-bottom:20px;">
       <h3 style="margin-top:0; font-size:15px; color:var(--royal-deep);">Cadastro de membro por link</h3>
@@ -3510,7 +3564,7 @@ function viewRH(){
       <div id="rh-lideranca-box">
        <div class="signature-rule" style="margin:18px 0 12px"><span style="font-size:11.5px;font-weight:700;color:var(--royal-dark);text-transform:uppercase">Liderança</span><div class="bar"></div></div>
        <div class="form-row"><div><label>É líder?</label><select id="rh-e-lider" onchange="admsToggleLideranca()"><option value="nao">Não</option><option value="sim">Sim</option></select></div>
-       <div id="rh-lider-dept-wrap" style="display:none"><label>Departamento que lidera</label><select id="rh-lider-dept"><option value="">Selecione...</option>${DEPARTMENTS.filter(d=>!d.restrito).map(d=>`<option value="${d.id}">${d.nome}</option>`).join('')}</select></div></div>
+       <div id="rh-lider-dept-wrap" style="display:none"><label>Departamento que lidera</label><select id="rh-lider-dept"><option value="">Selecione...</option>${admsDepartamentosLiderancaDisponiveis().map(d=>`<option value="${d.id}">${d.nome}</option>`).join('')}</select></div></div>
        <div id="rh-lider-datas" class="form-row" style="display:none"><div><label>Data de início</label><input id="rh-lider-inicio" type="date"></div><div><label>Atual</label><select id="rh-lider-atual" onchange="admsToggleLiderAtual()"><option value="sim">Sim</option><option value="nao">Não</option></select></div><div id="rh-lider-fim-wrap" style="display:none"><label>Data de fim</label><input id="rh-lider-fim" type="date"></div></div>
       </div>
 
@@ -3575,6 +3629,11 @@ function viewRH(){
 const INSTRUMENTOS_LISTA = ['Violão/Guitarra', 'Baixo', 'Bateria/Percussão', 'Teclado/Piano', 'Violino', 'Saxofone', 'Trompete', 'Outro'];
 const VOZES_LISTA = ['Soprano', 'Contralto', 'Tenor', 'Barítono', 'Baixo (voz)', 'Outra'];
 const CARGOS_LISTA = ['Diácono', 'Diaconisa', 'Presbítero', 'Evangelista', 'Missionário', 'Missionária', 'Pastor', 'Pastora', 'Auxiliar'];
+
+function admsDepartamentosLiderancaDisponiveis(){
+  const podeGerirPastoral=typeof canAccessDept==='function'&&canAccessDept('pastoral');
+  return DEPARTMENTS.filter(d=>!d.restrito||(d.id==='pastoral'&&podeGerirPastoral));
+}
 
 function deptCheckboxes(prefix, campo){
   return DEPARTMENTS.filter(d=>d.id!=='pastoral').map(d=>`
@@ -3678,7 +3737,7 @@ async function preencherFormularioPessoa(tipo,index,modo='editar'){
     rhSet('rh-data-membresia',p.dataMembresia||(modo==='converter'?new Date().toISOString().slice(0,10):'')); rhSet('rh-como-membro',p.comoMembro||(modo==='converter'?'Outro':'Batismo nesta igreja'));
     rhSetBool('rh-batizado',!!p.batizadoAguas); rhSet('rh-batismo-data',p.batizadoData||''); rhSet('rh-batismo-local',p.batizadoLocal||''); rhSetBool('rh-batizado-es',!!p.batizadoEspiritoSanto);
     rhSetBool('rh-tem-filhos',!!p.temFilhos); rhSet('rh-num-filhos',p.numFilhos||''); rhSet('rh-estado-membresia',p.estadoMembresia||'Ativo'); rhSetBool('rh-dizimista',!!p.dizimista); rhSet('rh-notas',p.notas||'');
-    rhSetBool('rh-empregado',!!p.empregado); rhSetBool('rh-carta',!!p.cartaRecomendacao); rhSet('rh-carta-origem',p.cartaRecomendacaoOrigem||''); rhSetBool('rh-consagrado',!!p.consagrado); rhSet('rh-cargo-consagracao',p.cargoConsagracao||'Diácono'); rhSet('rh-ministerio-consagracao',p.ministerioConsagracao||''); rhSetBool('rh-musico',!!p.musico); rhSetBool('rh-canta',!!p.canta); rhSet('rh-tipo-voz',p.tipoVoz||'Soprano');
+    rhSetBool('rh-empregado',!!p.empregado); rhSetBool('rh-carta',!!p.cartaRecomendacao); rhSet('rh-carta-origem',p.cartaRecomendacaoOrigem||''); rhSetBool('rh-consagrado',!!p.consagrado); rhSet('rh-cargo',p.cargoConsagracao||'Diácono'); rhSet('rh-ministerio-consagracao',p.ministerioConsagracao||''); rhSetBool('rh-musico',!!p.musico); rhSetBool('rh-canta',!!p.canta); rhSet('rh-tipo-voz',p.tipoVoz||'Soprano');
     rhSetChecks('rh-instrumentos-cb',p.instrumentos); rhSetChecks('rh-ja-serviu-cb',p.jaServiuDepartamentos); rhSetChecks('rh-pretende-servir-cb',p.pretendeServirDepartamentos);
     toggleConjugeWrap('rh'); toggleRHBatismo(); toggleRHFilhos(); toggleCartaWrap('rh'); toggleConsagradoWrap('rh'); toggleMusicoWrap('rh'); toggleCantaWrap('rh');
     const box=document.getElementById('rh-foto-preview'); if(box){ if(p.fotoPath){const data=await admsFotoDataUrl(p.fotoPath);box.innerHTML=data?`<img src="${data}" alt="Fotografia" style="width:100%;height:100%;object-fit:cover;">`:'Fotografia atual';}else box.innerHTML='Sem foto';}
@@ -3736,7 +3795,10 @@ async function addPessoa(){
   if(tipo==='membros'){
     const batizado=document.getElementById('rh-batizado').value==='sim', temFilhos=document.getElementById('rh-tem-filhos').value==='sim', dataMembresia=document.getElementById('rh-data-membresia').value;
     const base=(edit&&edit.modo==='editar'&&edit.tipo==='membros')?PESSOAS.membros[edit.index]:(edit&&edit.modo==='converter'?PESSOAS[edit.tipo][edit.index]:{});
-    pessoa={...base,id:base.id||('mb'+Date.now()+Math.random().toString(36).slice(2,6)),nome,contacto,dept,eLider:document.getElementById('rh-e-lider')?.value==='sim',liderDepartamentoId:document.getElementById('rh-e-lider')?.value==='sim'?(document.getElementById('rh-lider-dept')?.value||''):'',liderDataInicio:document.getElementById('rh-lider-inicio')?.value||'',liderAtual:document.getElementById('rh-lider-atual')?.value!=='nao',liderDataFim:document.getElementById('rh-lider-atual')?.value==='nao'?(document.getElementById('rh-lider-fim')?.value||''):'',desde:dataMembresia?String(dataMembresia.split('-')[0]):String(hoje.getFullYear()),
+    const eLider=document.getElementById('rh-e-lider')?.value==='sim';
+    const liderDepartamentoId=eLider?(document.getElementById('rh-lider-dept')?.value||''):'';
+    if(liderDepartamentoId==='pastoral'&&!canAccessDept('pastoral')){showToast('A liderança Pastoral só pode ser atribuída por Pastor, Secretaria ou Usuário Master.');return;}
+    pessoa={...base,id:base.id||('mb'+Date.now()+Math.random().toString(36).slice(2,6)),nome,contacto,dept,eLider,liderDepartamentoId,liderDataInicio:document.getElementById('rh-lider-inicio')?.value||'',liderAtual:document.getElementById('rh-lider-atual')?.value!=='nao',liderDataFim:document.getElementById('rh-lider-atual')?.value==='nao'?(document.getElementById('rh-lider-fim')?.value||''):'',desde:dataMembresia?String(dataMembresia.split('-')[0]):String(hoje.getFullYear()),
       dataNascimento:document.getElementById('rh-nascimento').value,genero:document.getElementById('rh-genero').value,estadoCivil:document.getElementById('rh-estado-civil').value,email:document.getElementById('rh-email').value.trim(),morada:document.getElementById('rh-morada').value.trim(),emergenciaNome:document.getElementById('rh-emerg-nome').value.trim(),emergenciaContacto:document.getElementById('rh-emerg-tel').value.trim(),profissao:document.getElementById('rh-profissao').value.trim(),escolaridade:document.getElementById('rh-escolaridade').value,nomeConjuge:document.getElementById('rh-estado-civil').value==='Casado(a)'?document.getElementById('rh-nome-conjuge').value.trim():'',conjugeConvertido:document.getElementById('rh-estado-civil').value==='Casado(a)'?document.getElementById('rh-conjuge-convertido').value==='sim':null,dataMembresia,comoMembro:document.getElementById('rh-como-membro').value,batizadoAguas:batizado,batizadoData:batizado?document.getElementById('rh-batismo-data').value:'',batizadoLocal:batizado?document.getElementById('rh-batismo-local').value.trim():'',batizadoEspiritoSanto:document.getElementById('rh-batizado-es').value==='sim',temFilhos,numFilhos:temFilhos?parseInt(document.getElementById('rh-num-filhos').value,10)||0:0,estadoMembresia:document.getElementById('rh-estado-membresia').value,dizimista:document.getElementById('rh-dizimista').value==='sim',notas:document.getElementById('rh-notas').value.trim(),...lerCamposMembroExtra('rh')};
     if(edit?.modo==='converter'){pessoa.origemCategoria=edit.tipo;pessoa.convertidoEm=new Date().toISOString();pessoa.convertidoPor=session.label;}
     if(edit?.modo==='editar'){pessoa.alteradoEm=new Date().toISOString();pessoa.alteradoPor=session.label;}
@@ -6992,7 +7054,7 @@ if(paramsUrl.get('form') === 'cadastro'){
 
 // Mantém a instalação como aplicação sem guardar páginas ou dados sensíveis em cache.
 if('serviceWorker' in navigator){
-    window.addEventListener('load',()=>navigator.serviceWorker.register('/sw-sistema.js?v=107').catch(()=>{}));
+    window.addEventListener('load',()=>navigator.serviceWorker.register('/sw-sistema.js?v=114').catch(()=>{}));
 }
 if(window.caches){
   caches.keys().then(keys=>Promise.all(keys.map(key=>caches.delete(key)))).catch(()=>{});
