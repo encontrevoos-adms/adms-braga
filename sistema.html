@@ -2756,9 +2756,11 @@ function distanciaAniversario(p,hoje=new Date()){
 function iniciaisAniversariante(nome){
   return String(nome||'').trim().split(/\s+/).filter(Boolean).slice(0,2).map(p=>p.charAt(0).toUpperCase()).join('')||'AD';
 }
-function mensagemAniversario(nome){
-  const primeiro=String(nome||'').trim().split(/\s+/)[0]||'irmão(ã)';
-  return `Querido(a) ${primeiro}, hoje damos graças a Deus pela sua vida. Que este novo ciclo seja marcado pela presença do Senhor, por saúde, paz, sabedoria e pela alegria de continuar a servir no Reino. Receba o nosso carinho, as nossas orações e um abraço cheio de amor.`;
+function mensagemAniversario(pessoa){
+  const p=typeof pessoa==='object'&&pessoa?pessoa:{nome:String(pessoa||'')};
+  const tratamento=String(p.genero||'').toLowerCase()==='feminino'?'Querida':'Querido';
+  const nomeComTitulo=nomeMinisterialAniversariante(p,true)||'irmão(ã)';
+  return `${tratamento} ${nomeComTitulo}, hoje damos graças a Deus pela sua vida. Que este novo ciclo seja marcado pela presença do Senhor, por saúde, paz, sabedoria e pela alegria de continuar a servir no Reino. Receba o nosso carinho, as nossas orações e um abraço cheio de amor.`;
 }
 function nomeMinisterialAniversariante(p,curto=false){
   const nome=curto?nomeCurtoCartao(p?.nome):String(p?.nome||'');
@@ -2779,7 +2781,7 @@ async function renderAniversariantes(){
     const indice=PESSOAS.membros.indexOf(p);
     const foto=fotos[i]?`<img class="birthday-photo" src="${fotos[i]}" alt="Fotografia de ${admsEsc(p.nome)}">`:`<div class="birthday-photo-fallback" aria-label="Sem fotografia cadastrada">${iniciaisAniversariante(p.nome)}</div>`;
     const publicar=hojeMesmo?`<button class="btn btn-primary" style="width:auto;margin-top:8px;background:linear-gradient(120deg,#e0b947,#bd8e1d);color:#07194f;" onclick="publicarAniversariante(${indice})">Publicar homenagem no site</button>`:'';
-    return `<article class="birthday-banner">${logoAniversario?`<div style="position:absolute;z-index:3;right:24px;top:22px;display:flex;align-items:center;gap:9px;padding:7px 12px 7px 8px;border:1px solid rgba(224,185,71,.52);border-radius:999px;background:rgba(7,25,79,.68);backdrop-filter:blur(10px);box-shadow:0 10px 28px rgba(0,0,0,.2)"><img src="${logoAniversario}" alt="ADMS Braga" style="width:38px;height:38px;object-fit:contain;border-radius:50%"><span style="font-size:10px;line-height:1.15;font-weight:800;letter-spacing:.65px;text-transform:uppercase;color:#f2d982">ADMS Braga<br><small style="font-size:7px;color:#fff;letter-spacing:.8px">Congregação Braga</small></span></div>`:''}<div class="birthday-photo-wrap">${foto}</div><div class="birthday-copy"><div class="birthday-kicker">${hojeMesmo?'Hoje celebramos uma vida':'Próximo aniversário · '+String(partes.dia).padStart(2,'0')+' de '+mesLabelCompleto(partes.mes)}</div><h2>Feliz aniversário,<br>${admsEsc(nomeMinisterialAniversariante(p,true))}!</h2><p>${admsEsc(mensagemAniversario(p.nome))}</p><p class="birthday-verse">“O Senhor te abençoe e te guarde; o Senhor faça resplandecer o seu rosto sobre ti e tenha misericórdia de ti.”<br><strong>Números 6:24–25</strong></p><p class="birthday-signature">Com amor, toda a Congregação ADMS Braga.</p>${publicar}</div></article>`;
+    return `<article class="birthday-banner">${logoAniversario?`<div style="position:absolute;z-index:3;right:24px;top:22px;display:flex;align-items:center;gap:9px;padding:7px 12px 7px 8px;border:1px solid rgba(224,185,71,.52);border-radius:999px;background:rgba(7,25,79,.68);backdrop-filter:blur(10px);box-shadow:0 10px 28px rgba(0,0,0,.2)"><img src="${logoAniversario}" alt="ADMS Braga" style="width:38px;height:38px;object-fit:contain;border-radius:50%"><span style="font-size:10px;line-height:1.15;font-weight:800;letter-spacing:.65px;text-transform:uppercase;color:#f2d982">ADMS Braga<br><small style="font-size:7px;color:#fff;letter-spacing:.8px">Congregação Braga</small></span></div>`:''}<div class="birthday-photo-wrap">${foto}</div><div class="birthday-copy"><div class="birthday-kicker">${hojeMesmo?'Hoje celebramos uma vida':'Próximo aniversário · '+String(partes.dia).padStart(2,'0')+' de '+mesLabelCompleto(partes.mes)}</div><h2>Feliz aniversário,<br>${admsEsc(nomeMinisterialAniversariante(p,true))}!</h2><p>${admsEsc(mensagemAniversario(p))}</p><p class="birthday-verse">“O Senhor te abençoe e te guarde; o Senhor faça resplandecer o seu rosto sobre ti e tenha misericórdia de ti.”<br><strong>Números 6:24–25</strong></p><p class="birthday-signature">Com amor, toda a Congregação ADMS Braga.</p>${publicar}</div></article>`;
   }).join('');
   const doMes=membros.filter(p=>aniversarioPartes(p).mes===mesAtual).sort((a,b)=>aniversarioPartes(a).dia-aniversarioPartes(b).dia||a.nome.localeCompare(b.nome,'pt'));
   const lista=doMes.map(p=>{const d=aniversarioPartes(p);return `<div class="birthday-person"><div class="birthday-day">${String(d.dia).padStart(2,'0')}</div><div><strong>${admsEsc(nomeMinisterialAniversariante(p))}</strong><small>${d.dia===diaAtual?'Aniversariante de hoje':'Aniversário em '+d.dia+' de '+mesLabelCompleto(d.mes)}</small></div></div>`;}).join('');
@@ -2803,7 +2805,7 @@ async function publicarAniversariante(indice){
     const fotoPublica=admsSupabase.storage.from('site-media').getPublicUrl(caminho).data.publicUrl;
     const dataHoje=`${hoje.getFullYear()}-${String(hoje.getMonth()+1).padStart(2,'0')}-${String(hoje.getDate()).padStart(2,'0')}`;
     const {data:{user}}=await admsSupabase.auth.getUser();
-    const row={chave:`aniversariante_${dataHoje}_${idSeguro}`,titulo:nomeMinisterialAniversariante(membro),subtitulo:'Números 6:24–25',conteudo:mensagemAniversario(membro.nome),url:fotoPublica,ativo:true,updated_by:user?.id||null,updated_at:new Date().toISOString()};
+    const row={chave:`aniversariante_${dataHoje}_${idSeguro}`,titulo:nomeMinisterialAniversariante(membro),subtitulo:'Números 6:24–25',conteudo:mensagemAniversario(membro),url:fotoPublica,ativo:true,updated_by:user?.id||null,updated_at:new Date().toISOString()};
     const {error}=await admsSupabase.from('site_conteudos').upsert(row,{onConflict:'chave'});if(error)throw error;
     addLog('site','Publicou homenagem de aniversário no site',membro.nome);
     showToast('Homenagem publicada no site público.');
@@ -7155,7 +7157,7 @@ if(paramsUrl.get('form') === 'cadastro'){
 
 // Mantém a instalação como aplicação sem guardar páginas ou dados sensíveis em cache.
 if('serviceWorker' in navigator){
-    window.addEventListener('load',()=>navigator.serviceWorker.register('/sw-sistema.js?v=120').catch(()=>{}));
+    window.addEventListener('load',()=>navigator.serviceWorker.register('/sw-sistema.js?v=121').catch(()=>{}));
 }
 if(window.caches){
   caches.keys().then(keys=>Promise.all(keys.map(key=>caches.delete(key)))).catch(()=>{});

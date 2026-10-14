@@ -1,4 +1,4 @@
-// ADMS Braga v120: tratamento ministerial nos aniversários de membros consagrados.
+// ADMS Braga v121: tratamento ministerial também no texto das homenagens.
 self.addEventListener('install',()=>self.skipWaiting());
 self.addEventListener('activate',event=>{
   event.waitUntil(
