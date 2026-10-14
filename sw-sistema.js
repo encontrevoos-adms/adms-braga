@@ -1,4 +1,4 @@
-// ADMS Braga v122: download e partilha do banner de aniversariante em PNG.
+// ADMS Braga v123: nova experiência visual do site público; portal preservado.
 self.addEventListener('install',()=>self.skipWaiting());
 self.addEventListener('activate',event=>{
   event.waitUntil(

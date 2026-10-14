@@ -1,0 +1,19 @@
+ADMS BRAGA — VERSÃO 123
+
+NOVIDADES DO SITE PÚBLICO
+
+- Nova direção visual editorial e imersiva, mantendo azul-marinho, dourado e branco.
+- Hero cinematográfico com mensagem de acolhimento e vídeo da congregação.
+- Próximo encontro e contagem regressiva integrados ao destaque principal.
+- Agenda semanal reorganizada em cartões modernos.
+- Acessos rápidos, acolhimento, história, liderança, vídeo, galeria e visita com nova hierarquia visual.
+- Melhor aproveitamento de ecrãs grandes, tablets e telemóveis.
+- Tipografia, espaçamento, botões, fotografias e cartões atualizados.
+- Funções existentes preservadas: pesquisa, Bíblia e plano anual, eventos, aniversariantes, formulários, ADMS Store e portal.
+
+IMPORTANTE
+
+- Esta versão não altera tabelas, dados, permissões nem funções do Supabase.
+- Não é necessário executar SQL.
+- O portal administrativo continua com as funcionalidades da versão anterior.
+- Caso a nova direção visual não seja aprovada, a versão 122 permanece como ponto seguro de retorno.
