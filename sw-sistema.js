@@ -1,4 +1,4 @@
-// ADMS Braga v118: emissão restrita e auditada de cartas eclesiásticas.
+// ADMS Braga v120: tratamento ministerial nos aniversários de membros consagrados.
 self.addEventListener('install',()=>self.skipWaiting());
 self.addEventListener('activate',event=>{
   event.waitUntil(

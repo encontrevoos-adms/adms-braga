@@ -1038,6 +1038,11 @@ window.addEventListener('online',()=>{ admsCarregarMembrosCloud(); admsCarregarE
 #app-screen .pending-empty{padding:20px;text-align:center;border:1px dashed #d8cfbc;border-radius:13px;color:#667085;font-size:14px;}
 @media(max-width:620px){#app-screen .pending-item{grid-template-columns:10px minmax(0,1fr)}#app-screen .pending-time{grid-column:2;white-space:normal}}
 #app-screen .birthday-banner{position:relative;isolation:isolate;overflow:hidden;min-height:430px;border-radius:24px;background:#07194f url('aniversariantes-fundo-v1.png') center/cover no-repeat;box-shadow:0 26px 60px -32px rgba(7,25,79,.92);display:grid;grid-template-columns:minmax(210px,.72fr) minmax(0,1.28fr);align-items:center;gap:34px;padding:42px;color:#fff;margin-bottom:20px;}
+#app-screen .birthday-brand{position:absolute;z-index:3;right:24px;top:22px;display:flex;align-items:center;gap:9px;padding:7px 12px 7px 8px;border:1px solid rgba(224,185,71,.52);border-radius:999px;background:rgba(7,25,79,.68);backdrop-filter:blur(10px);box-shadow:0 10px 28px rgba(0,0,0,.2)}
+#app-screen .birthday-brand img{width:38px;height:38px;object-fit:contain;border-radius:50%}
+#app-screen .birthday-brand span{font-size:10px;line-height:1.15;font-weight:800;letter-spacing:.65px;text-transform:uppercase;color:#f2d982}
+#app-screen .birthday-brand small{font-size:7px;color:#fff;letter-spacing:.8px}
+@media(max-width:700px){#app-screen .birthday-brand{right:14px;top:14px;padding:5px}#app-screen .birthday-brand img{width:34px;height:34px}#app-screen .birthday-brand span{display:none}}
 #app-screen .birthday-banner::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,rgba(4,18,58,.12),rgba(4,18,58,.4));}
 #app-screen .birthday-photo-wrap{display:flex;justify-content:center;align-items:center;}
 #app-screen .birthday-photo{width:min(270px,100%);aspect-ratio:4/5;object-fit:cover;border-radius:22px;border:5px solid #e0b947;box-shadow:0 22px 45px rgba(0,0,0,.38);background:#0b286d;}
@@ -2755,9 +2760,15 @@ function mensagemAniversario(nome){
   const primeiro=String(nome||'').trim().split(/\s+/)[0]||'irmão(ã)';
   return `Querido(a) ${primeiro}, hoje damos graças a Deus pela sua vida. Que este novo ciclo seja marcado pela presença do Senhor, por saúde, paz, sabedoria e pela alegria de continuar a servir no Reino. Receba o nosso carinho, as nossas orações e um abraço cheio de amor.`;
 }
+function nomeMinisterialAniversariante(p,curto=false){
+  const nome=curto?nomeCurtoCartao(p?.nome):String(p?.nome||'');
+  const cargo=p?.consagrado&&p?.cargoConsagracao?String(p.cargoConsagracao).trim():'';
+  return [cargo,nome].filter(Boolean).join(' ');
+}
 async function renderAniversariantes(){
   const el=document.getElementById('main-content');if(!el)return;
   const hoje=new Date(),mesAtual=hoje.getMonth()+1,diaAtual=hoje.getDate();
+  const logoAniversario=document.querySelector('.side-brand img')?.src||'';
   const membros=(PESSOAS.membros||[]).filter(p=>p.nome&&aniversarioPartes(p)&&String(p.estadoMembresia||'Ativo').toLowerCase()!=='inativo');
   const ordenados=[...membros].sort((a,b)=>distanciaAniversario(a,hoje)-distanciaAniversario(b,hoje)||a.nome.localeCompare(b.nome,'pt'));
   const deHoje=ordenados.filter(p=>{const d=aniversarioPartes(p);return d.mes===mesAtual&&d.dia===diaAtual;});
@@ -2768,10 +2779,10 @@ async function renderAniversariantes(){
     const indice=PESSOAS.membros.indexOf(p);
     const foto=fotos[i]?`<img class="birthday-photo" src="${fotos[i]}" alt="Fotografia de ${admsEsc(p.nome)}">`:`<div class="birthday-photo-fallback" aria-label="Sem fotografia cadastrada">${iniciaisAniversariante(p.nome)}</div>`;
     const publicar=hojeMesmo?`<button class="btn btn-primary" style="width:auto;margin-top:8px;background:linear-gradient(120deg,#e0b947,#bd8e1d);color:#07194f;" onclick="publicarAniversariante(${indice})">Publicar homenagem no site</button>`:'';
-    return `<article class="birthday-banner"><div class="birthday-photo-wrap">${foto}</div><div class="birthday-copy"><div class="birthday-kicker">${hojeMesmo?'Hoje celebramos uma vida':'Próximo aniversário · '+String(partes.dia).padStart(2,'0')+' de '+mesLabelCompleto(partes.mes)}</div><h2>Feliz aniversário,<br>${admsEsc(nomeCurtoCartao(p.nome))}!</h2><p>${admsEsc(mensagemAniversario(p.nome))}</p><p class="birthday-verse">“O Senhor te abençoe e te guarde; o Senhor faça resplandecer o seu rosto sobre ti e tenha misericórdia de ti.”<br><strong>Números 6:24–25</strong></p><p class="birthday-signature">Com amor, toda a Congregação ADMS Braga.</p>${publicar}</div></article>`;
+    return `<article class="birthday-banner">${logoAniversario?`<div style="position:absolute;z-index:3;right:24px;top:22px;display:flex;align-items:center;gap:9px;padding:7px 12px 7px 8px;border:1px solid rgba(224,185,71,.52);border-radius:999px;background:rgba(7,25,79,.68);backdrop-filter:blur(10px);box-shadow:0 10px 28px rgba(0,0,0,.2)"><img src="${logoAniversario}" alt="ADMS Braga" style="width:38px;height:38px;object-fit:contain;border-radius:50%"><span style="font-size:10px;line-height:1.15;font-weight:800;letter-spacing:.65px;text-transform:uppercase;color:#f2d982">ADMS Braga<br><small style="font-size:7px;color:#fff;letter-spacing:.8px">Congregação Braga</small></span></div>`:''}<div class="birthday-photo-wrap">${foto}</div><div class="birthday-copy"><div class="birthday-kicker">${hojeMesmo?'Hoje celebramos uma vida':'Próximo aniversário · '+String(partes.dia).padStart(2,'0')+' de '+mesLabelCompleto(partes.mes)}</div><h2>Feliz aniversário,<br>${admsEsc(nomeMinisterialAniversariante(p,true))}!</h2><p>${admsEsc(mensagemAniversario(p.nome))}</p><p class="birthday-verse">“O Senhor te abençoe e te guarde; o Senhor faça resplandecer o seu rosto sobre ti e tenha misericórdia de ti.”<br><strong>Números 6:24–25</strong></p><p class="birthday-signature">Com amor, toda a Congregação ADMS Braga.</p>${publicar}</div></article>`;
   }).join('');
   const doMes=membros.filter(p=>aniversarioPartes(p).mes===mesAtual).sort((a,b)=>aniversarioPartes(a).dia-aniversarioPartes(b).dia||a.nome.localeCompare(b.nome,'pt'));
-  const lista=doMes.map(p=>{const d=aniversarioPartes(p);return `<div class="birthday-person"><div class="birthday-day">${String(d.dia).padStart(2,'0')}</div><div><strong>${admsEsc(p.nome)}</strong><small>${d.dia===diaAtual?'Aniversariante de hoje':'Aniversário em '+d.dia+' de '+mesLabelCompleto(d.mes)}</small></div></div>`;}).join('');
+  const lista=doMes.map(p=>{const d=aniversarioPartes(p);return `<div class="birthday-person"><div class="birthday-day">${String(d.dia).padStart(2,'0')}</div><div><strong>${admsEsc(nomeMinisterialAniversariante(p))}</strong><small>${d.dia===diaAtual?'Aniversariante de hoje':'Aniversário em '+d.dia+' de '+mesLabelCompleto(d.mes)}</small></div></div>`;}).join('');
   const casamentos=(PESSOAS.membros||[]).filter(p=>{const d=casamentoPartes(p);return d&&d.mes===mesAtual&&String(p.estadoMembresia||'Ativo').toLowerCase()!=='inativo';}).sort((a,b)=>casamentoPartes(a).dia-casamentoPartes(b).dia||a.nome.localeCompare(b.nome,'pt'));
   const listaCasamentos=casamentos.map(p=>{const d=casamentoPartes(p),anos=hoje.getFullYear()-d.ano;return `<div class="birthday-person"><div class="birthday-day">${String(d.dia).padStart(2,'0')}</div><div><strong>${admsEsc(p.nome)}${p.nomeConjuge?' & '+admsEsc(p.nomeConjuge):''}</strong><small>${anos} ano${anos===1?'':'s'} de casamento · ${d.dia} de ${mesLabelCompleto(d.mes)}</small></div></div>`;}).join('');
   el.innerHTML=`<div class="topbar"><div><div class="breadcrumb">Comunhão e cuidado</div><h1>Aniversariantes</h1></div><span class="access-pill">${ICON.crown} Cadastro de membros</span></div>${ruleDivider()}${banners||'<div class="card"><h2>Nenhum aniversário disponível</h2><p>Cadastre a data de nascimento dos membros para gerar automaticamente as felicitações.</p></div>'}<div class="grid2"><section><div class="section-title"><h2>Aniversariantes de ${mesLabelCompleto(mesAtual)}</h2></div><div class="birthday-month-list">${lista||'<div class="card">Nenhum membro aniversaria neste mês.</div>'}</div></section><section><div class="section-title"><h2>Aniversários de casamento</h2></div><div class="birthday-month-list">${listaCasamentos||'<div class="card">Nenhum aniversário de casamento neste mês.</div>'}</div></section></div>`;
@@ -2792,7 +2803,7 @@ async function publicarAniversariante(indice){
     const fotoPublica=admsSupabase.storage.from('site-media').getPublicUrl(caminho).data.publicUrl;
     const dataHoje=`${hoje.getFullYear()}-${String(hoje.getMonth()+1).padStart(2,'0')}-${String(hoje.getDate()).padStart(2,'0')}`;
     const {data:{user}}=await admsSupabase.auth.getUser();
-    const row={chave:`aniversariante_${dataHoje}_${idSeguro}`,titulo:membro.nome,subtitulo:'Números 6:24–25',conteudo:mensagemAniversario(membro.nome),url:fotoPublica,ativo:true,updated_by:user?.id||null,updated_at:new Date().toISOString()};
+    const row={chave:`aniversariante_${dataHoje}_${idSeguro}`,titulo:nomeMinisterialAniversariante(membro),subtitulo:'Números 6:24–25',conteudo:mensagemAniversario(membro.nome),url:fotoPublica,ativo:true,updated_by:user?.id||null,updated_at:new Date().toISOString()};
     const {error}=await admsSupabase.from('site_conteudos').upsert(row,{onConflict:'chave'});if(error)throw error;
     addLog('site','Publicou homenagem de aniversário no site',membro.nome);
     showToast('Homenagem publicada no site público.');
@@ -7144,7 +7155,7 @@ if(paramsUrl.get('form') === 'cadastro'){
 
 // Mantém a instalação como aplicação sem guardar páginas ou dados sensíveis em cache.
 if('serviceWorker' in navigator){
-    window.addEventListener('load',()=>navigator.serviceWorker.register('/sw-sistema.js?v=118').catch(()=>{}));
+    window.addEventListener('load',()=>navigator.serviceWorker.register('/sw-sistema.js?v=120').catch(()=>{}));
 }
 if(window.caches){
   caches.keys().then(keys=>Promise.all(keys.map(key=>caches.delete(key)))).catch(()=>{});
