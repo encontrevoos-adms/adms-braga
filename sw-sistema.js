@@ -1,4 +1,4 @@
-// ADMS Braga v121: tratamento ministerial também no texto das homenagens.
+// ADMS Braga v122: download e partilha do banner de aniversariante em PNG.
 self.addEventListener('install',()=>self.skipWaiting());
 self.addEventListener('activate',event=>{
   event.waitUntil(

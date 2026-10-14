@@ -2767,6 +2767,44 @@ function nomeMinisterialAniversariante(p,curto=false){
   const cargo=p?.consagrado&&p?.cargoConsagracao?String(p.cargoConsagracao).trim():'';
   return [cargo,nome].filter(Boolean).join(' ');
 }
+function carregarImagemBanner(src){
+  return new Promise((resolve,reject)=>{if(!src)return resolve(null);const img=new Image();img.crossOrigin='anonymous';img.onload=()=>resolve(img);img.onerror=reject;img.src=src;});
+}
+function canvasTextoQuebrado(ctx,texto,x,y,largura,alturaLinha,maxLinhas=10){
+  const palavras=String(texto||'').split(/\s+/);let linha='',linhas=[];
+  palavras.forEach(p=>{const teste=linha?`${linha} ${p}`:p;if(ctx.measureText(teste).width>largura&&linha){linhas.push(linha);linha=p}else linha=teste;});
+  if(linha)linhas.push(linha);linhas.slice(0,maxLinhas).forEach((l,i)=>ctx.fillText(l,x,y+i*alturaLinha));return y+Math.min(linhas.length,maxLinhas)*alturaLinha;
+}
+async function criarImagemBannerAniversario(index){
+  const p=PESSOAS.membros?.[index];if(!p)throw new Error('Membro não encontrado.');
+  const canvas=document.createElement('canvas');canvas.width=1600;canvas.height=720;const ctx=canvas.getContext('2d');
+  const logoSrc=document.querySelector('.side-brand img')?.src||'';
+  const [fundo,foto,logo]=await Promise.all([carregarImagemBanner('aniversariantes-fundo-v1.png').catch(()=>null),admsFotoDataUrl(p.fotoPath).then(carregarImagemBanner).catch(()=>null),carregarImagemBanner(logoSrc).catch(()=>null)]);
+  const grad=ctx.createLinearGradient(0,0,1600,720);grad.addColorStop(0,'#102966');grad.addColorStop(1,'#03123c');ctx.fillStyle=grad;ctx.fillRect(0,0,1600,720);
+  if(fundo){ctx.globalAlpha=.62;ctx.drawImage(fundo,0,0,1600,720);ctx.globalAlpha=1;}
+  ctx.fillStyle='rgba(2,15,52,.30)';ctx.fillRect(0,0,1600,720);
+  if(logo){ctx.save();ctx.beginPath();ctx.arc(1480,84,50,0,Math.PI*2);ctx.clip();ctx.drawImage(logo,1430,34,100,100);ctx.restore();ctx.strokeStyle='#e0b947';ctx.lineWidth=4;ctx.beginPath();ctx.arc(1480,84,52,0,Math.PI*2);ctx.stroke();}
+  ctx.fillStyle='#e0b947';ctx.font='700 20px Arial';ctx.fillText('ADMS BRAGA',1350,158);
+  const px=110,py=160,pw=390,ph=450;ctx.fillStyle='#d4a928';ctx.fillRect(px-7,py-7,pw+14,ph+14);
+  if(foto){ctx.drawImage(foto,px,py,pw,ph)}else{ctx.fillStyle='#173263';ctx.fillRect(px,py,pw,ph);ctx.fillStyle='#fff';ctx.font='700 90px Georgia';ctx.textAlign='center';ctx.fillText(iniciaisAniversariante(p.nome),px+pw/2,py+ph/2+28);ctx.textAlign='left';}
+  const partes=aniversarioPartes(p),dataTexto=partes?`${String(partes.dia).padStart(2,'0')} DE ${mesLabelCompleto(partes.mes).toUpperCase()}`:'';
+  ctx.fillStyle='#f2d982';ctx.font='700 20px Arial';ctx.fillText(`CELEBRAMOS UMA VIDA · ${dataTexto}`,590,155);
+  ctx.fillStyle='#fff';ctx.font='700 60px Georgia';let y=canvasTextoQuebrado(ctx,`Feliz aniversário, ${nomeMinisterialAniversariante(p,true)}!`,590,230,850,66,3)+20;
+  ctx.font='24px Arial';ctx.fillStyle='#eef2ff';y=canvasTextoQuebrado(ctx,mensagemAniversario(p),590,y,850,36,5)+20;
+  ctx.fillStyle='rgba(3,18,60,.72)';ctx.fillRect(590,y,850,118);ctx.fillStyle='#e0b947';ctx.fillRect(590,y,5,118);
+  ctx.fillStyle='#fff';ctx.font='700 25px Georgia';canvasTextoQuebrado(ctx,'“O Senhor te abençoe e te guarde; o Senhor faça resplandecer o seu rosto sobre ti.”',620,y+39,790,34,2);
+  ctx.fillStyle='#f2d982';ctx.font='700 20px Arial';ctx.fillText('Números 6:24–25',620,y+101);
+  ctx.font='700 20px Arial';ctx.fillText('Com amor, toda a Congregação ADMS Braga.',590,675);
+  return new Promise((resolve,reject)=>canvas.toBlob(blob=>blob?resolve(blob):reject(new Error('Falha ao gerar a imagem.')),'image/png',1));
+}
+async function exportarBannerAniversario(index,partilhar=false){
+  try{
+    const p=PESSOAS.membros?.[index],blob=await criarImagemBannerAniversario(index),nome=`aniversario-${String(p?.nome||'membro').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/gi,'-').toLowerCase()}.png`,ficheiro=new File([blob],nome,{type:'image/png'});
+    if(partilhar&&navigator.share&&navigator.canShare?.({files:[ficheiro]})){await navigator.share({title:`Feliz aniversário, ${nomeMinisterialAniversariante(p,true)}!`,text:'Com amor, toda a Congregação ADMS Braga.',files:[ficheiro]});return;}
+    if(partilhar&&navigator.share){await navigator.share({title:`Feliz aniversário, ${nomeMinisterialAniversariante(p,true)}!`,text:mensagemAniversario(p)});return;}
+    const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=nome;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);showToast(partilhar?'O dispositivo não permitiu partilhar; a imagem foi descarregada.':'Banner descarregado em PNG.');
+  }catch(error){if(error?.name!=='AbortError'){console.error('[aniversário] exportação',error);showToast('Não foi possível gerar o banner agora.');}}
+}
 async function renderAniversariantes(){
   const el=document.getElementById('main-content');if(!el)return;
   const hoje=new Date(),mesAtual=hoje.getMonth()+1,diaAtual=hoje.getDate();
@@ -2780,7 +2818,7 @@ async function renderAniversariantes(){
     const partes=aniversarioPartes(p),hojeMesmo=partes.mes===mesAtual&&partes.dia===diaAtual;
     const indice=PESSOAS.membros.indexOf(p);
     const foto=fotos[i]?`<img class="birthday-photo" src="${fotos[i]}" alt="Fotografia de ${admsEsc(p.nome)}">`:`<div class="birthday-photo-fallback" aria-label="Sem fotografia cadastrada">${iniciaisAniversariante(p.nome)}</div>`;
-    const publicar=hojeMesmo?`<button class="btn btn-primary" style="width:auto;margin-top:8px;background:linear-gradient(120deg,#e0b947,#bd8e1d);color:#07194f;" onclick="publicarAniversariante(${indice})">Publicar homenagem no site</button>`:'';
+    const publicar=`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn btn-outline" style="width:auto;background:rgba(255,255,255,.1);color:#fff;border-color:rgba(255,255,255,.38)" onclick="exportarBannerAniversario(${indice},false)">Baixar imagem</button><button class="btn btn-outline" style="width:auto;background:rgba(255,255,255,.1);color:#fff;border-color:rgba(255,255,255,.38)" onclick="exportarBannerAniversario(${indice},true)">Partilhar</button>${hojeMesmo?`<button class="btn btn-primary" style="width:auto;margin-top:0;background:linear-gradient(120deg,#e0b947,#bd8e1d);color:#07194f;" onclick="publicarAniversariante(${indice})">Publicar no site</button>`:''}</div>`;
     return `<article class="birthday-banner">${logoAniversario?`<div style="position:absolute;z-index:3;right:24px;top:22px;display:flex;align-items:center;gap:9px;padding:7px 12px 7px 8px;border:1px solid rgba(224,185,71,.52);border-radius:999px;background:rgba(7,25,79,.68);backdrop-filter:blur(10px);box-shadow:0 10px 28px rgba(0,0,0,.2)"><img src="${logoAniversario}" alt="ADMS Braga" style="width:38px;height:38px;object-fit:contain;border-radius:50%"><span style="font-size:10px;line-height:1.15;font-weight:800;letter-spacing:.65px;text-transform:uppercase;color:#f2d982">ADMS Braga<br><small style="font-size:7px;color:#fff;letter-spacing:.8px">Congregação Braga</small></span></div>`:''}<div class="birthday-photo-wrap">${foto}</div><div class="birthday-copy"><div class="birthday-kicker">${hojeMesmo?'Hoje celebramos uma vida':'Próximo aniversário · '+String(partes.dia).padStart(2,'0')+' de '+mesLabelCompleto(partes.mes)}</div><h2>Feliz aniversário,<br>${admsEsc(nomeMinisterialAniversariante(p,true))}!</h2><p>${admsEsc(mensagemAniversario(p))}</p><p class="birthday-verse">“O Senhor te abençoe e te guarde; o Senhor faça resplandecer o seu rosto sobre ti e tenha misericórdia de ti.”<br><strong>Números 6:24–25</strong></p><p class="birthday-signature">Com amor, toda a Congregação ADMS Braga.</p>${publicar}</div></article>`;
   }).join('');
   const doMes=membros.filter(p=>aniversarioPartes(p).mes===mesAtual).sort((a,b)=>aniversarioPartes(a).dia-aniversarioPartes(b).dia||a.nome.localeCompare(b.nome,'pt'));
@@ -7157,7 +7195,7 @@ if(paramsUrl.get('form') === 'cadastro'){
 
 // Mantém a instalação como aplicação sem guardar páginas ou dados sensíveis em cache.
 if('serviceWorker' in navigator){
-    window.addEventListener('load',()=>navigator.serviceWorker.register('/sw-sistema.js?v=121').catch(()=>{}));
+    window.addEventListener('load',()=>navigator.serviceWorker.register('/sw-sistema.js?v=122').catch(()=>{}));
 }
 if(window.caches){
   caches.keys().then(keys=>Promise.all(keys.map(key=>caches.delete(key)))).catch(()=>{});
