@@ -1,0 +1,22 @@
+ADMS BRAGA — VERSÃO 126
+
+DIREÇÃO VISUAL AUTORAL
+
+- Composição assimétrica e tipografia monumental.
+- “102 anos” transformado em elemento gráfico de grande escala.
+- Efeito de luz que acompanha o movimento do cursor na abertura.
+- Próximo encontro apresentado como painel inclinado e translúcido.
+- Faixa cinética com os valores da igreja.
+- Jornada inicial reorganizada como composição editorial irregular.
+- Novo manifesto: “Não somos plateia. Somos corpo.”
+- Agenda transformada numa linha semanal visual e interativa.
+- História, liderança, vídeo, galeria e loja com geometria própria.
+- Experiência adaptada para telemóvel sem sacrificar legibilidade.
+
+PRESERVADO
+
+- Paleta de cores e logotipo ADMS Braga.
+- Todo o conteúdo funcional, o portal, o Supabase e as integrações.
+- Pesquisa, agenda dinâmica, Bíblia, aniversariantes e formulários.
+
+Não é necessário executar SQL.

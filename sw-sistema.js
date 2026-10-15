@@ -1,4 +1,4 @@
-// ADMS Braga v125: experiência pública jovem, dinâmica e autoexplicativa.
+// ADMS Braga v126: direção visual autoral, cinética e singular.
 self.addEventListener('install',()=>self.skipWaiting());
 self.addEventListener('activate',event=>{
   event.waitUntil(
