@@ -1,0 +1,22 @@
+ADMS BRAGA — VERSÃO 125
+
+NOVA ARQUITETURA DO SITE PÚBLICO
+
+- Linguagem visual jovem, tecnológica e orientada para descoberta.
+- Nova mensagem principal: fé para hoje e esperança para uma geração.
+- Indicador de igreja aberta e próximo encontro em tempo real.
+- Barra dinâmica com os valores centrais da comunidade.
+- Área “Qual é o seu próximo passo?” com quatro jornadas autoexplicativas.
+- Acesso direto para primeira visita, decisão por Cristo, crescimento bíblico e cuidado pastoral.
+- Cartões com interações, movimento e respostas visuais.
+- Barra superior de progresso da navegação.
+- Agenda, história, liderança, galeria, Bíblia e restantes áreas integradas ao novo sistema visual.
+- Experiência refeita para computador, tablet e principalmente telemóvel.
+
+PRESERVADO
+
+- Paleta azul-marinho, dourado e branco.
+- Logotipo comemorativo da ADMS.
+- Portal, banco de dados, Supabase, eventos, aniversariantes, formulários, pesquisa e ADMS Store.
+
+Não é necessário executar SQL.

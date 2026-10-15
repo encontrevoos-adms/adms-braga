@@ -1,4 +1,4 @@
-// ADMS Braga v124: abertura pública imersiva; portal preservado.
+// ADMS Braga v125: experiência pública jovem, dinâmica e autoexplicativa.
 self.addEventListener('install',()=>self.skipWaiting());
 self.addEventListener('activate',event=>{
   event.waitUntil(
