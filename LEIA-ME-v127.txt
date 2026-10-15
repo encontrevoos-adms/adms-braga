@@ -1,0 +1,28 @@
+ADMS BRAGA — VERSÃO 127
+
+RECONSTRUÇÃO INTEGRAL DO SITE PÚBLICO
+
+Esta versão abandona a arquitetura visual anterior. Foi criado um novo sistema de apresentação mantendo apenas a paleta institucional e o logotipo.
+
+PRINCIPAIS MUDANÇAS
+
+- Cabeçalho flutuante translúcido.
+- Abertura cinematográfica centralizada e sem elementos decorativos concorrentes.
+- Nova mensagem: “Mais do que um domingo”.
+- Programação imediata integrada numa central inferior.
+- Jornada do visitante reorganizada em blocos assimétricos e objetivos.
+- Manifesto visual preservado numa composição mais limpa.
+- Agenda redesenhada como experiência semanal.
+- História, liderança, vídeo, galeria, estudos, Bíblia, visita e loja reconstruídos dentro do novo sistema.
+- Responsividade refeita para computador, tablet e telemóvel.
+- Modo escuro compatível.
+
+FUNCIONALIDADES PRESERVADAS
+
+- Supabase, portal e banco de dados.
+- Eventos e avisos publicados pelo portal.
+- Próximo encontro no horário de Lisboa.
+- Pesquisa, formulários, aniversariantes e ADMS Store.
+- Bíblia local e plano anual de leitura.
+
+Não é necessário executar SQL.
