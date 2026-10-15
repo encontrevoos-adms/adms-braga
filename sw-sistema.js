@@ -1,4 +1,4 @@
-// ADMS Braga v128: abertura bíblica, amorosa e convidativa.
+// ADMS Braga v129: cadastro infantil protegido e responsáveis autorizados.
 self.addEventListener('install',()=>self.skipWaiting());
 self.addEventListener('activate',event=>{
   event.waitUntil(

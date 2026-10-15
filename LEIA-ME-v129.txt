@@ -1,0 +1,28 @@
+ADMS BRAGA — VERSÃO 129
+
+NOVIDADE PRINCIPAL
+Cadastro protegido do Ministério Infantil (Kids), separado do cadastro de membros adultos.
+
+O QUE FOI INCLUÍDO
+- painel Kids com indicadores de crianças ativas, visitantes, aniversários e alertas de cuidado;
+- ficha infantil com identificação, turma e vínculo com a congregação;
+- alergias, restrições alimentares, medicação de emergência, necessidades especiais e orientações;
+- vários responsáveis por criança, com responsável principal e autorização de retirada;
+- vínculo opcional entre o responsável e um membro já cadastrado em Recursos Humanos;
+- consentimentos para imagem, atividades externas e atendimento de emergência;
+- pesquisa por criança, número Kids, turma ou responsável;
+- ficha pronta para consulta e impressão;
+- edição sem transformar a criança em membro adulto ou criar conta no portal;
+- regras de acesso: Master e Secretaria administram; Pastor consulta; líder Kids administra; demais perfis não acedem.
+
+ATIVAÇÃO OBRIGATÓRIA
+1. Abra o SQL Editor do Supabase.
+2. Execute todo o conteúdo de EXECUTAR-NO-SUPABASE-v129.sql uma única vez.
+3. Publique a pasta completa desta versão na Vercel.
+4. Saia e entre novamente no portal ou abra uma janela anónima.
+
+IMPORTANTE
+As informações de saúde e os responsáveis das crianças são dados confidenciais. O SQL v129 ativa RLS e concede apenas os acessos necessários.
+
+PRÓXIMA FASE PREPARADA
+Check-in/check-out com código aleatório, confirmação do adulto autorizado, histórico de frequência e painel de ocupação por turma.
