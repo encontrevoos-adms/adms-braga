@@ -1,4 +1,4 @@
-// ADMS Braga v129: cadastro infantil protegido e responsáveis autorizados.
+// ADMS Braga v131: identidade documental institucional unificada.
 self.addEventListener('install',()=>self.skipWaiting());
 self.addEventListener('activate',event=>{
   event.waitUntil(

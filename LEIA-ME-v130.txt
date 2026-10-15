@@ -1,0 +1,27 @@
+ADMS BRAGA — VERSÃO 130
+
+INTEGRAÇÃO KIDS COM RECURSOS HUMANOS
+
+Esta versão integra o cadastro infantil aos indicadores e relatórios institucionais sem classificar automaticamente as crianças como membros adultos.
+
+MELHORIAS
+- indicador “Total de pessoas acompanhadas” com membros, congregados, visitantes e crianças;
+- contagem oficial de membros preservada e apresentada separadamente;
+- nova aba Kids nos indicadores de Recursos Humanos;
+- crianças por turma, faixa etária e vínculo com a congregação;
+- indicadores de autorizações pendentes e concedidas;
+- relatório geral consolidado de pessoas acompanhadas;
+- listas Kids: todas, ativas, inativas e visitantes;
+- impressão com número Kids, idade, turma, responsável e contacto;
+- aniversariantes Kids incluídos na área de aniversários;
+- próximos aniversários Kids incluídos no Painel Administrativo;
+- carregamento seguro das tabelas Kids diretamente do Supabase.
+
+INSTALAÇÃO
+1. A versão 129 e o respetivo SQL devem estar instalados.
+2. Publique a pasta completa desta versão na Vercel.
+3. Atualize o portal ou teste numa janela anónima.
+
+CONTAGEM CORRETA
+“Total de membros” considera somente os membros formalmente cadastrados.
+“Total de pessoas acompanhadas” inclui membros, congregados, visitantes e crianças ativas.

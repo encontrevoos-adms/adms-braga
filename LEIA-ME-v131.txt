@@ -1,0 +1,24 @@
+ADMS BRAGA — VERSÃO 131
+
+PADRONIZAÇÃO DOCUMENTAL
+
+Todos os documentos gerados pelo portal passam a utilizar o cabeçalho institucional baseado na Carta de Apresentação:
+
+- logotipo oficial da ADMS Braga;
+- nome completo “Igreja Evangélica Assembleia de Deus Ministério de Santos”;
+- identificação “Congregação Braga · Portugal”;
+- linha azul e faixa institucional azul, vermelha e dourada;
+- rodapé padronizado com identificação do Sistema de Gestão ADMS Braga.
+
+DOCUMENTOS ABRANGIDOS
+- cartas de recomendação, transferência e apresentação;
+- fichas cadastrais de membros, congregados e visitantes;
+- ficha infantil do Ministério Kids;
+- relatórios e listas de Recursos Humanos;
+- relatórios financeiros e recibos;
+- escalas de serviço;
+- planeamentos de culto;
+- documentos abertos pelo gerador central de impressão.
+
+INSTALAÇÃO
+Esta versão não exige novo SQL. Publique a pasta completa na Vercel e atualize o portal.
