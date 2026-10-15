@@ -1,4 +1,4 @@
-// ADMS Braga v127: reconstrução integral do site público.
+// ADMS Braga v128: abertura bíblica, amorosa e convidativa.
 self.addEventListener('install',()=>self.skipWaiting());
 self.addEventListener('activate',event=>{
   event.waitUntil(

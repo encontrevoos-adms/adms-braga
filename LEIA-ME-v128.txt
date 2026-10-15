@@ -1,0 +1,14 @@
+ADMS BRAGA — VERSÃO 128
+
+ALTERAÇÃO DA MENSAGEM INICIAL
+
+Mensagem principal:
+“Há um lugar para si.”
+
+Texto de acolhimento:
+“Jesus disse: ‘Vinde a mim’. Aqui encontrará a Palavra, cuidado e uma família para caminhar consigo no amor de Deus.”
+
+Também foi alterado o primeiro botão para “Quero conhecer”.
+
+O layout e todas as funcionalidades da versão 127 foram preservados.
+Não é necessário executar SQL.
