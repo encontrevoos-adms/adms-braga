@@ -1,0 +1,14 @@
+ADMS BRAGA — VERSÃO 124
+
+CORREÇÃO DA DIREÇÃO VISUAL
+
+- A abertura passa a usar vídeo em tela cheia, com sobreposição escura e conteúdo integrado.
+- A mensagem de acolhimento ocupa o lado esquerdo.
+- O próximo encontro ocupa um painel translúcido no lado direito.
+- Cabeçalho escuro e integrado à composição.
+- A primeira dobra deixa de utilizar vídeo recortado em formato vertical.
+- Sobreposições e espaços vazios observados na versão 123 foram removidos.
+- Em telemóvel, o conteúdo passa para uma coluna, mantendo legibilidade e proporção.
+
+As funcionalidades, os dados, o portal e as integrações foram preservados.
+Não é necessário executar SQL.
