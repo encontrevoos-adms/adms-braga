@@ -1,0 +1,12 @@
+{
+	"appId": "org.admsbraga.portal",
+	"appName": "ADMS Braga",
+	"webDir": "dist",
+	"backgroundColor": "#07194f",
+	"android": {
+		"allowMixedContent": false
+	},
+	"ios": {
+		"contentInset": "automatic"
+	}
+}

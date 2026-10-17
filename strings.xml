@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">ADMS Braga</string>
+    <string name="title_activity_main">ADMS Braga</string>
+    <string name="package_name">org.admsbraga.portal</string>
+    <string name="custom_url_scheme">admsbraga</string>
+</resources>
