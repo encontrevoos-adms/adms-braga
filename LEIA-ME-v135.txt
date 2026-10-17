@@ -1,0 +1,19 @@
+ADMS BRAGA — VERSÃO 135
+
+NOVIDADES
+- Nova chamada pública “Natal ADMS Braga 2026”.
+- Cantata de Natal: 20/12/2026, 18h30, sede da ADMS Braga.
+- Coral de Jovens, Grande Coral ADMS Braga e convívio.
+- Grande Ceia de Natal: 24/12/2026, 21h00.
+- Inscrição individual ou por agregado familiar no próprio site.
+- Campos obrigatórios: prato, sobremesa e bebidas.
+- Referência automática para cada inscrição.
+- Dados protegidos em tabela própria; o navegador público não consulta a lista.
+
+ATIVAÇÃO DA INSCRIÇÃO
+1. Execute o conteúdo da migration 20261017235500_natal_2026_inscricoes_v135.sql no SQL Editor.
+2. Crie/deploy a Edge Function com slug public-christmas-registration usando o index.ts incluído.
+3. Faça o deploy dos ficheiros da versão 135 no Vercel.
+4. Teste uma inscrição e confirme a linha em inscricoes_natal_2026.
+
+O portal e os dados financeiros não foram alterados.

@@ -1,0 +1,25 @@
+ADMS BRAGA — VERSÃO 136
+
+CONCEITO
+Centro digital da igreja: moderno, jovem e orientado por conteúdo.
+A arquitetura combina a clareza dos grandes sites de igrejas com a identidade própria da ADMS Braga.
+
+PRINCIPAIS MUDANÇAS
+- Navegação simplificada por necessidades reais.
+- Hero cinematográfico com mensagem mais acolhedora.
+- “Acontece na ADMS” priorizado no início da página.
+- Chamada de Natal e inscrições da v135 integralmente preservadas.
+- Agenda reposicionada e com leitura mais rápida.
+- Área “Vida em Comunidade” para Kids, Jovens, Homens, Mulheres e Louvor.
+- Mensagens e estudos apresentados como biblioteca viva.
+- Galeria com composição editorial.
+- Nova área ADMS Braga Digital para Portal, Bíblia, agenda e conteúdos.
+- Layout revisto para computador, tablet e telemóvel.
+- Paleta azul, dourada e branca e logotipo dos 102 anos preservados.
+
+INSTALAÇÃO
+- Envie todos os ficheiros do pacote v136 ao projeto Vercel.
+- Para a inscrição de Natal, mantenha o SQL e a Edge Function incluídos desde a v135.
+- Teste em janela anónima depois do deploy.
+
+Nenhuma tabela financeira, cadastro de membros ou permissão do Portal foi alterada.
