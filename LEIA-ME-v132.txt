@@ -1,0 +1,18 @@
+ADMS BRAGA — VERSÃO 132
+
+ALTERAÇÃO
+- A contagem regressiva do site público passou a utilizar a mesma programação
+  apresentada na agenda.
+- Alterações publicadas em itens "agenda" ou "evento_agenda" refletem-se
+  automaticamente no próximo encontro.
+- O cálculo continua a seguir exclusivamente o fuso Europe/Lisbon, incluindo
+  as mudanças entre horário de inverno e horário de verão.
+- São aceites encontros semanais e datas específicas em DD/MM/AAAA ou
+  AAAA-MM-DD.
+- A programação semanal atual permanece como reserva caso a agenda dinâmica
+  esteja indisponível.
+
+SEGURANÇA DA ALTERAÇÃO
+- Nenhuma tabela ou política do Supabase foi modificada.
+- O portal de gestão não foi alterado.
+- A camada Android não foi alterada.
