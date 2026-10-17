@@ -1,0 +1,18 @@
+ADMS BRAGA — VERSÃO 134
+
+RECONSTRUÇÃO INTEGRAL DO SITE PÚBLICO
+
+- Nova direção visual "Santuário Digital".
+- Abertura cinematográfica com vídeo, tipografia monumental e painel vivo do
+  próximo encontro.
+- Navegação flutuante translúcida e experiência móvel reorganizada.
+- Nova arquitetura editorial para acolhimento, agenda, identidade, liderança,
+  mensagem, galeria, estudos, Bíblia, oração, visita, localização e loja.
+- Layout responsivo próprio para computador, tablet e telemóvel.
+- Paleta institucional e logotipo preservados.
+- Funcionalidades, IDs, formulários, Supabase e conteúdos dinâmicos preservados.
+- Portal administrativo não alterado.
+
+REVERSÃO
+Para regressar ao visual anterior, restaure o index.html da v133 e o vínculo ao
+ficheiro site-v127.css. Nenhuma migração SQL é necessária.

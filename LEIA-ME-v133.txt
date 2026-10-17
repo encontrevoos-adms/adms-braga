@@ -1,0 +1,13 @@
+ADMS BRAGA — VERSÃO 133
+
+MELHORIA DE LOCALIZAÇÃO
+- A secção "Visite-nos" mantém o mapa incorporado.
+- Novo botão "Traçar rota" com o destino da ADMS Braga preenchido.
+- Opção direta para abrir no Google Maps.
+- Opção direta para abrir no Waze e iniciar a navegação.
+- Botões reorganizados em coluna nos telemóveis.
+
+ENDEREÇO UTILIZADO
+Praça do Bocage, 7, São Victor, Braga, Portugal.
+
+Esta versão não altera o portal, o Supabase ou a camada Android.
