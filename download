@@ -1,2 +1,10 @@
-/build/*
-!/build/.npmkeep
+node_modules/
+dist/
+*.jks
+*.keystore
+*.mobileprovision
+android/local.properties
+android/.gradle/
+android/**/build/
+ios/App/Pods/
+ios/App/App.xcworkspace/xcuserdata/
