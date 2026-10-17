@@ -7714,5 +7714,6 @@ function atualizarLembreteBackupV89(){
 const executarDiagnosticoBaseV89=executarDiagnosticoOperacional;
 executarDiagnosticoOperacional=async function(){await executarDiagnosticoBaseV89();if(window.admsUltimoDiagnostico){window.admsUltimoDiagnostico.versao=90;window.admsUltimoDiagnostico.errosRecentes=[...window.admsErrosTecnicos];const host=document.getElementById('diagnostico-detalhes');if(host&&window.admsErrosTecnicos.length)host.insertAdjacentHTML('beforeend',`<div class="hint-box" style="margin-top:12px"><strong>${window.admsErrosTecnicos.length} ocorrência(s) técnica(s) nesta sessão.</strong> O relatório descarregável contém os detalhes protegidos.</div>`)}}
 </script>
+  <script src="/mobile-bridge.js"></script>
 </body>
 </html>
