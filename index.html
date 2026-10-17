@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- ADMS Braga v133 — rotas integradas com Google Maps e Waze -->
+<!-- ADMS Braga v134 — reconstrução integral da experiência pública -->
 <html lang="pt-PT">
 <head>
   <meta charset="UTF-8">
@@ -205,7 +205,7 @@
     @media(max-width:760px){.hero{min-height:calc(100svh - 72px);justify-content:flex-start;padding-top:42px}.hero-century{right:-12vw;top:41%;font-size:77vw}.hero h1{font-size:clamp(55px,16vw,72px);line-height:.8}.hero h1 em,.hero p,.hero .actions{margin-left:0}.hero-next{margin:0;transform:none;border-radius:3px 22px 3px 22px;box-shadow:10px 12px 0 rgba(240,189,47,.12)}.hero-next>*{transform:none}.hero-edge{width:5px}.journey{padding-top:105px}.journey:before{top:35px;font-size:18vw}.journey-head h2{font-size:54px}.journey-grid{grid-template-columns:1fr}.journey-card:first-child,.journey-card:nth-child(4){grid-column:auto}.journey-card:first-child{min-height:360px}.journey-card{border-radius:3px 24px 3px 24px}.manifesto{padding:100px 20px}.manifesto h2{font-size:16vw;margin-bottom:45px}.manifesto-grid{grid-template-columns:1fr}.identity-card:first-child,.identity-card:nth-child(2),.identity-card:nth-child(3){transform:none}.media-grid{transform:none;box-shadow:10px 12px 0 #f0bd2f}}
     @media(prefers-reduced-motion:reduce){.manifesto:before{animation:none}}
   </style>
-  <link rel="stylesheet" href="/site-v127.css?v=127">
+  <link rel="stylesheet" href="/site-v134.css?v=134">
 </head>
 <body>
   <div class="scroll-progress" id="scroll-progress" aria-hidden="true"></div>
@@ -218,12 +218,12 @@
   <main id="public-content" tabindex="-1">
     <section class="hero" id="inicio">
       <div class="hero-century" aria-hidden="true">102<small>anos de legado</small></div><div class="hero-edge" aria-hidden="true"></div>
-      <div class="hero-copy"><div class="hero-status"><i></i>ADMS Braga · Portugal</div><div class="eyebrow">UMA IGREJA PARA SI E PARA A SUA FAMÍLIA</div><h1>Há um lugar<br><em>para si.</em></h1><p>Jesus disse: “Vinde a mim”. Aqui encontrará a Palavra, cuidado e uma família para caminhar consigo no amor de Deus.</p><div class="actions"><a class="btn btn-gold" href="#comece-aqui">Quero conhecer</a><a class="btn btn-line" href="#agenda">Ver programação</a></div></div>
+      <div class="hero-copy"><div class="hero-status"><i></i>ADMS Braga · Portugal</div><div class="eyebrow">FÉ PARA VIVER · UMA CASA PARA PERTENCER</div><h1>Encontre<br><em>o seu lugar.</em></h1><p>Uma comunidade bíblica, viva e próxima. Venha conhecer Jesus, construir relações e caminhar connosco numa fé que alcança toda a vida.</p><div class="actions"><a class="btn btn-gold" href="#comece-aqui">Começar agora</a><a class="btn btn-line" href="#agenda">Próximos encontros</a></div></div>
       <div class="hero-video-wrap" aria-label="Vídeo da ADMS Braga"><video id="hero-church-video" class="hero-video" autoplay muted loop playsinline preload="metadata"><source src="/video-igreja-adms.mp4" type="video/mp4"></video><div class="hero-video-shade"></div><button class="hero-sound" type="button" onclick="toggleHeroSound()">Ativar som</button></div>
       <aside class="hero-next" aria-label="Próximo encontro"><div class="hero-next-top"><span>ACONTECE A SEGUIR</span><span id="next-service-day">A calcular…</span></div><h2 id="next-service-name">Culto na ADMS Braga</h2><p id="next-service-time">Consulte a nossa agenda semanal</p><div class="countdown" aria-label="Contagem regressiva"><div><strong id="count-days">00</strong><small>dias</small></div><div><strong id="count-hours">00</strong><small>horas</small></div><div><strong id="count-minutes">00</strong><small>min</small></div><div><strong id="count-seconds">00</strong><small>seg</small></div></div><a class="next-link" href="#agenda">Ver agenda completa →</a></aside>
     </section>
 
-    <div class="signal-strip" aria-hidden="true"><div class="signal-track"><span>Jesus no centro</span><span>Uma família de fé</span><span>Braga para Cristo</span><span>Palavra que transforma</span><span>Há um lugar para si</span><span>Jesus no centro</span><span>Uma família de fé</span><span>Braga para Cristo</span><span>Palavra que transforma</span><span>Há um lugar para si</span></div></div>
+    <div class="signal-strip" aria-hidden="true"><div class="signal-track"><span>Jesus no centro</span><span>Palavra viva</span><span>Famílias fortalecidas</span><span>Braga alcançada</span><span>Gerações conectadas</span><span>Jesus no centro</span><span>Palavra viva</span><span>Famílias fortalecidas</span><span>Braga alcançada</span><span>Gerações conectadas</span></div></div>
 
     <section class="journey" id="comece-aqui"><div class="journey-shell"><div class="journey-head"><div><div class="eyebrow">COMECE POR AQUI</div><h2>Qual é o seu<br>próximo passo?</h2></div><p>Não precisa conhecer tudo para começar. Escolha o que melhor representa o seu momento e encontre rapidamente o caminho certo.</p></div><div class="journey-grid"><button class="journey-card featured" data-number="01" type="button" onclick="openContact('novo')"><span class="journey-icon">↗</span><div><h3>É a minha primeira vez</h3><p>Saiba como funciona uma visita e deixe-nos preparar a sua chegada.</p><b>Quero visitar →</b></div></button><button class="journey-card" data-number="02" type="button" onclick="openContact('decisao')"><span class="journey-icon">✦</span><div><h3>Quero conhecer Jesus</h3><p>Converse com alguém e dê o primeiro passo numa nova caminhada de fé.</p><b>Falar com a equipa →</b></div></button><a class="journey-card" data-number="03" href="#plano-biblico"><span class="journey-icon">◫</span><div><h3>Quero crescer</h3><p>Leia a Bíblia, acompanhe o plano anual e encontre estudos para a semana.</p><b>Abrir a Bíblia →</b></div></a><button class="journey-card" data-number="04" type="button" onclick="openContact('pastor')"><span class="journey-icon">♡</span><div><h3>Preciso de cuidado</h3><p>Peça oração ou fale com a liderança pastoral de forma reservada.</p><b>Encontrar ajuda →</b></div></button></div></div></section>
 
