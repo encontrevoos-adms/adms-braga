@@ -1,0 +1,18 @@
+ADMS BRAGA — SITE E PORTAL v142
+
+IMPLEMENTADO
+- Edge Function public-christmas-registration publicada e ativa no Supabase.
+- Gestão das inscrições da Ceia em Portal > Agenda e Eventos.
+- Indicadores de inscrições, participantes, presenças e cancelamentos.
+- Pesquisa por nome, contacto, referência e alimentos.
+- Alteração de estado: confirmada, presente ou cancelada.
+- Exportação CSV e impressão da lista.
+- Acesso reservado a Master, Pastor e Secretaria.
+
+AÇÃO NECESSÁRIA NO SUPABASE
+1. Abra o SQL Editor.
+2. Cole o conteúdo de EXECUTAR-NO-SUPABASE-v142.sql.
+3. Clique em Run.
+
+PUBLICAÇÃO VERCEL
+Envie os ficheiros do pacote para o projeto correspondente.

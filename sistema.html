@@ -2532,7 +2532,7 @@ function renderModule(){
   if(currentModule==='notificacoes'){el.innerHTML='<div class="card">A carregar notificações...</div>';renderNotificacoes();return;}
   if(currentModule==='gabinete'){renderGabinetePastoral();return;}
   if(currentModule==='meu-perfil') return el.innerHTML = viewMeuPerfil();
-  if(currentModule==='eventos'){ el.innerHTML = permPode('eventos')?viewEventos():viewLocked('Eventos'); return; }
+  if(currentModule==='eventos'){ el.innerHTML = permPode('eventos')?viewEventos():viewLocked('Eventos');if(permPode('eventos')&&podeGerirInscricoesNatal())setTimeout(carregarInscricoesNatal,0);return; }
   if(currentModule==='dashboard'){
     el.innerHTML=((session.tipo==='membro'||session.tipo==='consulta')?viewMemberHome():viewDashboard());
     if(session.tipo!=='membro'&&session.tipo!=='consulta'){
@@ -4713,6 +4713,8 @@ async function receberConta(id){
 
 /* ================= EVENTOS (COM INSCRIÇÕES) ================= */
 function podeCriarEventos(){ return session.tipo!=='membro' && permPode('eventos','inserir'); }
+let NATAL_INSCRICOES=[];
+function podeGerirInscricoesNatal(){return hasFullConfidentialAccess()}
 function viewEventos(){
   const hoje = new Date().toISOString().split('T')[0];
   const proximos = EVENTOS.filter(e=>!e.arquivado&&e.data>=hoje).sort((a,b)=>a.data.localeCompare(b.data));
@@ -4726,6 +4728,8 @@ function viewEventos(){
       <span class="access-pill">${ICON.events} ${proximos.length} evento(s) a decorrer</span>
     </div>
     ${ruleDivider()}
+
+    ${podeGerirInscricoesNatal()?`<section class="card" style="margin-bottom:20px;border:1px solid var(--gold)"><div style="display:flex;justify-content:space-between;gap:15px;align-items:center;flex-wrap:wrap"><div><div class="breadcrumb">Natal ADMS Braga · 2026</div><h2 style="margin:4px 0">Inscrições da Ceia de Natal</h2><p style="margin:0;color:var(--ink-soft)">Participantes, famílias e contribuições para a mesa.</p></div><button class="btn btn-primary" style="width:auto" onclick="carregarInscricoesNatal()">Atualizar inscrições</button></div><div id="natal-inscricoes-panel" style="margin-top:18px"><div class="hint-box">A carregar inscrições…</div></div></section>`:''}
 
     ${podeCriarEventos() ? `
     <div class="section-title"><h2>Criar novo evento</h2></div>
@@ -4758,6 +4762,27 @@ function viewEventos(){
     ${arquivados.length?`<div class="section-title"><h2>Eventos arquivados</h2></div>${arquivados.slice(0,10).map(e=>eventoCardHTML(e,meuNome,true,true)).join('')}`:''}
   `;
 }
+async function carregarInscricoesNatal(){
+  const host=document.getElementById('natal-inscricoes-panel');if(!host||!podeGerirInscricoesNatal())return;
+  host.innerHTML='<div class="hint-box">A sincronizar com a base de dados…</div>';
+  const {data,error}=await admsSupabase.from('inscricoes_natal_2026').select('*').order('criado_em',{ascending:false});
+  if(error){console.error('[natal] inscrições',error);host.innerHTML='<div class="hint-box" style="border-color:#dc2626;color:#991b1b">Não foi possível carregar. Confirme a instalação da atualização v142 no Supabase.</div>';return}
+  NATAL_INSCRICOES=data||[];renderInscricoesNatal();
+}
+function renderInscricoesNatal(){
+  const host=document.getElementById('natal-inscricoes-panel');if(!host)return;
+  const termo=String(document.getElementById('natal-filtro-texto')?.value||'').trim().toLocaleLowerCase('pt'),estado=document.getElementById('natal-filtro-estado')?.value||'',items=NATAL_INSCRICOES.filter(i=>(!estado||i.estado===estado)&&(!termo||[i.nome_responsavel,i.telefone,i.email,i.nomes_agregado,i.prato,i.sobremesa,i.bebidas,i.referencia].join(' ').toLocaleLowerCase('pt').includes(termo))),confirmadas=NATAL_INSCRICOES.filter(i=>i.estado!=='cancelada'),pessoas=confirmadas.reduce((s,i)=>s+(Number(i.total_participantes)||0),0),presentes=NATAL_INSCRICOES.filter(i=>i.estado==='presente').reduce((s,i)=>s+(Number(i.total_participantes)||0),0);
+  host.innerHTML=`<div class="kpi-grid" style="margin-bottom:16px"><div class="kpi"><span>Inscrições</span><strong>${confirmadas.length}</strong></div><div class="kpi"><span>Participantes</span><strong>${pessoas}</strong></div><div class="kpi"><span>Presenças</span><strong>${presentes}</strong></div><div class="kpi"><span>Canceladas</span><strong>${NATAL_INSCRICOES.filter(i=>i.estado==='cancelada').length}</strong></div></div><div class="form-row"><div><label>Pesquisa rápida</label><input id="natal-filtro-texto" value="${admsEsc(termo)}" placeholder="Nome, contacto, alimento ou referência" oninput="renderInscricoesNatal()"></div><div><label>Estado</label><select id="natal-filtro-estado" onchange="renderInscricoesNatal()"><option value="">Todos</option><option value="confirmada" ${estado==='confirmada'?'selected':''}>Confirmadas</option><option value="presente" ${estado==='presente'?'selected':''}>Presentes</option><option value="cancelada" ${estado==='cancelada'?'selected':''}>Canceladas</option></select></div></div><div style="display:flex;gap:8px;flex-wrap:wrap;margin:14px 0"><button class="btn btn-outline" style="width:auto" onclick="exportarInscricoesNatalCSV()">Exportar CSV</button><button class="btn btn-outline" style="width:auto" onclick="imprimirInscricoesNatal()">Imprimir lista</button></div><div style="overflow:auto"><table><thead><tr><th>Responsável / família</th><th>Contacto</th><th>Pessoas</th><th>Contribuição</th><th>Estado</th><th>Registo</th></tr></thead><tbody>${items.map(i=>`<tr><td><b>${admsEsc(i.nome_responsavel)}</b><br><small>${admsEsc(i.nomes_agregado||'Inscrição individual')} · ${admsEsc(i.referencia)}</small></td><td>${admsEsc(i.telefone)}${i.email?`<br><small>${admsEsc(i.email)}</small>`:''}</td><td>${Number(i.total_participantes)||1}</td><td><small><b>Prato:</b> ${admsEsc(i.prato)}<br><b>Sobremesa:</b> ${admsEsc(i.sobremesa)}<br><b>Bebidas:</b> ${admsEsc(i.bebidas)}</small></td><td><select aria-label="Estado da inscrição de ${admsEsc(i.nome_responsavel)}" onchange="alterarEstadoInscricaoNatal('${i.id}',this.value)"><option value="confirmada" ${i.estado==='confirmada'?'selected':''}>Confirmada</option><option value="presente" ${i.estado==='presente'?'selected':''}>Presente</option><option value="cancelada" ${i.estado==='cancelada'?'selected':''}>Cancelada</option></select></td><td><small>${new Date(i.criado_em).toLocaleString('pt-PT',{timeZone:'Europe/Lisbon'})}</small></td></tr>`).join('')||'<tr><td colspan="6">Nenhuma inscrição encontrada.</td></tr>'}</tbody></table></div>`;
+}
+async function alterarEstadoInscricaoNatal(id,estado){
+  if(!podeGerirInscricoesNatal()||!['confirmada','presente','cancelada'].includes(estado))return;
+  const {error}=await admsSupabase.from('inscricoes_natal_2026').update({estado,atualizado_em:new Date().toISOString()}).eq('id',id);
+  if(error){console.error(error);showToast('Não foi possível atualizar a inscrição.');return}
+  const item=NATAL_INSCRICOES.find(i=>i.id===id);if(item)item.estado=estado;await logAction('eventos','Inscrição de Natal atualizada',`${item?.nome_responsavel||id} — ${estado}`);showToast('Estado da inscrição atualizado.');renderInscricoesNatal();
+}
+function natalCsvCell(value){return `"${String(value??'').replace(/"/g,'""')}"`}
+function exportarInscricoesNatalCSV(){if(!podeGerirInscricoesNatal())return;const cols=['Referência','Responsável','Telefone','E-mail','Participantes','Agregado','Prato','Sobremesa','Bebidas','Estado','Registado em'],rows=NATAL_INSCRICOES.map(i=>[i.referencia,i.nome_responsavel,i.telefone,i.email,i.total_participantes,i.nomes_agregado,i.prato,i.sobremesa,i.bebidas,i.estado,new Date(i.criado_em).toLocaleString('pt-PT',{timeZone:'Europe/Lisbon'})]),csv='\uFEFF'+[cols,...rows].map(r=>r.map(natalCsvCell).join(';')).join('\r\n'),url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'})),a=document.createElement('a');a.href=url;a.download='inscricoes-ceia-natal-2026.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
+function imprimirInscricoesNatal(){if(!podeGerirInscricoesNatal())return;const w=window.open('','_blank','noopener');if(!w)return showToast('Permita janelas pop-up para imprimir.');w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Inscrições — Ceia de Natal 2026</title><style>body{font:14px Arial;color:#07194f;padding:30px}header{border-bottom:3px solid #c79a20;margin-bottom:24px}h1{font:30px Georgia;margin:8px 0}table{width:100%;border-collapse:collapse}th,td{padding:9px;border:1px solid #ccd3df;text-align:left;vertical-align:top}th{background:#07194f;color:white}small{color:#526078}</style></head><body><header><small>IGREJA EVANGÉLICA ASSEMBLEIA DE DEUS — MINISTÉRIO DE SANTOS</small><h1>Ceia de Natal ADMS Braga — Inscrições</h1><p>24 de dezembro de 2026 · 21h00</p></header><table><thead><tr><th>Família</th><th>Pessoas</th><th>Contacto</th><th>Prato / sobremesa / bebidas</th><th>Estado</th></tr></thead><tbody>${NATAL_INSCRICOES.map(i=>`<tr><td><b>${admsEsc(i.nome_responsavel)}</b><br><small>${admsEsc(i.nomes_agregado||'Individual')}</small></td><td>${Number(i.total_participantes)||1}</td><td>${admsEsc(i.telefone)}</td><td>${admsEsc(i.prato)}<br>${admsEsc(i.sobremesa)}<br>${admsEsc(i.bebidas)}</td><td>${admsEsc(i.estado)}</td></tr>`).join('')}</tbody></table><script>print()<\/script></body></html>`);w.document.close()}
 function eventoCardHTML(e, meuNome, passado, arquivado=false){
   e.inscritos=e.inscritos||[];
   const jaInscrito = meuNome && e.inscritos.some(i=>i.nome===meuNome);
@@ -7300,7 +7325,7 @@ if(paramsUrl.get('form') === 'cadastro'){
 
 // Mantém a instalação como aplicação sem guardar páginas ou dados sensíveis em cache.
 if('serviceWorker' in navigator){
-    window.addEventListener('load',()=>navigator.serviceWorker.register('/sw-sistema.js?v=131').catch(()=>{}));
+    window.addEventListener('load',()=>navigator.serviceWorker.register('/sw-sistema.js?v=142').catch(()=>{}));
 }
 if(window.caches){
   caches.keys().then(keys=>Promise.all(keys.map(key=>caches.delete(key)))).catch(()=>{});
@@ -7714,6 +7739,5 @@ function atualizarLembreteBackupV89(){
 const executarDiagnosticoBaseV89=executarDiagnosticoOperacional;
 executarDiagnosticoOperacional=async function(){await executarDiagnosticoBaseV89();if(window.admsUltimoDiagnostico){window.admsUltimoDiagnostico.versao=90;window.admsUltimoDiagnostico.errosRecentes=[...window.admsErrosTecnicos];const host=document.getElementById('diagnostico-detalhes');if(host&&window.admsErrosTecnicos.length)host.insertAdjacentHTML('beforeend',`<div class="hint-box" style="margin-top:12px"><strong>${window.admsErrosTecnicos.length} ocorrência(s) técnica(s) nesta sessão.</strong> O relatório descarregável contém os detalhes protegidos.</div>`)}}
 </script>
-  <script src="/mobile-bridge.js"></script>
 </body>
 </html>

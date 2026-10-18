@@ -1,4 +1,4 @@
-// ADMS Braga v131: identidade documental institucional unificada.
+// ADMS Braga v142: inscrições da Ceia de Natal no Portal.
 self.addEventListener('install',()=>self.skipWaiting());
 self.addEventListener('activate',event=>{
   event.waitUntil(
