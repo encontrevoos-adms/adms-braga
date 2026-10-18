@@ -1,0 +1,14 @@
+ADMS BRAGA — SITE PÚBLICO v144
+
+CORREÇÃO DE QUALIDADE
+- A imagem principal do Monte das Oliveiras foi reconstruída em alta definição.
+- Resolução final otimizada para o site: 2560 × 1440 px.
+- Foram recuperados detalhes das oliveiras, de Jerusalém e do céu.
+- A nova versão elimina a pixelização visível em monitores grandes.
+- Cache e imagem de partilha social atualizados para a versão 144.
+
+FICHEIROS PRINCIPAIS ALTERADOS
+- index.html
+- hero-monte-oliveiras-v144.webp
+
+Esta atualização mantém o layout, o Portal e todas as funcionalidades existentes.
