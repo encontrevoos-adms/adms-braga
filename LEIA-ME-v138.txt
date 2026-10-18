@@ -6,7 +6,7 @@ O portal de gestão (sistema.html) não foi alterado.
 ARQUIVOS NOVOS OU ALTERADOS
 1. index.html
 2. site-v138.css
-3. hero-braga-v139.webp
+3. hero-monte-oliveiras-v138.webp
 
 PUBLICAÇÃO
 - Envie os três arquivos para a raiz do projeto na Vercel.
@@ -24,5 +24,5 @@ VERIFICAÇÕES RECOMENDADAS
 - Computador, tablet e telemóvel.
 
 VERSÃO
-Site público: v139 — reconstrução integral com abertura identificada com Braga.
+Site público: v138 — reconstrução integral minimalista e tecnológica.
 Portal: preservado sem alterações.
