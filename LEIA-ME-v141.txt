@@ -1,0 +1,19 @@
+ADMS BRAGA — SITE PÚBLICO v141
+
+NOVIDADES
+- Dois flyers natalícios ilustrados e responsivos.
+- Cantata de Natal: 20 de dezembro de 2026, às 18h30.
+- Ceia de Natal: 24 de dezembro de 2026, às 21h00.
+- Formulário de inscrição individual ou familiar ligado à função public-christmas-registration.
+- Campos obrigatórios para prato, sobremesa e bebidas.
+- Mantida a sincronização da agenda do portal implementada na v140.
+
+FICHEIROS PARA PUBLICAR
+- index.html
+- site-v138.css
+- hero-braga-v139.webp
+- natal-cantata-v141.webp
+- natal-ceia-v141.webp
+
+IMPORTANTE
+A função Supabase public-christmas-registration e a tabela inscricoes_natal_2026 devem estar ativas para receber as inscrições.
