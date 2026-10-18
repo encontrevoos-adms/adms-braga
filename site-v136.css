@@ -47,3 +47,125 @@ header{height:88px;padding:0 var(--page-pad);background:rgba(255,255,255,.95);bo
 @media(max-width:700px){:root{--page-pad:18px}header{height:70px;padding:0 14px}.brand img{width:56px;height:58px}.brand b{font-size:17px}.nav-christmas,.theme-toggle{display:none}.portal{font-size:10px}.hero{min-height:860px;padding:95px 18px 310px}.hero h1{font-size:clamp(58px,17vw,82px);line-height:.8}.hero h1 em{font-size:.55em;margin-top:15px}.hero p{font-size:16px}.hero-next{left:18px;width:calc(100% - 36px);bottom:35px}.quick-actions{width:100%;padding:45px 12px}.quick-card{min-height:170px;padding:22px 18px}.quick-card strong{font-size:22px}.section{padding:85px 18px}.section h2,.section-head h2{font-size:48px}.welcome-strip{padding:25px 18px 80px}.welcome-panel{padding:32px 24px}.journey{padding:85px 18px}.journey-head h2{font-size:58px}.journey-grid{grid-template-columns:1fr}.journey-card,.journey-card:first-child,.journey-card:nth-child(2),.journey-card:nth-child(3),.journey-card:last-child{min-height:310px;border-radius:0}.journey-card:first-child{border-radius:15px 15px 0 0}.journey-card:last-child{border-radius:0 0 15px 15px}.video-frame{min-height:300px}.dark-card{padding:30px}.community-hub{padding:90px 18px}.community-heading h2{font-size:58px}.community-grid{grid-template-columns:1fr}.community-card{min-height:310px;padding:28px}.community-cta{align-items:flex-start;flex-direction:column}.christmas-programme{grid-template-columns:1fr}.gallery-grid{grid-auto-rows:210px}.digital-companion{padding:90px 18px}.digital-copy h2{font-size:58px}.digital-copy ul{grid-template-columns:1fr}.digital-phone-screen{width:min(300px,80vw)}.socials{grid-template-columns:1fr}.social,.social:first-child,.social:last-child{border-radius:0}.store-invite{border-radius:3px 28px 3px 28px}}
 
 body.theme-dark .quick-actions,body.theme-dark #agenda,body.theme-dark #galeria{background:#081637}body.theme-dark .journey,body.theme-dark #estudos,body.theme-dark .store-section{background:#06122f}body.theme-dark .quick-card,body.theme-dark .journey-card,body.theme-dark .card{background:#0d214f;color:#fff}body.theme-dark .quick-card strong,body.theme-dark .journey-card h3,body.theme-dark .card h3,body.theme-dark .event h3{color:#fff}
+
+/* v137 — agenda responsiva e contraste consistente nos modos claro/escuro */
+:root{
+  color-scheme:light;
+  --theme-bg:#f5f4ef;
+  --theme-surface:#fff;
+  --theme-surface-soft:#f7f8fb;
+  --theme-text:#091636;
+  --theme-muted:#59657d;
+  --theme-line:#d7dce7;
+  --theme-field:#fff;
+  --theme-field-text:#091636;
+}
+[data-theme="dark"]{
+  color-scheme:dark;
+  --theme-bg:#050d21;
+  --theme-surface:#0b1937;
+  --theme-surface-soft:#08142e;
+  --theme-text:#f5f7ff;
+  --theme-muted:#b8c4dc;
+  --theme-line:#2b3d60;
+  --theme-field:#102347;
+  --theme-field-text:#f7f9ff;
+}
+
+body{background:var(--theme-bg);color:var(--theme-text)}
+
+/* Agenda: o título nunca invade a grelha de cultos. */
+#agenda{background:var(--theme-bg)!important;color:var(--theme-text)}
+#agenda .content-shell{
+  display:grid!important;
+  grid-template-columns:minmax(390px,.72fr) minmax(0,1.55fr)!important;
+  gap:clamp(36px,4.5vw,76px)!important;
+  align-items:start!important;
+}
+#agenda .section-head{min-width:0;max-width:520px!important;margin:0!important;overflow:visible}
+#agenda .section-head h2{
+  max-width:100%;
+  margin:18px 0 22px;
+  color:var(--theme-text)!important;
+  font-size:clamp(48px,4.5vw,74px)!important;
+  line-height:.88!important;
+  letter-spacing:-.065em!important;
+  overflow-wrap:break-word;
+}
+#agenda .section-head p{color:var(--theme-muted)!important}
+#agenda .agenda{
+  min-width:0;
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:12px!important;
+  border:0!important;
+}
+#agenda .event{
+  box-sizing:border-box;
+  min-width:0;
+  min-height:300px!important;
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:flex-start!important;
+  justify-content:flex-end!important;
+  padding:26px!important;
+  border:1px solid var(--theme-line)!important;
+  border-radius:18px!important;
+  background:var(--theme-surface)!important;
+  color:var(--theme-text)!important;
+  overflow:hidden;
+}
+#agenda .event:before{pointer-events:none}
+#agenda .event-date{margin-bottom:auto;color:#b58a13!important}
+#agenda .event h3{max-width:100%;color:var(--theme-text)!important;overflow-wrap:anywhere}
+#agenda .event p{color:var(--theme-muted)!important}
+#agenda .event-actions{display:grid!important;grid-template-columns:1fr 1fr;gap:8px;width:100%;margin-top:18px}
+#agenda .event-action{
+  width:100%;
+  min-height:42px;
+  margin:0!important;
+  border:1px solid var(--theme-line)!important;
+  border-radius:10px!important;
+  background:var(--theme-surface-soft)!important;
+  color:var(--theme-text)!important;
+  opacity:1!important;
+  font-weight:850!important;
+  cursor:pointer;
+}
+#agenda .event-action:hover,#agenda .event-action:focus-visible{
+  border-color:var(--pv-gold)!important;
+  background:var(--pv-gold)!important;
+  color:#061a55!important;
+}
+
+/* Componentes que precisam de contraste inequívoco nos dois modos. */
+input,select,textarea,.modal-card,.site-search-result,.editorial-library-item,
+.plan-today,.plan-summary,.bible-reader,.store-product,.store-cart-row{
+  background:var(--theme-field)!important;
+  color:var(--theme-field-text)!important;
+  border-color:var(--theme-line)!important;
+}
+input::placeholder,textarea::placeholder{color:var(--theme-muted)!important;opacity:1}
+label,.modal-card p,.modal-card small,.site-search-result small,.editorial-library-item small{color:var(--theme-muted)}
+.modal-card h2,.modal-card h3,.site-search-result strong,.editorial-library-item strong{color:var(--theme-text)!important}
+.btn-soft{background:var(--theme-surface-soft)!important;color:var(--theme-text)!important;border-color:var(--theme-line)!important}
+
+[data-theme="dark"] header{background:rgba(4,14,37,.96)!important;border-color:#263958!important}
+[data-theme="dark"] header .brand b,[data-theme="dark"] header nav>a:not(.portal),[data-theme="dark"] header .site-search-trigger,[data-theme="dark"] header .theme-toggle{color:#fff!important}
+[data-theme="dark"] .section.alt,[data-theme="dark"] .welcome-strip,[data-theme="dark"] .bible-plan,[data-theme="dark"] #identidade,[data-theme="dark"] #lideranca,[data-theme="dark"] #redes{background:var(--theme-surface-soft)!important}
+[data-theme="dark"] .journey,[data-theme="dark"] #estudos,[data-theme="dark"] .store-section,[data-theme="dark"] #galeria{background:var(--theme-bg)!important}
+[data-theme="dark"] .quick-card,[data-theme="dark"] .journey-card,[data-theme="dark"] .card,[data-theme="dark"] .social,[data-theme="dark"] .location{background:var(--theme-surface)!important;border-color:var(--theme-line)!important;color:var(--theme-text)!important}
+[data-theme="dark"] .quick-card strong,[data-theme="dark"] .journey-card h3,[data-theme="dark"] .card h3,[data-theme="dark"] .social strong,[data-theme="dark"] .section h2,[data-theme="dark"] .section-head h2{color:var(--theme-text)!important}
+[data-theme="dark"] .quick-card>span:last-child,[data-theme="dark"] .journey-card p,[data-theme="dark"] .card p,[data-theme="dark"] .section-head p{color:var(--theme-muted)!important}
+
+@media(max-width:1200px){
+  #agenda .content-shell{grid-template-columns:1fr!important}
+  #agenda .section-head{position:static!important;max-width:760px!important;margin-bottom:34px!important}
+  #agenda .section-head h2{font-size:clamp(52px,8vw,82px)!important}
+}
+@media(max-width:700px){
+  #agenda .agenda{grid-template-columns:1fr!important}
+  #agenda .section-head h2{font-size:clamp(45px,14vw,62px)!important;line-height:.9!important}
+  #agenda .event{min-height:245px!important;padding:23px!important}
+  #agenda .event-actions{grid-template-columns:1fr}
+}
