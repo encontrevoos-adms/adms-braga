@@ -1,0 +1,13 @@
+ADMS BRAGA — SITE PÚBLICO v143
+
+ALTERAÇÃO
+- A imagem principal de Braga foi substituída pela fotografia do Monte das Oliveiras com Jerusalém ao fundo.
+- A imagem de partilha social também foi atualizada.
+- O cache visual foi renovado para a versão 143.
+
+FICHEIROS PARA PUBLICAR
+- index.html
+- site-v138.css
+- hero-monte-oliveiras-v143.webp
+
+Esta atualização não altera o Portal nem a base de dados.
