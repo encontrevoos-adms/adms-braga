@@ -1,0 +1,16 @@
+ADMS BRAGA — VERSÃO 145
+
+Melhoria visual:
+- Substituída a imagem da secção “Uma família para caminhar consigo”.
+- Substituída a imagem da secção “Mensagem da Semana”.
+- Novas imagens horizontais em alta definição, com enquadramento responsivo.
+- Identidade cromática azul-marinho e dourado preservada.
+- Cache do CSS atualizado para a versão 145.
+
+INSTALAÇÃO NA VERCEL
+1. Extraia integralmente o ficheiro ADMS-Braga-v145-Novas-Imagens.zip.
+2. Envie todos os ficheiros extraídos para o projeto do site público.
+3. Aguarde o estado Ready — Production.
+4. Abra o site numa janela anónima para confirmar a atualização.
+
+Não envie o ficheiro ZIP sem o extrair.
