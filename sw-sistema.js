@@ -1,4 +1,4 @@
-// ADMS Braga v147: formulários públicos de oração e contacto pastoral corrigidos.
+// ADMS Braga v148: vídeo da comunidade no destaque principal do site.
 self.addEventListener('install',()=>self.skipWaiting());
 self.addEventListener('activate',event=>{
   event.waitUntil(

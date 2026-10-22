@@ -13,6 +13,8 @@
     {"source": "/store.html", "headers": [{"key": "Cache-Control", "value": "no-cache, max-age=0, must-revalidate"}]},
     {"source": "/biblia-local.json", "headers": [{"key": "Cache-Control", "value": "public, max-age=86400, stale-while-revalidate=604800"}]},
     {"source": "/video-igreja-adms.mp4", "headers": [{"key": "Cache-Control", "value": "public, max-age=604800, immutable"}]},
+    {"source": "/hero-comunidade-adms-v148.mp4", "headers": [{"key": "Cache-Control", "value": "public, max-age=604800, immutable"}]},
+    {"source": "/hero-comunidade-adms-v148-mobile.mp4", "headers": [{"key": "Cache-Control", "value": "public, max-age=604800, immutable"}]},
     {"source": "/sw-sistema.js", "headers": [{"key": "Cache-Control", "value": "no-cache, no-store, must-revalidate"}]},
     {"source": "/sistema.html", "headers": [{"key": "Cache-Control", "value": "no-store, max-age=0"}]},
     {"source": "/sistema", "headers": [{"key": "Cache-Control", "value": "no-store, max-age=0"}]},

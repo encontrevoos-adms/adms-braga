@@ -1,0 +1,22 @@
+ADMS BRAGA — VERSÃO 148
+VÍDEO DA COMUNIDADE NO DESTAQUE PRINCIPAL
+
+MELHORIAS
+- A imagem do Monte das Oliveiras foi substituída pelo vídeo real da comunidade ADMS Braga.
+- Foi criada uma versão panorâmica própria para computador e tablet.
+- Foi criada uma versão vertical própria para telemóvel.
+- O áudio foi removido para permitir reprodução automática sem interrupções.
+- O vídeo é reproduzido continuamente, sem controlos e sem interferir na navegação.
+- Uma imagem de reserva aparece enquanto o vídeo carrega ou quando o dispositivo reduz animações.
+- A fotografia de partilha do site também passou a representar a comunidade ADMS Braga.
+- Os ficheiros foram otimizados e configurados para cache na Vercel.
+
+INSTALAÇÃO
+1. Extraia integralmente ADMS-Braga-v148-Video-Comunidade.zip.
+2. Envie todos os ficheiros e pastas extraídos para o projeto do site público na Vercel.
+3. Aguarde Ready — Production.
+4. Abra o site numa janela anónima e confirme o vídeo em computador e telemóvel.
+
+BASE DE DADOS
+- Esta versão não exige SQL.
+- A Edge Function dos formulários públicos corrigida na versão 147 permanece incluída.
