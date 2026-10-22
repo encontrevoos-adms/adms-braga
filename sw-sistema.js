@@ -1,4 +1,4 @@
-// ADMS Braga v142: inscrições da Ceia de Natal no Portal.
+// ADMS Braga v147: formulários públicos de oração e contacto pastoral corrigidos.
 self.addEventListener('install',()=>self.skipWaiting());
 self.addEventListener('activate',event=>{
   event.waitUntil(

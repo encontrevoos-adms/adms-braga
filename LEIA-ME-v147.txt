@@ -1,0 +1,30 @@
+ADMS BRAGA — VERSÃO 147
+FORMULÁRIOS PÚBLICOS CORRIGIDOS
+
+CORREÇÕES
+- O formulário "Pedido de oração" volta a gravar os pedidos no Supabase.
+- O formulário "Quero falar com um pastor" volta a gravar os contactos.
+- Foi acrescentada a escolha do melhor horário para o contacto pastoral.
+- A função pública aceita os dois domínios oficiais atualmente usados pela ADMS Braga.
+- Os novos registos passam a usar o estado "novo", compatível com a consulta no Portal.
+- As mensagens de erro exibem uma orientação clara sem revelar dados técnicos.
+- A função mantém validação, consentimento RGPD, proteção contra robôs e limite de envios.
+
+SUPABASE
+- A Edge Function public-submit v3 já foi publicada e está ativa.
+- Não é necessário executar SQL.
+- O funcionamento do servidor já está corrigido; a instalação na Vercel acrescenta ao site
+  o seletor de horário e as mensagens melhoradas.
+
+INSTALAÇÃO NA VERCEL
+1. Extraia integralmente ADMS-Braga-v147-Formularios-Publicos.zip.
+2. Envie todos os ficheiros e pastas extraídos para o projeto do site público na Vercel.
+3. Aguarde o estado Ready — Production.
+4. Abra o site numa janela anónima.
+5. Teste "Pedido de oração" e "Quero falar com um pastor".
+
+VALIDAÇÃO REALIZADA
+- Pedido de oração: HTTP 201 e gravação confirmada.
+- Contacto pastoral: HTTP 201 e gravação confirmada.
+- CORS do domínio adms-braga-site.vercel.app: confirmado.
+- Os dois registos técnicos de teste foram removidos após a validação.

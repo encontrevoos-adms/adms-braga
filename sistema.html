@@ -6560,6 +6560,44 @@ function resumoLancamentosFinanceiros(lancamentos){
   const saidas=lancamentos.filter(l=>l.tipo==='Saída').reduce((s,l)=>s+parseValorEuro(l.valor),0);
   return {entradas:formatEuro(entradas),saidas:formatEuro(saidas),saldo:formatEuro(entradas-saidas)};
 }
+function chaveCronologicaLancamento(lancamento){
+  const data=String(lancamento?.data||'').trim();
+  if(/^\d{4}-\d{2}-\d{2}$/.test(data))return data;
+  const partes=data.split('/');
+  if(partes.length===3)return `${String(partes[2]).padStart(4,'0')}-${String(partes[1]).padStart(2,'0')}-${String(partes[0]).padStart(2,'0')}`;
+  return '9999-12-31';
+}
+function ordenarLancamentosCronologicamente(lancamentos){
+  return lancamentos.map((lancamento,indice)=>({lancamento,indice})).sort((a,b)=>{
+    const porData=chaveCronologicaLancamento(a.lancamento).localeCompare(chaveCronologicaLancamento(b.lancamento));
+    if(porData!==0)return porData;
+    const porCriacao=String(a.lancamento.criadoEm||a.lancamento.criado_em||'').localeCompare(String(b.lancamento.criadoEm||b.lancamento.criado_em||''));
+    return porCriacao!==0?porCriacao:a.indice-b.indice;
+  }).map(item=>item.lancamento);
+}
+function linhaLancamentoFinanceiro(lancamento,detalhado=false){
+  const base=[
+    lancamento.data,
+    entityDeptLabel(lancamento.departamento),
+    normalizarRubricaFinanceira(categoriaLancamento(lancamento),lancamento.tipo)
+  ];
+  if(detalhado){
+    return [...base,lancamento.fornecedor||'—',lancamento.beneficiario||'—',lancamento.desc,lancamento.tipo,lancamento.valor,lancamento.reciboId||'—',lancamento.criadoPor||'—'];
+  }
+  return [...base,lancamento.fornecedor||lancamento.beneficiario||'Não identificado',lancamento.desc,lancamento.tipo,lancamento.valor];
+}
+function secoesEntradasSaidas(lancamentos,detalhado=false){
+  const criar=(tipo,titulo,tone)=>{
+    const itens=ordenarLancamentosCronologicamente(lancamentos.filter(l=>l.tipo===tipo));
+    return {
+      title:titulo,
+      tone,
+      rows:itens.map(l=>linhaLancamentoFinanceiro(l,detalhado)),
+      total:formatEuro(itens.reduce((s,l)=>s+parseValorEuro(l.valor),0))
+    };
+  };
+  return [criar('Entrada','Entradas','entrada'),criar('Saída','Saídas','saida')].filter(secao=>secao.rows.length);
+}
 function agruparFinanceiro(lista,chaveFn){
   const mapa={};
   lista.forEach(l=>{const chave=chaveFn(l)||'Não identificado';if(!mapa[chave])mapa[chave]={quantidade:0,total:0};mapa[chave].quantidade++;mapa[chave].total+=parseValorEuro(l.valor);});
@@ -6600,43 +6638,34 @@ function getReportData(){
     return {title:'Relatório de Património', headers:['Bem','Categoria','Valor','Estado','Localização'], rows};
   }
   if(tipo==='financeiro'){
-    const lancamentos=lancamentosFinanceirosFiltrados();
-    const rows = lancamentos.map(l=>[l.data,entityDeptLabel(l.departamento),normalizarRubricaFinanceira(categoriaLancamento(l),l.tipo),l.fornecedor||l.beneficiario||'Não identificado',l.desc,l.tipo,l.valor]);
+    const lancamentos=ordenarLancamentosCronologicamente(lancamentosFinanceirosFiltrados());
+    const sections=secoesEntradasSaidas(lancamentos);
+    const rows=sections.flatMap(secao=>secao.rows);
     return {
       title:'Razão Financeiro Detalhado',
       headers:['Data','Departamento','Rubrica / categoria','Entidade','Descrição','Tipo','Valor'],
       rows,
+      sections,
       summary:resumoLancamentosFinanceiros(lancamentos)
     };
   }
   if(tipo==='movimento-mensal'){
     const mes=document.getElementById('rel-fin-mes')?.value||RELATORIO_FILTROS.financeiroMes||mesFinanceiroPadrao();
     const info=movimentoFinanceiroMes(mes),fechado=mesFinanceiroFechado(mes);
-    const movimentos=[...info.movimentos].sort((a,b)=>{const iso=l=>{const [d,m,y]=l.data.split('/');return `${y}-${m}-${d}`};return iso(a).localeCompare(iso(b));});
-    return {title:`Movimento Financeiro — ${rotuloMesFinanceiro(mes)}${fechado?' · ENCERRADO':' · EM CONFERÊNCIA'}`,headers:['Data','Departamento','Rubrica / categoria','Entidade','Descrição','Tipo','Valor'],rows:movimentos.map(l=>[l.data,entityDeptLabel(l.departamento),normalizarRubricaFinanceira(categoriaLancamento(l),l.tipo),l.fornecedor||l.beneficiario||'Não identificado',l.desc,l.tipo,l.valor]),summary:{saldoAbertura:formatEuro(info.saldoAbertura),entradas:formatEuro(info.entradas),saidas:formatEuro(info.saidas),saldo:formatEuro(info.saldoEncerramento)}};
+    const movimentos=ordenarLancamentosCronologicamente(info.movimentos);
+    const sections=secoesEntradasSaidas(movimentos);
+    return {title:`Movimento Financeiro — ${rotuloMesFinanceiro(mes)}${fechado?' · ENCERRADO':' · EM CONFERÊNCIA'}`,headers:['Data','Departamento','Rubrica / categoria','Entidade','Descrição','Tipo','Valor'],rows:sections.flatMap(secao=>secao.rows),sections,summary:{saldoAbertura:formatEuro(info.saldoAbertura),entradas:formatEuro(info.entradas),saidas:formatEuro(info.saidas),saldo:formatEuro(info.saldoEncerramento)}};
   }
   if(tipo==='extrato-entidade'){
     const entidade=document.getElementById('rel-fin-entidade')?.value||'Todas';
-    const lancamentos=lancamentosFinanceirosFiltrados().sort((a,b)=>{
-      const data=l=>{const [d,m,y]=String(l.data||'').split('/');return `${y||'0000'}-${m||'00'}-${d||'00'}`};
-      return data(a).localeCompare(data(b));
-    });
-    const rows=lancamentos.map(l=>[
-      l.data,
-      entityDeptLabel(l.departamento),
-      normalizarRubricaFinanceira(categoriaLancamento(l),l.tipo),
-      l.fornecedor||'—',
-      l.beneficiario||'—',
-      l.desc,
-      l.tipo,
-      l.valor,
-      l.reciboId||'—',
-      l.criadoPor||'—'
-    ]);
+    const lancamentos=ordenarLancamentosCronologicamente(lancamentosFinanceirosFiltrados());
+    const sections=secoesEntradasSaidas(lancamentos,true);
+    const rows=sections.flatMap(secao=>secao.rows);
     return {
       title:entidade==='Todas'?'Extrato Financeiro Detalhado por Entidade':`Extrato Financeiro — ${entidade}`,
       headers:['Data','Departamento','Rubrica / categoria','Fornecedor / pagador','Beneficiário','Descrição','Tipo','Valor','Recibo','Registado por'],
       rows,
+      sections,
       summary:resumoLancamentosFinanceiros(lancamentos)
     };
   }
@@ -6728,24 +6757,48 @@ function carregarXLSX(){
 }
 async function exportRelatorio(formato){
   if(!exigirPermissao('relatorios','exportar')) return;
-  const {title, headers, rows, summary} = getReportData();
+  const {title, headers, rows, sections, summary} = getReportData();
   if(!rows.length && RELATORIO_FILTROS.tipo!=='movimento-mensal'){ showToast('Sem dados para os filtros selecionados.'); return; }
   const subtitle = 'Igreja Evangélica Assembleia de Deus Ministério de Santos — Congregação Braga · Gerado em ' + new Date().toLocaleDateString('pt-PT');
   try{ await carregarXLSX(); }catch(error){ showToast(error.message); return; }
   const resumo = summary ? [[],['RESUMO FINANCEIRO'],...(summary.saldoAbertura?[['Saldo transportado inicial',summary.saldoAbertura]]:[]),['Valor total de entradas',summary.entradas],['Valor total de saídas',summary.saidas],['Valor a transportar',summary.saldo]] : [];
-  const ws = XLSX.utils.aoa_to_sheet([[title],[subtitle],[],headers, ...rows, ...resumo]);
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Relatório');
+  if(sections?.length){
+    const wsResumo=XLSX.utils.aoa_to_sheet([[title],[subtitle],...resumo]);
+    XLSX.utils.book_append_sheet(wb,wsResumo,'Resumo');
+    sections.forEach(secao=>{
+      const totalLinha=new Array(headers.length).fill('');
+      totalLinha[Math.max(0,headers.length-2)]=`Total de ${secao.title.toLocaleLowerCase('pt-PT')}`;
+      totalLinha[headers.length-1]=secao.total;
+      const ws=XLSX.utils.aoa_to_sheet([[`${title} — ${secao.title}`],[subtitle],['Ordem cronológica: da data mais antiga para a mais recente'],[],headers,...secao.rows,[],totalLinha]);
+      XLSX.utils.book_append_sheet(wb,ws,secao.title.slice(0,31));
+    });
+  }else{
+    const ws = XLSX.utils.aoa_to_sheet([[title],[subtitle],[],headers, ...rows, ...resumo]);
+    XLSX.utils.book_append_sheet(wb, ws, 'Relatório');
+  }
   XLSX.writeFile(wb, title.replace(/\s+/g,'_') + '.xlsx');
   showToast('Relatório Excel gerado: ' + title);
 }
 
 function verRelatorio(){
   const tipoRelatorio=document.getElementById('rel-tipo').value;
-  const {title, headers, rows, summary} = getReportData();
+  const {title, headers, rows, sections, summary} = getReportData();
   if(!rows.length && tipoRelatorio!=='movimento-mensal'){ showToast('Sem dados para os filtros selecionados. Verifique se os filtros escolhidos correspondem a lançamentos existentes.'); return; }
   const logoSrc = document.querySelector('.side-brand img') ? document.querySelector('.side-brand img').src : '';
   const hoje = new Date().toLocaleString('pt-PT');
+  const tabelaRelatorio=(linhas)=>`<table class="print-table">
+      <thead><tr>${headers.map(h=>`<th>${admsEsc(h)}</th>`).join('')}</tr></thead>
+      <tbody>${linhas.map(r=>`<tr>${r.map(c=>`<td>${c===undefined||c===''?'—':admsEsc(String(c))}</td>`).join('')}</tr>`).join('')}</tbody>
+    </table>`;
+  const corpoRelatorio=sections?.length?sections.map((secao,indice)=>`
+    <section style="margin-top:${indice?26:0}px;page-break-inside:auto;">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 9px;padding:9px 12px;border-left:4px solid ${secao.tone==='entrada'?'#153b97':'#a7192e'};background:${secao.tone==='entrada'?'#f2f6ff':'#fff4f5'};page-break-after:avoid;">
+        <strong style="font-size:15px;color:${secao.tone==='entrada'?'#153b97':'#a7192e'};">${admsEsc(secao.title)}</strong>
+        <span style="font-size:11px;color:#4a5578;">${secao.rows.length} lançamento(s) · Total: <b>${admsEsc(secao.total)}</b></span>
+      </div>
+      ${tabelaRelatorio(secao.rows)}
+    </section>`).join(''):tabelaRelatorio(rows);
 
   const html = `
     <div class="print-header">
@@ -6758,13 +6811,8 @@ function verRelatorio(){
     <div class="print-band"></div>
     <div class="print-title" style="text-align:left; font-size:19px;">${title}</div>
     <p style="font-size:11px; color:#4A5578; margin:-10px 0 18px 0;">Gerado em ${hoje} por ${session.label} · ${rows.length} registo(s)</p>
-
-    <table class="print-table">
-      <thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead>
-      <tbody>
-        ${rows.map(r=>`<tr>${r.map(c=>`<td>${c===undefined||c===''?'—':c}</td>`).join('')}</tr>`).join('')}
-      </tbody>
-    </table>
+    ${sections?.length?'<p style="font-size:10px;color:#667085;margin:-8px 0 13px;">Entradas e saídas apresentadas em secções independentes, por ordem cronológica (da mais antiga para a mais recente).</p>':''}
+    ${corpoRelatorio}
     ${summary?`<div style="display:grid;grid-template-columns:repeat(${summary.saldoAbertura?4:3},1fr);gap:10px;margin:20px 0 8px;page-break-inside:avoid;">
       ${summary.saldoAbertura?`<div style="border:1px solid #ccd4e5;border-radius:8px;padding:12px;background:#f8f6ef;"><div style="font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:#4a5578;margin-bottom:5px;">Saldo transportado inicial</div><strong style="font-size:17px;color:#071b50;">${summary.saldoAbertura}</strong></div>`:''}
       <div style="border:1px solid #ccd4e5;border-radius:8px;padding:12px;background:#f7f9fd;"><div style="font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:#4a5578;margin-bottom:5px;">Valor total de entradas</div><strong style="font-size:17px;color:#153b97;">${summary.entradas}</strong></div>
