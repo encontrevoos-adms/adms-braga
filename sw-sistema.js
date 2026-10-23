@@ -1,4 +1,4 @@
-// ADMS Braga v152: nova mensagem de acolhimento no site público.
+// ADMS Braga v153: tipografia jovial e nova composição do título público.
 self.addEventListener('install',()=>self.skipWaiting());
 self.addEventListener('activate',event=>{
   event.waitUntil(

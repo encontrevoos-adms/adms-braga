@@ -1,0 +1,23 @@
+ADMS Braga — versão 153
+Tipografia jovial e nova composição do título
+
+O que mudou
+- A mensagem principal foi reorganizada em duas linhas intencionais:
+  “Seja bem-vindo à”
+  “Família ADMS Braga!”
+- A nova fonte Outfit traz uma aparência mais jovem, atual e tecnológica.
+- O tamanho, a altura das linhas e o espaçamento foram revistos para impedir que “bem-vindo” seja quebrado no hífen.
+- A segunda linha recebeu maior destaque em dourado, mantendo a identidade visual da ADMS Braga.
+- A composição foi adaptada separadamente para computador, tablet e telemóvel.
+- Fotografias, animações e demais conteúdos foram preservados.
+
+Importante
+- Esta versão não requer execução de SQL.
+- Não há alterações em dados, permissões ou configurações do Supabase.
+
+Instalação
+1. Extraia o pacote.
+2. No projeto do site público (adms-braga-site.vercel.app), envie todos os ficheiros do pacote.
+3. Aguarde o estado Ready — Production.
+4. Abra o site público numa janela anónima e verifique o título em computador e telemóvel.
+5. O endereço adms-braga.vercel.app continua reservado ao Portal.
