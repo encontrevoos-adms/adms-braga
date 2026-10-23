@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- ADMS Braga v151 — relatórios de eventos, participantes e contribuições -->
 <html lang="pt-PT">
 <head>
 <meta charset="UTF-8">
@@ -2244,7 +2245,7 @@ function permissaoDoComando(comando=''){
     [/abrirEditorDepartamento\(\)/,'departamentos','inserir'],[/abrirEditorDepartamento\('/,'departamentos','editar'],[/arquivarDepartamento\(/,'departamentos','arquivar'],
     [/addBem\(/,'patrimonio','inserir'],[/addPessoa\(/,'membros','inserir'],[/editarPessoa\(|preencherFormularioPessoa\(|tornarMembro\(/,'membros','editar'],[/imprimirFichaPessoa\(|verCartaoMembro\(/,'membros','exportar'],
     [/addLancamento\(|addContaPagar\(|addContaReceber\(/,'financeiro','inserir'],[/pagarConta\(|receberConta\(|definirOrcamento\(/,'financeiro','editar'],[/abrirRelatorioTipo\(/,'financeiro','exportar'],
-    [/criarEvento\(/,'eventos','inserir'],[/addEscala\(/,'escalas','inserir'],[/postAviso\(/,'avisos','inserir'],[/partilharComunicacao\(|enviarComunicacaoEmail\(/,'avisos','exportar'],
+    [/criarEvento\(/,'eventos','inserir'],[/imprimirRelatorioEvento\(|verInscritosEvento\(/,'eventos','exportar'],[/addEscala\(/,'escalas','inserir'],[/postAviso\(/,'avisos','inserir'],[/partilharComunicacao\(|enviarComunicacaoEmail\(/,'avisos','exportar'],
     [/cmsCriar\(/,'site-publico','inserir'],[/guardarConteudoSite\(|cmsGuardar\(|cmsAlternar\(|cmsMover\(|cmsRestaurar\(/,'site-publico','editar'],[/cmsRemover\(/,'site-publico','arquivar'],[/atualizarPedidoOracao\(|guardarNotaOracao\(/,'pastoral','editar'],
     [/exportRelatorio\(/,'relatorios','exportar'],[/exportarAuditoriaCSV\(/,'auditoria','exportar'],[/ativarAcessoMembro\(|revogarAcessoMembro\(|liberarDept\(|createLeader\(|revokeLeaderDept\(|approvePassword\(|rejectPassword\(/,'acessos','editar']
   ];
@@ -4785,8 +4786,9 @@ function exportarInscricoesNatalCSV(){if(!podeGerirInscricoesNatal())return;cons
 function imprimirInscricoesNatal(){if(!podeGerirInscricoesNatal())return;const w=window.open('','_blank','noopener');if(!w)return showToast('Permita janelas pop-up para imprimir.');w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Inscrições — Ceia de Natal 2026</title><style>body{font:14px Arial;color:#07194f;padding:30px}header{border-bottom:3px solid #c79a20;margin-bottom:24px}h1{font:30px Georgia;margin:8px 0}table{width:100%;border-collapse:collapse}th,td{padding:9px;border:1px solid #ccd3df;text-align:left;vertical-align:top}th{background:#07194f;color:white}small{color:#526078}</style></head><body><header><small>IGREJA EVANGÉLICA ASSEMBLEIA DE DEUS — MINISTÉRIO DE SANTOS</small><h1>Ceia de Natal ADMS Braga — Inscrições</h1><p>24 de dezembro de 2026 · 21h00</p></header><table><thead><tr><th>Família</th><th>Pessoas</th><th>Contacto</th><th>Prato / sobremesa / bebidas</th><th>Estado</th></tr></thead><tbody>${NATAL_INSCRICOES.map(i=>`<tr><td><b>${admsEsc(i.nome_responsavel)}</b><br><small>${admsEsc(i.nomes_agregado||'Individual')}</small></td><td>${Number(i.total_participantes)||1}</td><td>${admsEsc(i.telefone)}</td><td>${admsEsc(i.prato)}<br>${admsEsc(i.sobremesa)}<br>${admsEsc(i.bebidas)}</td><td>${admsEsc(i.estado)}</td></tr>`).join('')}</tbody></table><script>print()<\/script></body></html>`);w.document.close()}
 function eventoCardHTML(e, meuNome, passado, arquivado=false){
   e.inscritos=e.inscritos||[];
-  const jaInscrito = meuNome && e.inscritos.some(i=>i.nome===meuNome);
-  const cheio = e.vagas>0 && e.inscritos.length>=e.vagas;
+  const jaInscrito = meuNome && e.inscritos.some(i=>i.nome===meuNome||i.membroId===session?.membroId);
+  const totalParticipantes=totalParticipantesEvento(e);
+  const cheio = e.vagas>0 && totalParticipantes>=e.vagas;
   return `
     <div class="card" style="margin-bottom:14px; ${passado?'opacity:.65;':''}">
       <div class="event-card">
@@ -4798,14 +4800,14 @@ function eventoCardHTML(e, meuNome, passado, arquivado=false){
         </div>
       </div>
       <div style="display:flex; justify-content:space-between; align-items:center; margin-top:14px; padding-top:12px; border-top:1px solid var(--paper-2);">
-        <span style="font-size:12px; color:var(--ink-soft);">${e.inscritos.length} inscrito(s)${e.vagas>0?` / ${e.vagas} vaga(s)`:''}</span>
+        <span style="font-size:12px; color:var(--ink-soft);">${totalParticipantes} participante(s) · ${e.inscritos.length} inscrição(ões)${e.vagas>0?` / ${e.vagas} vaga(s)`:''}</span>
         <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">${!passado ? `
           ${meuNome
             ? (jaInscrito
                 ? `<span class="tag tag-green">Já inscrito(a)</span>`
                 : (cheio ? `<span class="tag tag-red">Esgotado</span>` : `<button class="btn btn-primary" style="width:auto; margin-top:0;" onclick="inscreverEvento('${e.id}')">Inscrever-me</button>`))
-            : `<span style="color:var(--royal-dark); font-weight:700; cursor:pointer; font-size:12px;" onclick="verInscritosEvento('${e.id}')">Ver inscritos</span>`
-          }` : ''}${session.tipo!=='membro'&&permPode('eventos','editar')?`${!arquivado?`<button class="btn btn-outline" style="width:auto" onclick="editarEvento('${e.id}')">Editar</button>${e.publicarSite?`<button class="btn btn-outline" style="width:auto" onclick="retirarEventoDoSite('${e.id}')">Retirar do site</button>`:''}<button class="btn btn-outline" style="width:auto" onclick="arquivarEvento('${e.id}')">Arquivar</button>`:`<button class="btn btn-outline" style="width:auto" onclick="restaurarEvento('${e.id}')">Restaurar</button>`}`:''}</div>
+            : `<button class="btn btn-outline" style="width:auto" onclick="verInscritosEvento('${e.id}')">Participantes</button>`
+          }` : ''}${session.tipo!=='membro'&&permPode('eventos','exportar')?`<button class="btn btn-outline" style="width:auto" onclick="imprimirRelatorioEvento('${e.id}')">Relatório</button>`:''}${session.tipo!=='membro'&&permPode('eventos','editar')?`${!arquivado?`<button class="btn btn-outline" style="width:auto" onclick="editarEvento('${e.id}')">Editar</button>${e.publicarSite?`<button class="btn btn-outline" style="width:auto" onclick="retirarEventoDoSite('${e.id}')">Retirar do site</button>`:''}<button class="btn btn-outline" style="width:auto" onclick="arquivarEvento('${e.id}')">Arquivar</button>`:`<button class="btn btn-outline" style="width:auto" onclick="restaurarEvento('${e.id}')">Restaurar</button>`}`:''}</div>
       </div>
     </div>
   `;
@@ -4844,23 +4846,73 @@ async function criarEvento(){
   logAction('sistema',existente?'Evento atualizado':'Evento criado',`${titulo} — ${formatDate(data)}${publicarSite?` · site (${siteLocal})`:''}`);EVENTO_EDITANDO_ID=null;showToast(publicarSite?(existente?'Evento atualizado e sincronizado.':'Evento criado e publicado no site.'):(existente?'Evento atualizado.':'Evento criado.'));renderModule();
 }
 async function abrirMediaEvento(id){const e=EVENTOS.find(x=>x.id===id);if(!e?.mediaPath)return;const {data,error}=await admsSupabase.storage.from('comunicacoes-media').createSignedUrl(e.mediaPath,300);if(error||!data?.signedUrl){showToast('Não foi possível abrir o anexo.');return;}window.open(data.signedUrl,'_blank','noopener');}
+function quantidadeInscricaoEvento(inscricao){
+  const valor=Number(inscricao?.quantidade??inscricao?.totalParticipantes??inscricao?.total_participantes??1);
+  return Number.isFinite(valor)&&valor>0?Math.floor(valor):1;
+}
+function contribuicaoInscricaoEvento(inscricao){
+  const texto=String(inscricao?.contribuicao??inscricao?.contribution??'').trim();
+  if(texto)return texto;
+  const valor=Number(inscricao?.valorContribuicao??inscricao?.valor_contribuicao);
+  return Number.isFinite(valor)&&valor>0?formatEuro(valor):'';
+}
+function nomesInscricaoEvento(inscricao){
+  const acompanhantes=String(inscricao?.acompanhantes||'').split(/[,;\n]/).map(n=>n.trim()).filter(Boolean);
+  return [String(inscricao?.nome||'Participante').trim(),...acompanhantes].filter(Boolean).join(', ');
+}
+function totalParticipantesEvento(evento){
+  return (evento?.inscritos||[]).reduce((total,inscricao)=>total+quantidadeInscricaoEvento(inscricao),0);
+}
+function fecharModalInscricaoEvento(){document.getElementById('evento-inscricao-modal')?.remove()}
 function inscreverEvento(eventoId){
-  const e = EVENTOS.find(x=>x.id===eventoId);
-  if(!e) return;
-  if(e.vagas>0 && e.inscritos.length>=e.vagas){ showToast('Este evento já não tem vagas.'); return; }
-  const nome = session.label;
-  const contacto = session.tipo==='membro' ? (PESSOAS.membros.find(m=>m.id===session.membroId)||{}).contacto : '';
-  e.inscritos.push({nome, contacto, data: new Date().toISOString().split('T')[0]});
-  logAction('sistema', 'Inscrição em evento', `${nome} inscreveu-se em "${e.titulo}"`);
-  salvarEstado();
-  showToast('Inscrição confirmada!');
-  renderModule();
+  const e=EVENTOS.find(x=>x.id===eventoId);
+  if(!e||session.tipo!=='membro')return;
+  e.inscritos=e.inscritos||[];
+  if(e.inscritos.some(i=>i.nome===session.label||i.membroId===session.membroId)){showToast('A sua inscrição já está registada.');return;}
+  const disponiveis=e.vagas>0?e.vagas-totalParticipantesEvento(e):20;
+  if(disponiveis<1){showToast('Este evento já não tem vagas.');return;}
+  const pessoa=PESSOAS.membros.find(m=>m.id===session.membroId)||{};
+  const modal=document.createElement('div');
+  modal.id='evento-inscricao-modal';
+  modal.style.cssText='position:fixed;inset:0;z-index:9999;background:#020b22d9;display:grid;place-items:center;padding:20px';
+  modal.innerHTML=`<article role="dialog" aria-modal="true" aria-labelledby="evento-inscricao-titulo" style="width:min(620px,100%);max-height:92vh;overflow:auto;border-radius:24px;background:var(--paper,#fff);color:var(--ink,#172033);box-shadow:0 30px 80px #0008">
+    <header style="padding:24px 26px;background:linear-gradient(135deg,#07194f,#153b97);color:#fff;position:relative"><button type="button" aria-label="Fechar" onclick="fecharModalInscricaoEvento()" style="position:absolute;right:15px;top:13px;width:38px;height:38px;border:0;border-radius:50%;background:#ffffff20;color:#fff;font-size:24px;cursor:pointer">×</button><div style="color:#f0c956;font-size:11px;font-weight:900;letter-spacing:1.5px">INSCRIÇÃO NO EVENTO</div><h2 id="evento-inscricao-titulo" style="margin:6px 45px 0 0;color:#fff">${admsEsc(e.titulo)}</h2><p style="margin:8px 0 0;color:#dfe7ff">${admsEsc(formatDate(e.data))}${e.hora?' · '+admsEsc(e.hora):''}${e.local?' · '+admsEsc(e.local):''}</p></header>
+    <div style="padding:24px 26px"><div class="form-row"><div><label>Responsável pela inscrição</label><input value="${admsEsc(session.label)}" readonly></div><div><label>Contacto</label><input id="ev-insc-contacto" value="${admsEsc(pessoa.contacto||pessoa.telefone||pessoa.telemovel||'')}" maxlength="40"></div></div><div class="form-row"><div><label>Número total de participantes</label><input id="ev-insc-quantidade" type="number" min="1" max="${disponiveis}" value="1"></div><div><label>Contribuição (opcional)</label><input id="ev-insc-contribuicao" maxlength="160" placeholder="Ex.: € 10,00 ou sobremesa"></div></div><label>Nomes dos acompanhantes (se houver)</label><textarea id="ev-insc-acompanhantes" rows="3" maxlength="500" placeholder="Separe os nomes por vírgula"></textarea><div class="hint-box" style="margin-top:12px">Indique o total de pessoas desta inscrição. A contribuição pode ser um valor, alimento ou outro apoio ao evento.</div><div style="display:flex;justify-content:flex-end;gap:10px;margin-top:18px;flex-wrap:wrap"><button class="btn btn-outline" style="width:auto" onclick="fecharModalInscricaoEvento()">Cancelar</button><button class="btn btn-primary" style="width:auto" onclick="confirmarInscricaoEvento('${e.id}')">Confirmar inscrição</button></div></div>
+  </article>`;
+  document.body.appendChild(modal);
+  setTimeout(()=>document.getElementById('ev-insc-quantidade')?.focus(),30);
+}
+async function confirmarInscricaoEvento(eventoId){
+  const e=EVENTOS.find(x=>x.id===eventoId);if(!e)return;
+  const quantidade=Math.max(1,Math.floor(Number(document.getElementById('ev-insc-quantidade')?.value)||1));
+  const restantes=e.vagas>0?e.vagas-totalParticipantesEvento(e):quantidade;
+  if(e.vagas>0&&quantidade>restantes){showToast(`Existem apenas ${Math.max(0,restantes)} vaga(s) disponíveis.`);return;}
+  const inscricao={nome:session.label,membroId:session.membroId||null,contacto:document.getElementById('ev-insc-contacto')?.value.trim()||'',data:dataHojeLisboa(),quantidade,acompanhantes:document.getElementById('ev-insc-acompanhantes')?.value.trim()||'',contribuicao:document.getElementById('ev-insc-contribuicao')?.value.trim()||''};
+  e.inscritos.push(inscricao);
+  const guardado=await salvarEstado(['eventos']);
+  if(!guardado?.ok){e.inscritos.pop();showToast('Não foi possível guardar a inscrição.');return;}
+  await logAction('eventos','Inscrição em evento',`${session.label} · ${e.titulo} · ${quantidade} participante(s)`);
+  fecharModalInscricaoEvento();showToast('Inscrição confirmada e guardada.');renderModule();
 }
 function verInscritosEvento(eventoId){
-  const e = EVENTOS.find(x=>x.id===eventoId);
-  if(!e) return;
-  const lista = e.inscritos.length ? e.inscritos.map(i=>`• ${i.nome}${i.contacto?' — '+i.contacto:''}`).join('\n') : 'Ainda sem inscritos.';
-  alert('Inscritos em "' + e.titulo + '":\n\n' + lista);
+  if(!exigirPermissao('eventos','exportar'))return;
+  const e=EVENTOS.find(x=>x.id===eventoId);if(!e)return;
+  const inscritos=e.inscritos||[],modal=document.createElement('div');
+  modal.id='evento-inscritos-modal';modal.style.cssText='position:fixed;inset:0;z-index:9999;background:#020b22d9;display:grid;place-items:center;padding:20px';
+  modal.innerHTML=`<article role="dialog" aria-modal="true" style="width:min(920px,100%);max-height:92vh;overflow:auto;border-radius:24px;background:var(--paper,#fff);color:var(--ink,#172033);padding:26px;box-shadow:0 30px 80px #0008"><div style="display:flex;align-items:start;justify-content:space-between;gap:18px"><div><div class="breadcrumb">Participantes do evento</div><h2 style="margin:4px 0">${admsEsc(e.titulo)}</h2><p style="margin:0;color:var(--ink-soft)">${admsEsc(formatDate(e.data))} · ${totalParticipantesEvento(e)} participante(s)</p></div><button type="button" aria-label="Fechar" onclick="document.getElementById('evento-inscritos-modal')?.remove()" style="width:38px;height:38px;border:0;border-radius:50%;background:#edf1fa;color:#07194f;font-size:24px;cursor:pointer">×</button></div><div style="overflow:auto;margin-top:20px"><table><thead><tr><th>Nome(s)</th><th>Participantes</th><th>Contacto</th><th>Contribuição</th><th>Inscrição</th></tr></thead><tbody>${inscritos.map(i=>`<tr><td>${admsEsc(nomesInscricaoEvento(i))}</td><td>${quantidadeInscricaoEvento(i)}</td><td>${admsEsc(i.contacto||'—')}</td><td>${admsEsc(contribuicaoInscricaoEvento(i)||'—')}</td><td>${admsEsc(i.data?formatDate(i.data):'—')}</td></tr>`).join('')||'<tr><td colspan="5">Ainda não existem inscrições.</td></tr>'}</tbody></table></div><div style="display:flex;justify-content:flex-end;gap:10px;margin-top:18px"><button class="btn btn-outline" style="width:auto" onclick="document.getElementById('evento-inscritos-modal')?.remove()">Fechar</button><button class="btn btn-primary" style="width:auto" onclick="document.getElementById('evento-inscritos-modal')?.remove();imprimirRelatorioEvento('${e.id}')">Abrir relatório</button></div></article>`;
+  document.body.appendChild(modal);
+}
+function imprimirRelatorioEvento(eventoId){
+  if(!exigirPermissao('eventos','exportar'))return;
+  const e=EVENTOS.find(x=>x.id===eventoId);if(!e)return;
+  const inscritos=[...(e.inscritos||[])].sort((a,b)=>String(a.data||'').localeCompare(String(b.data||''))||String(a.nome||'').localeCompare(String(b.nome||''),'pt-PT'));
+  const temContribuicao=inscritos.some(i=>contribuicaoInscricaoEvento(i));
+  const total=totalParticipantesEvento(e),comContribuicao=inscritos.filter(i=>contribuicaoInscricaoEvento(i)).length;
+  const cabecalhos=['N.º','Nome dos participantes','N.º de participantes',...(temContribuicao?['Contribuição']:[]),'Data da inscrição'];
+  const linhas=inscritos.map((i,index)=>[index+1,nomesInscricaoEvento(i),quantidadeInscricaoEvento(i),...(temContribuicao?[contribuicaoInscricaoEvento(i)||'—']:[]),i.data?formatDate(i.data):'—']);
+  const html=`<div class="print-title" style="text-align:left;font-size:19px">RELATÓRIO DE PARTICIPANTES — ${admsEsc(e.titulo)}</div><p style="margin:-8px 0 20px;color:#4a5578;font-size:11px"><b>${admsEsc(formatDate(e.data))}${e.hora?' · '+admsEsc(e.hora):''}</b>${e.local?' · '+admsEsc(e.local):''} · ${admsEsc(e.deptId?deptNome(e.deptId):'Toda a igreja')}</p><div style="display:grid;grid-template-columns:repeat(${temContribuicao?3:2},1fr);gap:10px;margin:0 0 20px;page-break-inside:avoid"><div style="border:1px solid #ccd4e5;border-radius:8px;padding:12px;background:#f7f9fd"><div style="font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:#4a5578">Inscrições</div><strong style="font-size:18px;color:#071b50">${inscritos.length}</strong></div><div style="border:1px solid #d7ba55;border-radius:8px;padding:12px;background:#fffaf0"><div style="font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:#4a5578">Total de participantes</div><strong style="font-size:18px;color:#071b50">${total}</strong></div>${temContribuicao?`<div style="border:1px solid #c9dfd1;border-radius:8px;padding:12px;background:#f4fbf6"><div style="font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:#4a5578">Contribuições registadas</div><strong style="font-size:18px;color:#17643b">${comContribuicao}</strong></div>`:''}</div><table class="print-table"><thead><tr>${cabecalhos.map(h=>`<th>${admsEsc(h)}</th>`).join('')}</tr></thead><tbody>${linhas.length?linhas.map(r=>`<tr>${r.map(c=>`<td>${admsEsc(String(c))}</td>`).join('')}</tr>`).join(''):`<tr><td colspan="${cabecalhos.length}">Nenhum participante inscrito.</td></tr>`}</tbody><tfoot><tr><th colspan="2">TOTAL</th><th>${total}</th>${temContribuicao?`<th>${comContribuicao} contribuição(ões)</th>`:''}<th></th></tr></tfoot></table><p style="margin-top:18px;font-size:10px;color:#667085">Relatório emitido em ${new Date().toLocaleString('pt-PT',{timeZone:'Europe/Lisbon'})} por ${admsEsc(session.label)}.</p>`;
+  logAction('eventos','Relatório de evento emitido',`${e.titulo} · ${total} participante(s)`);
+  mostrarDocumentoImpressao(html);
 }
 
 /* ================= ESTUDOS BÍBLICOS (EBD) ================= */
@@ -6243,7 +6295,7 @@ function viewAuditoria(){
 }
 
 /* ================= RELATÓRIOS (PDF / EXCEL) ================= */
-const RELATORIO_FILTROS={tipo:'',departamento:'',financeiroTipo:'Todos',financeiroRubrica:'Todas',financeiroEntidade:'Todas',financeiroMes:'',inicio:'',fim:'',rhTipo:'todos',patCategoria:'Todas',contaStatus:'todos'};
+const RELATORIO_FILTROS={tipo:'',departamento:'',financeiroTipo:'Todos',financeiroRubrica:'Todas',financeiroEntidade:'Todas',financeiroMes:'',eventoId:'todos',inicio:'',fim:'',rhTipo:'todos',patCategoria:'Todas',contaStatus:'todos'};
 
 function guardarFiltrosRelatorio(){
   const valor=id=>document.getElementById(id)?.value;
@@ -6259,6 +6311,8 @@ function guardarFiltrosRelatorio(){
   if(financeiroEntidade!==undefined) RELATORIO_FILTROS.financeiroEntidade=financeiroEntidade;
   const financeiroMes=valor('rel-fin-mes');
   if(financeiroMes!==undefined) RELATORIO_FILTROS.financeiroMes=financeiroMes;
+  const eventoId=valor('rel-evento-id');
+  if(eventoId!==undefined) RELATORIO_FILTROS.eventoId=eventoId;
   const inicio=valor('rel-data-inicio');
   if(inicio!==undefined) RELATORIO_FILTROS.inicio=inicio;
   const fim=valor('rel-data-fim');
@@ -6292,6 +6346,7 @@ function tiposRelatorioDisponiveis(){
     tipos.push({v:'frequencia-escalas', t:'Frequência e escalas'});
   }
   if(canAccessEscalas()) tipos.push({v:'escalas', t:'Escalas de Serviço'});
+  if(permPode('eventos','exportar')) tipos.push({v:'eventos', t:'Eventos — participantes e contribuições'});
   tipos.push({v:'avisos', t:'Avisos e Comunicados'});
   return tipos;
 }
@@ -6501,6 +6556,10 @@ function renderRelFilters(){
       <div><label>Fornecedor / pagador / beneficiário</label><select id="rel-fin-entidade" onchange="atualizarFiltrosRelatorio()"><option value="Todas">Todos</option>${entidades.map(c=>`<option value="${admsEsc(c)}" ${RELATORIO_FILTROS.financeiroEntidade===c?'selected':''}>${admsEsc(c)}</option>`).join('')}</select></div>
       <div><label>Data início</label><input id="rel-data-inicio" type="date" value="${RELATORIO_FILTROS.inicio}" onchange="atualizarFiltrosRelatorio()"></div>
     </div><div class="form-row"><div><label>Data fim</label><input id="rel-data-fim" type="date" value="${RELATORIO_FILTROS.fim}" onchange="atualizarFiltrosRelatorio()"></div></div>`;
+  } else if(tipo==='eventos'){
+    const eventosDisponiveis=EVENTOS.filter(e=>!e.arquivado).sort((a,b)=>String(b.data||'').localeCompare(String(a.data||'')));
+    if(!eventosDisponiveis.some(e=>e.id===RELATORIO_FILTROS.eventoId))RELATORIO_FILTROS.eventoId='todos';
+    extra.innerHTML=`<div class="form-row" style="margin-top:12px"><div><label>Evento</label><select id="rel-evento-id" onchange="guardarFiltrosRelatorio()"><option value="todos">Todos os eventos</option>${eventosDisponiveis.map(e=>`<option value="${admsEsc(e.id)}" ${RELATORIO_FILTROS.eventoId===e.id?'selected':''}>${admsEsc(formatDate(e.data)+' — '+e.titulo)}</option>`).join('')}</select></div><div><label>Data início</label><input id="rel-data-inicio" type="date" value="${RELATORIO_FILTROS.inicio}" onchange="guardarFiltrosRelatorio()"></div></div><div class="form-row"><div><label>Data fim</label><input id="rel-data-fim" type="date" value="${RELATORIO_FILTROS.fim}" onchange="guardarFiltrosRelatorio()"></div></div>`;
   } else if(tipo==='escalas' || tipo==='avisos'){
     extra.innerHTML = `<div class="form-row" style="margin-top:12px;">
       <div><label>Data início</label><input id="rel-data-inicio" type="date" value="${RELATORIO_FILTROS.inicio}" onchange="guardarFiltrosRelatorio()"></div>
@@ -6716,6 +6775,17 @@ function getReportData(){
     const rows = [];
     depts.forEach(id=> (ESCALAS[id]||[]).filter(e=>dentroIntervalo(e.data, ini, fim)).forEach(e=> rows.push([deptNome(id), formatDate(e.data), e.evento, e.pessoas.join(', ')])));
     return {title:'Relatório de Escalas de Serviço', headers:['Departamento','Data','Evento','Pessoas Escaladas'], rows};
+  }
+  if(tipo==='eventos'){
+    const eventoId=document.getElementById('rel-evento-id')?.value||RELATORIO_FILTROS.eventoId||'todos';
+    const ini=document.getElementById('rel-data-inicio')?.value||'';
+    const fim=document.getElementById('rel-data-fim')?.value||'';
+    const eventos=EVENTOS.filter(e=>!e.arquivado&&(eventoId==='todos'||e.id===eventoId)&&(deptSel==='todos'||deptSel==='geral'&&!e.deptId||e.deptId===deptSel)&&dentroIntervalo(e.data,ini,fim)).sort((a,b)=>String(a.data||'').localeCompare(String(b.data||'')));
+    const rows=[];let total=0;
+    eventos.forEach(e=>(e.inscritos||[]).forEach(i=>{const quantidade=quantidadeInscricaoEvento(i);total+=quantidade;rows.push([formatDate(e.data),e.titulo,nomesInscricaoEvento(i),quantidade,contribuicaoInscricaoEvento(i)||'—']);}));
+    if(rows.length)rows.push(['','TOTAL DE PARTICIPANTES','',total,'']);
+    const selecionado=eventos.length===1?eventos[0]:null;
+    return {title:selecionado?`Participantes — ${selecionado.titulo}`:'Relatório Consolidado de Eventos',headers:['Data','Evento','Nome dos participantes','N.º de participantes','Contribuição'],rows};
   }
   if(tipo==='avisos'){
     const ini = document.getElementById('rel-data-inicio').value;

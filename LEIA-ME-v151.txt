@@ -1,0 +1,29 @@
+ADMS Braga — versão 151
+Relatórios completos de eventos
+
+O que mudou
+- Cada cartão de evento tem agora o botão “Relatório”.
+- O relatório usa o cabeçalho institucional padrão da carta de apresentação.
+- O documento apresenta o nome dos participantes, a quantidade por inscrição, o total geral e a contribuição quando existir.
+- O campo de contribuição é ocultado no relatório quando o evento não possui contribuições.
+- A inscrição do membro aceita agregado familiar, nomes dos acompanhantes e contribuição opcional.
+- A lotação passa a considerar o número real de participantes, e não apenas o número de formulários enviados.
+- O botão “Participantes” abre uma visualização organizada antes da impressão.
+- O módulo Relatórios inclui a opção “Eventos — participantes e contribuições”, com filtros por evento, departamento e período, além de exportação para Excel.
+- Inscrições antigas continuam compatíveis e são contabilizadas como uma pessoa cada.
+
+Permissões
+- Os membros podem inscrever-se nos eventos disponíveis.
+- A visualização nominal e a emissão dos relatórios exigem permissão de exportação no módulo Eventos.
+- Usuário Master, Pastor e Secretaria mantêm acesso administrativo completo.
+
+Importante
+- Esta versão não requer execução de SQL.
+- Os novos dados ficam guardados no mesmo estado central de Eventos já utilizado pelo Portal.
+
+Instalação
+1. Extraia o pacote.
+2. No projeto do Portal (adms-braga.vercel.app), envie todos os ficheiros do pacote.
+3. Aguarde o estado Ready — Production.
+4. Abra o Portal numa janela anónima.
+5. Entre em Agenda e Eventos e confirme o botão “Relatório”.
