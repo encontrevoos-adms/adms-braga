@@ -1,0 +1,21 @@
+ADMS Braga — versão 149
+Vídeo da comunidade com qualidade aprimorada
+
+O que mudou
+- Redução conservadora dos artefactos de compressão do vídeo recebido pelo WhatsApp.
+- Ajustes leves de luz, contraste e cor.
+- Ampliação com interpolação Lanczos e nitidez moderada.
+- Ficheiro horizontal otimizado para computador e tablet.
+- Ficheiro vertical otimizado para telemóvel.
+- Nova imagem de capa do vídeo.
+
+Importante
+- Rostos, pessoas e conteúdo não foram reconstruídos nem alterados por IA.
+- A melhoria é visual e respeita o limite de detalhe existente no vídeo original.
+- Esta versão não requer execução de SQL.
+
+Instalação
+1. Extraia o pacote.
+2. Envie TODOS os ficheiros para o projeto público da ADMS Braga na Vercel.
+3. Aguarde o estado Ready — Production.
+4. Abra o site numa janela anónima para confirmar a versão atualizada.
