@@ -1,0 +1,20 @@
+ADMS Braga — versão 152
+Nova mensagem de acolhimento
+
+O que mudou
+- O título principal do site público foi substituído por:
+  “Seja Bem-vindo à Família ADMS Braga!”
+- A mensagem continua dividida em duas linhas para preservar o impacto visual do bloco inicial.
+- A paleta de cores, as fotografias, as animações e os restantes conteúdos permanecem inalterados.
+- Todas as melhorias da versão 151 do Portal, incluindo os relatórios de eventos, continuam incluídas.
+
+Importante
+- Esta versão não requer execução de SQL.
+- Não há alteração de dados, permissões ou configurações do Supabase.
+
+Instalação
+1. Extraia o pacote.
+2. No projeto do site público (adms-braga-site.vercel.app), envie todos os ficheiros do pacote.
+3. Aguarde o estado Ready — Production.
+4. Abra o site público numa janela anónima e confirme a nova mensagem inicial.
+5. Não publique este pacote no projeto errado: adms-braga.vercel.app é o Portal.

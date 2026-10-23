@@ -1,4 +1,4 @@
-// ADMS Braga v151: relatórios completos de eventos no Portal.
+// ADMS Braga v152: nova mensagem de acolhimento no site público.
 self.addEventListener('install',()=>self.skipWaiting());
 self.addEventListener('activate',event=>{
   event.waitUntil(

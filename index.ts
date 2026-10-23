@@ -1,207 +1,142 @@
-import "jsr:@supabase/functions-js/edge-runtime.d.ts"
-import { createClient } from "npm:@supabase/supabase-js@2.57.4"
+import { createClient } from 'npm:@supabase/supabase-js@2.57.4'
 
-const SUPABASE_URL = Deno.env.get("SUPABASE_URL") || ""
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-const ALLOWED_ORIGINS = new Set([
-  "https://adms-braga.vercel.app",
-  "https://adms-braga-site.vercel.app",
-  "https://www.admsbraga.org",
-  "https://admsbraga.org",
+function defaultApiKey(
+  variable: 'SUPABASE_PUBLISHABLE_KEYS' | 'SUPABASE_SECRET_KEYS',
+  legacyVariable: 'SUPABASE_ANON_KEY' | 'SUPABASE_SERVICE_ROLE_KEY',
+) {
+  const raw = Deno.env.get(variable)
+  if (raw) {
+    try {
+      const keys = JSON.parse(raw) as Record<string, string>
+      if (keys.default) return keys.default
+    } catch {
+      if (raw.startsWith('sb_') || raw.startsWith('eyJ')) return raw
+    }
+  }
+  const legacy = Deno.env.get(legacyVariable)
+  if (legacy) return legacy
+  throw new Error(`${variable} e ${legacyVariable} não estão disponíveis.`)
+}
+
+const allowedOrigins = new Set([
+  'https://adms-braga.vercel.app',
+  'https://adms-braga-site.vercel.app',
+  'https://www.admsbraga.org',
+  'https://admsbraga.org',
 ])
 
-function secretKey() {
-  const modern = Deno.env.get("SUPABASE_SECRET_KEYS")
-  if (modern) {
-    const keys = JSON.parse(modern) as Record<string, string>
-    if (keys.default) return keys.default
-  }
-  const legacy = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")
-  if (legacy) return legacy
-  throw new Error("A chave administrativa do Supabase não está disponível.")
-}
-
-function requestOrigin(req: Request) {
-  return req.headers.get("origin") || ""
-}
-
-function originAllowed(origin: string) {
-  return ALLOWED_ORIGINS.has(origin) || /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)
-}
-
-function cors(req: Request) {
-  const origin = requestOrigin(req)
+function cors(origin: string | null) {
   return {
-    "Access-Control-Allow-Origin": originAllowed(origin) ? origin : "https://adms-braga-site.vercel.app",
-    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Access-Control-Max-Age": "86400",
-    "Vary": "Origin",
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
   }
 }
 
-function json(req: Request, body: Record<string, unknown>, status = 200, extra: Record<string, string> = {}) {
+function json(origin: string | null, body: Record<string, unknown>, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
-    headers: {
-      ...cors(req),
-      ...extra,
-      "Content-Type": "application/json; charset=utf-8",
-      "Cache-Control": "no-store",
-    },
+    headers: { ...cors(origin), 'Content-Type': 'application/json; charset=utf-8' },
   })
 }
 
-function text(value: unknown, max: number) {
-  return String(value ?? "").trim().slice(0, max + 1)
+const roleConfig: Record<string, { role: string; cargo: string }> = {
+  pastor: { role: 'pastor', cargo: 'Pastoral' },
+  secretaria: { role: 'master', cargo: 'Secretaria — Usuário Master' },
+  tesouraria: { role: 'tesouraria', cargo: 'Tesouraria' },
+  lider: { role: 'lider', cargo: 'Liderança de departamento' },
+  consulta: { role: 'consulta', cargo: 'Consulta' },
 }
 
-function clientIp(req: Request) {
-  return (
-    req.headers.get("cf-connecting-ip") ||
-    req.headers.get("x-forwarded-for")?.split(",")[0] ||
-    "unknown"
-  ).trim()
-}
-
-async function digest(value: string) {
-  const bytes = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value))
-  return Array.from(new Uint8Array(bytes), (byte) => byte.toString(16).padStart(2, "0")).join("")
-}
-
-async function allowedByRateLimit(
-  admin: ReturnType<typeof createClient>,
-  req: Request,
-  type: "prayer" | "contact",
-  identity: string,
-) {
-  const ipHash = await digest(clientIp(req))
-  const identityHash = await digest(identity)
-  const [{ data: ipAllowed, error: ipError }, { data: identityAllowed, error: identityError }] =
-    await Promise.all([
-      admin.rpc("consume_rate_limit", {
-        p_key: `public:${type}:ip:${ipHash}`,
-        p_window_seconds: 3600,
-        p_limit: 5,
-      }),
-      admin.rpc("consume_rate_limit", {
-        p_key: `public:${type}:identity:${identityHash}`,
-        p_window_seconds: 600,
-        p_limit: 2,
-      }),
-    ])
-
-  if (ipError || identityError) {
-    console.error("public-submit rate-limit:", ipError || identityError)
-    throw new Error("RATE_LIMIT_UNAVAILABLE")
-  }
-  return Boolean(ipAllowed && identityAllowed)
-}
-
-Deno.serve(async (req: Request) => {
-  if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: cors(req) })
-  if (req.method !== "POST") {
-    return json(req, { ok: false, error: "Método não permitido." }, 405, { Allow: "POST, OPTIONS" })
-  }
-
-  const origin = requestOrigin(req)
-  if (origin && !originAllowed(origin)) {
-    return json(req, { ok: false, error: "Origem não autorizada." }, 403)
-  }
-  if (Number(req.headers.get("content-length") || 0) > 12_000) {
-    return json(req, { ok: false, error: "Pedido demasiado grande." }, 413)
-  }
+Deno.serve(async (req) => {
+  const origin = req.headers.get('origin')
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: cors(origin) })
+  if (req.method !== 'POST') return json(origin, { ok: false, error: 'Método não permitido.' }, 405)
 
   try {
-    const body = (await req.json()) as Record<string, unknown>
-    const type = body.type === "prayer" ? "prayer" : body.type === "contact" ? "contact" : null
-    if (!type) return json(req, { ok: false, error: "Tipo de pedido inválido." }, 400)
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')
+    const publishableKey = defaultApiKey('SUPABASE_PUBLISHABLE_KEYS', 'SUPABASE_ANON_KEY')
+    const secretKey = defaultApiKey('SUPABASE_SECRET_KEYS', 'SUPABASE_SERVICE_ROLE_KEY')
+    const authorization = req.headers.get('Authorization')
+    if (!supabaseUrl || !authorization) return json(origin, { ok: false, error: 'Sessão administrativa inválida.' }, 401)
 
-    // Campo invisível: robôs recebem uma resposta neutra sem qualquer gravação.
-    if (text(body.website, 200)) return json(req, { ok: true }, 202)
+    const callerClient = createClient(supabaseUrl, publishableKey, { global: { headers: { Authorization: authorization } }, auth: { autoRefreshToken: false, persistSession: false } })
+    const admin = createClient(supabaseUrl, secretKey, { auth: { autoRefreshToken: false, persistSession: false } })
+    const { data: userData, error: userError } = await callerClient.auth.getUser()
+    if (userError || !userData.user) return json(origin, { ok: false, error: 'Sessão expirada. Entre novamente.' }, 401)
 
-    const name = text(body.nome, 100)
-    const email = text(body.email, 160).toLowerCase()
-    const phone = text(body.contacto, 30)
-    if (name.length < 2 || name.length > 100 || (email && !EMAIL_RE.test(email))) {
-      return json(req, { ok: false, error: "Verifique o nome e o endereço de e-mail." }, 400)
+    const { data: callerProfile, error: profileError } = await admin.from('profiles').select('id,nome,role,ativo,cargo').eq('id', userData.user.id).single()
+    const callerCargo = String(callerProfile?.cargo || '').toLowerCase()
+    const authorized = callerProfile?.ativo === true && (['master', 'pastor', 'secretaria'].includes(callerProfile.role) || callerCargo.includes('secretar'))
+    if (profileError || !authorized) return json(origin, { ok: false, error: 'Não tem autorização para gerir acessos.' }, 403)
+
+    const body = await req.json()
+    const action = String(body.action || '')
+    const requestId = String(body.requestId || '')
+    if (!['aprovar', 'rejeitar'].includes(action) || !/^[0-9a-f-]{36}$/i.test(requestId)) return json(origin, { ok: false, error: 'Pedido inválido.' }, 400)
+
+    const { data: accessRequest, error: requestError } = await admin.from('solicitacoes_acesso').select('*').eq('id', requestId).single()
+    if (requestError || !accessRequest) return json(origin, { ok: false, error: 'Solicitação não encontrada.' }, 404)
+    if ((accessRequest.status || 'pendente') !== 'pendente') return json(origin, { ok: false, error: 'Esta solicitação já foi decidida.' }, 409)
+
+    if (action === 'rejeitar') {
+      const motivo = String(body.motivo || '').trim().slice(0, 500)
+      if (!motivo) return json(origin, { ok: false, error: 'Informe o motivo da rejeição.' }, 400)
+      const { error } = await admin.from('solicitacoes_acesso').update({ status: 'rejeitado', motivo_rejeicao: motivo, decidido_por: userData.user.id, decidido_em: new Date().toISOString() }).eq('id', requestId).eq('status', 'pendente')
+      if (error) throw error
+      await admin.from('registo_atividade').insert({ utilizador: callerProfile.nome || 'Administração', perfil: callerProfile.role, modulo: 'acesso', acao: 'Solicitação rejeitada', detalhes: `${accessRequest.nome_completo} · ${accessRequest.email}` })
+      return json(origin, { ok: true, message: 'Solicitação rejeitada e registada no histórico.' })
     }
 
-    const admin = createClient(SUPABASE_URL, secretKey(), {
-      auth: { persistSession: false, autoRefreshToken: false },
-    })
-    const identity = `${email}|${phone}|${name.toLocaleLowerCase("pt-PT")}`
+    const requestedRole = String(body.profileRole || '')
+    const config = roleConfig[requestedRole]
+    const deptIds = Array.isArray(body.deptIds) ? [...new Set(body.deptIds.map((x: unknown) => String(x)).filter(Boolean))].slice(0, 30) : []
+    if (!config) return json(origin, { ok: false, error: 'Perfil de acesso inválido.' }, 400)
+    if (requestedRole === 'lider' && deptIds.length === 0) return json(origin, { ok: false, error: 'A Liderança exige pelo menos um departamento.' }, 400)
 
-    if (type === "prayer") {
-      const pedido = text(body.pedido, 3000)
-      if (pedido.length < 5 || pedido.length > 3000) {
-        return json(req, { ok: false, error: "Escreva o seu pedido de oração." }, 400)
-      }
-      if (!(await allowedByRateLimit(admin, req, type, identity))) {
-        return json(
-          req,
-          { ok: false, error: "Muitos envios. Aguarde dez minutos antes de tentar novamente." },
-          429,
-          { "Retry-After": "600" },
-        )
-      }
-
-      const { error } = await admin.from("pedidos_oracao").insert({
-        nome: name,
-        email: email || null,
-        contacto: phone || null,
-        pedido,
-        confidencial: body.confidencial === true,
-        status: "novo",
-      })
-      if (error) {
-        console.error("public-submit prayer insert:", error.code, error.message)
-        return json(req, { ok: false, error: "Não foi possível guardar o pedido agora." }, 500)
-      }
-      return json(req, { ok: true, message: "Pedido de oração recebido." }, 201)
+    const email = String(accessRequest.email || '').trim().toLowerCase()
+    let authUser: { id: string; email?: string } | null = null
+    for (let page = 1; page <= 10 && !authUser; page++) {
+      const { data, error } = await admin.auth.admin.listUsers({ page, perPage: 1000 })
+      if (error) throw error
+      authUser = data.users.find((u) => u.email?.toLowerCase() === email) || null
+      if (data.users.length < 1000) break
     }
 
-    const horarios = new Set(["Manhã", "Tarde", "Noite", "Qualquer horário"])
-    const melhorHorario = text(body.melhor_horario, 30) || "Qualquer horário"
-    const mensagem = text(body.mensagem, 2000)
-    const origem = text(body.origem, 80) || "site_novo"
-    if (
-      phone.length < 5 ||
-      phone.length > 30 ||
-      !horarios.has(melhorHorario) ||
-      body.rgpd_aceite !== true
-    ) {
-      return json(req, { ok: false, error: "Verifique o contacto e a autorização RGPD." }, 400)
+    let invited = false
+    if (!authUser) {
+      const suppliedRedirect = String(body.redirectTo || '')
+      const redirectTo = /^https:\/\/(adms-braga(-site)?\.vercel\.app|(?:www\.)?admsbraga\.org)\/sistema(?:\?|$)/.test(suppliedRedirect)
+        ? suppliedRedirect
+        : 'https://adms-braga.vercel.app/sistema?v=90'
+      const { data, error } = await admin.auth.admin.inviteUserByEmail(email, { redirectTo, data: { nome: accessRequest.nome_completo } })
+      if (error) throw error
+      authUser = data.user
+      invited = true
     }
-    if (!(await allowedByRateLimit(admin, req, type, identity))) {
-      return json(
-        req,
-        { ok: false, error: "Muitos envios. Aguarde dez minutos antes de tentar novamente." },
-        429,
-        { "Retry-After": "600" },
-      )
-    }
+    if (!authUser) throw new Error('Não foi possível preparar a conta do utilizador.')
 
-    const { error } = await admin.from("novos_contactos").insert({
-      nome: name,
-      email: email || null,
-      contacto: phone,
-      melhor_horario: melhorHorario,
-      mensagem: mensagem || null,
-      origem,
-      rgpd_aceite: true,
-      status: "novo",
-    })
-    if (error) {
-      console.error("public-submit contact insert:", error.code, error.message)
-      return json(req, { ok: false, error: "Não foi possível guardar o contacto agora." }, 500)
-    }
-    return json(req, { ok: true, message: "Contacto recebido." }, 201)
+    const { error: upsertError } = await admin.from('profiles').upsert({
+      id: authUser.id,
+      nome: accessRequest.nome_completo,
+      role: config.role,
+      ativo: true,
+      cargo: config.cargo,
+      dept_ids: deptIds,
+      must_set_password: invited,
+    }, { onConflict: 'id' })
+    if (upsertError) throw upsertError
+
+    const { error: updateError } = await admin.from('solicitacoes_acesso').update({
+      status: 'aprovado', perfil_atribuido: requestedRole, dept_ids: deptIds,
+      auth_user_id: authUser.id, decidido_por: userData.user.id, decidido_em: new Date().toISOString(), motivo_rejeicao: null,
+    }).eq('id', requestId).eq('status', 'pendente')
+    if (updateError) throw updateError
+
+    await admin.from('registo_atividade').insert({ utilizador: callerProfile.nome || 'Administração', perfil: callerProfile.role, modulo: 'acesso', acao: 'Acesso aprovado', detalhes: `${accessRequest.nome_completo} · ${requestedRole} · ${deptIds.join(', ') || 'sem departamento específico'}` })
+    return json(origin, { ok: true, message: invited ? 'Acesso aprovado. O convite foi enviado por e-mail.' : 'Acesso atualizado. O utilizador já possuía uma conta e pode entrar ou recuperar a palavra-passe.' })
   } catch (error) {
-    if (error instanceof Error && error.message === "RATE_LIMIT_UNAVAILABLE") {
-      return json(req, { ok: false, error: "Serviço temporariamente indisponível." }, 503)
-    }
-    console.error("public-submit:", error)
-    return json(req, { ok: false, error: "Não foi possível concluir o envio agora." }, 500)
+    console.error('gerir-solicitacoes-acesso:', error)
+    return json(origin, { ok: false, error: 'Não foi possível concluir a operação. Consulte os registos da função.' }, 500)
   }
 })
