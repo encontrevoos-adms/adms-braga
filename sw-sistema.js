@@ -1,4 +1,4 @@
-// ADMS Braga v149: vídeo da comunidade com qualidade aprimorada.
+// ADMS Braga v150: mosaico vivo da comunidade no site público.
 self.addEventListener('install',()=>self.skipWaiting());
 self.addEventListener('activate',event=>{
   event.waitUntil(

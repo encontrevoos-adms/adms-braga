@@ -1,0 +1,21 @@
+ADMS Braga — versão 150
+Mosaico vivo da comunidade
+
+O que mudou
+- O vídeo do destaque principal foi substituído por fotografias reais da ADMS Braga.
+- Novo mosaico editorial assimétrico para computador e tablet.
+- Novo mosaico responsivo em grelha para telemóvel.
+- Transições lentas e discretas entre momentos de família, Kids, oração, Ceia e serviço.
+- Pessoas com preferência por movimento reduzido veem uma composição estática.
+- A fotografia da área de mensagem também foi atualizada.
+- As nove fotografias foram otimizadas em WebP para reduzir o tempo de carregamento.
+
+Importante
+- As imagens não tiveram rostos ou conteúdo alterados.
+- Esta versão não requer execução de SQL.
+
+Instalação
+1. Extraia o pacote.
+2. Envie TODOS os ficheiros para o projeto público da ADMS Braga na Vercel.
+3. Aguarde o estado Ready — Production.
+4. Abra o site numa janela anónima para confirmar a versão atualizada.
