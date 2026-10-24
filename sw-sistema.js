@@ -1,4 +1,4 @@
-// ADMS Braga v154: mosaico inicial mais luminoso e fotografias valorizadas.
+// ADMS Braga v155: mosaico inicial 40% mais luminoso.
 self.addEventListener('install',()=>self.skipWaiting());
 self.addEventListener('activate',event=>{
   event.waitUntil(

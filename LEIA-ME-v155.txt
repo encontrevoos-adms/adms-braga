@@ -1,0 +1,20 @@
+ADMS Braga — versão 155
+Mosaico inicial 40% mais luminoso
+
+O que mudou
+- A camada escura do mosaico inicial foi reduzida em mais 40%.
+- As fotografias, rostos, roupas e detalhes da comunidade passam a ter muito mais presença.
+- O título e o texto receberam sombras localizadas para permanecerem legíveis sem escurecer toda a imagem.
+- O mesmo princípio foi adaptado para tablet e telemóvel.
+- A fonte Outfit, a composição do título e os restantes conteúdos foram preservados.
+
+Importante
+- Esta versão não requer execução de SQL.
+- Não há alterações em dados, permissões ou configurações do Supabase.
+
+Instalação
+1. Extraia o pacote.
+2. No projeto do site público (adms-braga-site.vercel.app), envie todos os ficheiros do pacote.
+3. Aguarde o estado Ready — Production.
+4. Abra o site numa janela anónima e confira a área inicial.
+5. O endereço adms-braga.vercel.app continua reservado ao Portal.
